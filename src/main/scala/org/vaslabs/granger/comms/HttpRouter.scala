@@ -11,13 +11,14 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
 import org.vaslabs.granger.model.json._
 import org.vaslabs.granger.repo.GrangerRepo
+import org.vaslabs.granger.spa.StaticResources
 
 import scala.concurrent.Future
 
 /**
  * Created by vnicolaou on 28/05/17.
  */
-trait HttpRouter extends FailFastCirceSupport{ this: GrangerRepo[Future] =>
+trait HttpRouter extends FailFastCirceSupport with StaticResources { this: GrangerRepo[Future] =>
 
   private[this] def defineApi(implicit system: ActorSystem,
                               materializer: ActorMaterializer): Route = {
@@ -48,6 +49,6 @@ trait HttpRouter extends FailFastCirceSupport{ this: GrangerRepo[Future] =>
           }
         }
       }
-    }
+    } ~ staticResources
 
 }

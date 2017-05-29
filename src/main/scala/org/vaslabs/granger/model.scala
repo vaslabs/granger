@@ -36,6 +36,31 @@ object model {
 
   case class Tooth(number: Int, details: ToothDetails)
 
+  object Tooth {
+    implicit val ordering: Ordering[Tooth] = (x: Tooth, y: Tooth) => {
+      if (x.number <= 18 && y.number <= 18)
+        y.number - x.number
+      else if (x.number <= 18)
+        -1
+      else if (y.number <= 18)
+        1
+      else if (x.number <= 28 && y.number <= 28)
+        x.number - y.number
+      else if (x.number <= 28)
+        -1
+      else if (y.number <= 28)
+        1
+      else if (x.number <= 38 && y.number <= 38)
+        x.number - y.number
+      else if (y.number <= 38)
+        -1
+      else if (x.number <= 38)
+        1
+      else
+        y.number - x.number
+    }
+  }
+
   object json {
     val localDateFormatter = DateTimeFormatter.ISO_DATE
     implicit val localDateEncoder: Encoder[LocalDate] =

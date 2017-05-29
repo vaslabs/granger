@@ -40,7 +40,7 @@ class MockGrangerRepo extends GrangerRepo[Future] {
     val teeth31To38 = (31 to 38).map(
       Tooth(_, getToothDetails())
     )
-    val teeth41To48 = (31 to 48).map(
+    val teeth41To48 = (41 to 48).map(
       Tooth(_, getToothDetails())
     )
     (teeth11To18 ++ teeth21To28 ++ teeth31To38 ++ teeth41To48).toList
@@ -73,7 +73,7 @@ class MockGrangerRepo extends GrangerRepo[Future] {
     (1 to 20).map(
       id =>
         PatientId(id.toLong) -> Patient(PatientId(id.toLong), getRandomFirstName(), getRandomSurname(), LocalDate.of(getRandomYear(), getRandomMonth(), getRandomDay()),
-        DentalChart(getTeeth()))
+        DentalChart(getTeeth().sorted))
     ).toList
   }
 
