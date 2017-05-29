@@ -25,6 +25,7 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.deselectPatient = function() {
         ctrl.selectedPatient = null;
+        ctrl.selectedTooth = null;
     };
 
     ctrl.deselectTooth = function() {
