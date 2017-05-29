@@ -142,6 +142,9 @@ app.controller('MainController', function($q, $http) {
             data: data
         }).then(function(resp) {
             ctrl.selectedPatient = resp.data;
+            ctrl.allPatients = ctrl.allPatients.filter(function(patient) { return patient.patientId != ctrl.selectedPatient.patientId;});
+            ctrl.allPatients.push(ctrl.selectedPatient);
+            ctrl.selectedTooth = ctrl.selectedPatient.dentalChart.teeth.find(function(tooth) { return tooth.number == ctrl.selectedTooth.number;});
             clearEditData();
         });
     };
