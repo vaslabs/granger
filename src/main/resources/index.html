@@ -21,6 +21,14 @@
 <script src="/js/main.js"></script>
 <body ng-app="grangerApp">
 
+<style>
+    table#allpatients {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+</style>
+
 <div ng-controller="MainController as ctrl">
     <div class="card scale-transition" ng-class="{ 'scale-out': ctrl.selectedPatient == null, 'scale-in':ctrl.selectedPatient != null}">
         <div class="card-content">
@@ -41,40 +49,87 @@
         </div>
         <div class="card-tabs">
             <ul class="tabs tabs-fixed-width">
-                <li class="tab"><a href="#personalInfo">Personal information</a></li>
-                <li class="tab"><a class="active" href="#dentalChart">Dental chart</a></li>
-                <li class="tab"><a href="#test6">Photo</a></li>
+                <li class="tab"><a href="#personalInfoTab">Personal information</a></li>
+                <li class="tab"><a class="active" href="#dentalChartTab">Dental chart</a></li>
+                <li class="tab"><a href="#photoTab">Photo</a></li>
             </ul>
         </div>
         <div class="card-content grey lighten-4">
-            <div id="personalInfo">
+            <div id="personalInfoTab">
                 Date of birth: {{ctrl.selectedPatient.dateOfBirth}}
             </div>
-            <div id="dentalChart">
+            <div id="dentalChartTab">
                 <table ng-if="ctrl.selectedPatient != null">
                     <tbody>
                         <tr>
                             <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(0,15)">
-                                <div class="chip">
-                                    {{tooth.number}}
-                                </div>
+                                <a href="#" ng-click="ctrl.selectTooth(tooth)">
+                                    <div class="chip">
+                                        {{tooth.number}}
+                                    </div>
+                                </a>
                             </td>
                         </tr>
                         <tr>
                             <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(16,31)">
-                                <div class="chip">
-                                    {{tooth.number}}
-                                </div>
+                                <a href="#" ng-click="ctrl.selectTooth(tooth)">
+                                    <div class="chip">
+                                        {{tooth.number}}
+                                    </div>
+                                </a>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div id="test6">Test 3</div>
+            <div id="photoTab">Photo</div>
+        </div>
+
+        <div class="col s12 m7" ng-if="ctrl.selectedTooth != null">
+            <h2 class="header">{{ctrl.selectedTooth.number}}</h2>
+            <div class="card horizontal">
+                <div class="card-image">
+                    <img src="https://is4-ssl.mzstatic.com/image/thumb/Purple1/v4/be/e1/e9/bee1e951-cfb3-95d2-f996-78f454bde70d/source/256x256bb.jpg">
+                </div>
+                <div class="card-stacked">
+                    <div class="card-content">
+                        <h4>Roots</h4>
+                        <table class="striped">
+                            <thead>
+                                <tr>
+                                    <td>Name</td>
+                                    <td>Size</td>
+                                    <td>Thickness</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="root in ctrl.selectedTooth.details.roots">
+                                    <td>{{root.name}}</td>
+                                    <td>{{root.size}}</td>
+                                    <td>{{root.thickness}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <hr />
+                        <h4>Medicament</h4>
+                        <p>{{ctrl.selectedTooth.medicament}}</p>
+                        <hr />
+                        <h4>Next visit</h4>
+                        <p>{{ctrl.selectedTooth.nextVisit}}</p>
+                        <hr />
+                        <h4>Notes</h4>
+                        <p>{{ctrl.selectedTooth.notes}}</p>
+
+                    </div>
+                    <div class="card-action">
+                        <a href="#" ng-click="ctrl.deselectTooth()">Close</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <table class="highlight scale-transition" ng-class="{ 'scale-out': ctrl.selectedPatient != null, 'scale-in':ctrl.selectedPatient == null}">
+    <table id="allpatients" class="highlight scale-transition" ng-class="{ 'scale-out': ctrl.selectedPatient != null, 'scale-in':ctrl.selectedPatient == null}">
         <thead>
         <tr>
             <th>Patient id</th>

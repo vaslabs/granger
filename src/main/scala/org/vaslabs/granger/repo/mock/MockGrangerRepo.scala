@@ -23,7 +23,7 @@ class MockGrangerRepo extends GrangerRepo[Future] {
 
   def getRandomRoots(): List[Root] = {
     rootList.takeWhile(_ => Random.nextDouble() < 0.8)
-    .map(rootName => Root(20 - Random.nextInt(5), rootName, thickness.apply(Random.nextInt(thickness.size - 1))))
+    .map(rootName => Root(20 - Random.nextInt(5), thickness.apply(Random.nextInt(thickness.size - 1)), rootName))
   }
 
   def getToothDetails(): ToothDetails = {

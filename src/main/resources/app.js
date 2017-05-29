@@ -8,6 +8,8 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.selectedPatient = null;
 
+    ctrl.selectedTooth = null;
+
     function getAllPatients() {
         return $http({
             method: "get",
@@ -23,6 +25,14 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.deselectPatient = function() {
         ctrl.selectedPatient = null;
+    };
+
+    ctrl.deselectTooth = function() {
+        ctrl.selectedTooth = null;
+    };
+
+    ctrl.selectTooth = function(tooth) {
+        ctrl.selectedTooth = tooth;
     };
 
     ctrl.firstTeethRow = function(criteria) {
