@@ -22,7 +22,7 @@
 <body ng-app="grangerApp">
 
 <style>
-    table#allpatients {
+    div#customerManagement {
         position: absolute;
         left: 0;
         top: 0;
@@ -129,23 +129,50 @@
         </div>
     </div>
 
-    <table id="allpatients" class="highlight scale-transition" ng-class="{ 'scale-out': ctrl.selectedPatient != null, 'scale-in':ctrl.selectedPatient == null}">
-        <thead>
-        <tr>
-            <th>Patient id</th>
-            <th>First name</th>
-            <th>Last Name</th>
-        </tr>
-        </thead>
+    <div class="row" id="customerManagement" ng-if="ctrl.selectedPatient == null">
+        <div class="row">
+            <form class="col s12">
+                <div class="row">
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix">account_circle</i>
+                        <input id="icon_prefix_firstName" type="text" class="validate" ng-model="ctrl.firstName">
+                        <label for="icon_prefix_firstName">First Name</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <input id="icon_prefix_lastName" type="text" class="validate" ng-model="ctrl.lastName">
+                        <label for="icon_prefix_lastName">Last Name</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <i class="material-icons prefix">date_range</i>
+                        <input id="birthday" type="date" placeholder="yyyy-MM-dd" ng-model="ctrl.birthday.value">
+                    </div>
+                    <div class="input-field col s3">
+                        <a class="btn-floating btn-small waves-effect waves-light red" ng-click="ctrl.addPatient()"><i class="material-icons">add</i></a>
+                    </div>
+                </div>
+            </form>
+        </div>
 
-        <tbody ng-repeat="patient in ctrl.allPatients">
-            <tr ng-click="ctrl.selectPatient(patient)">
-                <td>{{patient.patientId}}</td>
-                <td>{{patient.firstName}}</td>
-                <td>{{patient.lastName}}</td>
-            </tr>
-        </tbody>
-    </table>
+        <div class="row">
+            <table id="allpatients" class="highlight scale-transition">
+                <thead>
+                <tr>
+                    <th>Patient id</th>
+                    <th>First name</th>
+                    <th>Last Name</th>
+                </tr>
+                </thead>
+
+                <tbody ng-repeat="patient in ctrl.allPatients">
+                    <tr ng-click="ctrl.selectPatient(patient)">
+                        <td>{{patient.patientId}}</td>
+                        <td>{{patient.firstName}}</td>
+                        <td>{{patient.lastName}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 </body>
 </html>

@@ -28,6 +28,13 @@ object model {
 
   case class DentalChart(teeth: List[Tooth])
 
+  object DentalChart {
+    def emptyChart(): DentalChart =
+      DentalChart((11 to 18).map(
+        Tooth(_, ToothDetails(List.empty, "", "", ""))
+      ).toList)
+  }
+
 
   case class Root(size: Int, thickness: String, name: String)
 

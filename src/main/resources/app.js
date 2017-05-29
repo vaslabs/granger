@@ -28,6 +28,39 @@ app.controller('MainController', function($q, $http) {
         ctrl.selectedTooth = null;
     };
 
+    ctrl.birthday = {
+        value: new Date(1985, 6, 15)
+    };
+
+    function formatDate(date) {
+        var month = date.getMonth();
+        var day = date.getDate();
+        var year = date.getFullYear();
+        month = month < 10 ? '0'+month : month;
+        day = day < 10 ? '0'+day : day;
+        return year + '-' + month + '-' + day;
+    }
+
+    ctrl.firstName = "";
+    ctrl.lastName = "";
+
+    ctrl.addPatient = function() {
+        var data = {
+            'patientId': 0,
+            'firstName': ctrl.firstName,
+            'lastName':ctrl.lastName,
+            'dateOfBirth': formatDate(ctrl.birthday.value),
+            'dentalChart':{'teeth':[]}
+        };
+        $http({
+            method: "post",
+            url: '/api',
+            data: data
+        }).then(function(resp) {
+            ctrl.allPatients.push(resp.data)
+        });
+    };
+
     ctrl.deselectTooth = function() {
         ctrl.selectedTooth = null;
     };

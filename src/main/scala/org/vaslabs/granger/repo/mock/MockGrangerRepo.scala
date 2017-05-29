@@ -21,16 +21,16 @@ class MockGrangerRepo extends GrangerRepo[Future] {
   private final val maleFirstNames = List("Andreas", "Vasilis", "Georgios", "Kyriakos", "George", "Giorgos", "Nikos", "Pavlos", "Marios", "Christos", "Kostas", "Costas")
   private final val lastNames = List("Andreou", "Vasileiou", "Georgiou", "Costa", "Nicolaou", "Stylianou", "Michael", "Panayi", "Hatzistilli", "Kyriakou")
 
-  def getRandomRoots(): List[Root] = {
+  private[this] def getRandomRoots(): List[Root] = {
     rootList.takeWhile(_ => Random.nextDouble() < 0.8)
     .map(rootName => Root(20 - Random.nextInt(5), thickness.apply(Random.nextInt(thickness.size - 1)), rootName))
   }
 
-  def getToothDetails(): ToothDetails = {
+  private[this] def getToothDetails(): ToothDetails = {
     ToothDetails(getRandomRoots(), "", "", "")
   }
 
-  def getTeeth(): List[Tooth] = {
+  private[this] def getTeeth(): List[Tooth] = {
     val teeth11To18 = (11 to 18).map(
       Tooth(_, getToothDetails())
     )
@@ -46,30 +46,30 @@ class MockGrangerRepo extends GrangerRepo[Future] {
     (teeth11To18 ++ teeth21To28 ++ teeth31To38 ++ teeth41To48).toList
   }
 
-  def getRandomFirstName(): String = {
+  private[this] def getRandomFirstName(): String = {
     if (Random.nextDouble() < 0.5)
       femaleFirstNames.apply(Random.nextInt(femaleFirstNames.size))
     else
       maleFirstNames.apply(Random.nextInt(maleFirstNames.size))
   }
 
-  def getRandomSurname(): String = {
+  private[this] def getRandomSurname(): String = {
     lastNames.apply(Random.nextInt(lastNames.size))
   }
 
-  def getRandomYear(): Int = {
+  private[this] def getRandomYear(): Int = {
     2000 - Random.nextInt(50)
   }
 
-  def getRandomMonth(): Int = {
+  private[this] def getRandomMonth(): Int = {
     1+Random.nextInt(12)
   }
 
-  def getRandomDay(): Int = {
+  private[this] def getRandomDay(): Int = {
     1+Random.nextInt(28)
   }
 
-  def getPatients(): List[(PatientId, Patient)] = {
+  private[this] def getPatients(): List[(PatientId, Patient)] = {
     (1 to 20).map(
       id =>
         PatientId(id.toLong) -> Patient(PatientId(id.toLong), getRandomFirstName(), getRandomSurname(), LocalDate.of(getRandomYear(), getRandomMonth(), getRandomDay()),
@@ -77,10 +77,17 @@ class MockGrangerRepo extends GrangerRepo[Future] {
     ).toList
   }
 
-  val repo: Map[PatientId, Patient] = getPatients().toMap
+  private var repo: Map[PatientId, Patient] = getPatients().toMap
 
   override def retrieveAllPatients(): Future[List[model.Patient]] = {
     Future.successful(repo.values.toList)
+  }
+
+  override def addPatient(patient: Patient): Future[Patient] = {
+    val id = repo.keys.maxBy(_.id)
+    val patientEntry = patient.copy(patientId = id, dentalChart = DentalChart.emptyChart())
+    repo = repo + (id -> patientEntry)
+    Future.successful(patientEntry)
   }
 }
 
