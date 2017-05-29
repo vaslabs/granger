@@ -1,178 +1,179 @@
 
 <!DOCTYPE html>
 <html>
-<head>
-    <!--Import Google Icon Font-->
-    <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!--Import materialize.css-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/css/materialize.min.css">
+    <head>
+        <!--Import Google Icon Font-->
+        <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <!--Import materialize.css-->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/css/materialize.min.css">
 
-    <!--Let browser know website is optimized for mobile-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-</head>
-<!--Import jQuery before materialize.js-->
-<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-<!-- Compiled and minified CSS -->
+        <!--Let browser know website is optimized for mobile-->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+    <!--Import jQuery before materialize.js-->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <!-- Compiled and minified CSS -->
 
-<!-- Compiled and minified JavaScript -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
 
-<script src="/js/main.js"></script>
-<body ng-app="grangerApp">
+    <script src="/js/main.js"></script>
+    <body ng-app="grangerApp">
 
-<style>
-    div#customerManagement {
-        position: absolute;
-        left: 0;
-        top: 0;
-    }
-</style>
-
-<div ng-controller="MainController as ctrl">
-    <div class="card scale-transition" ng-class="{ 'scale-out': ctrl.selectedPatient == null, 'scale-in':ctrl.selectedPatient != null}">
-        <div class="card-content">
-            <a class="btn-floating btn-small waves-effect waves-light red" ng-click="ctrl.deselectPatient()"><i class="material-icons">done</i></a>
-
-            <div class="fixed-action-btn horizontal">
-                <a class="btn-floating btn-large red">
-                    <i class="large material-icons">mode_edit</i>
-                </a>
-                <ul>
-                    <li><a class="btn-floating red"><i class="material-icons">insert_chart</i></a></li>
-                    <li><a class="btn-floating yellow darken-1"><i class="material-icons">format_quote</i></a></li>
-                    <li><a class="btn-floating green"><i class="material-icons">publish</i></a></li>
-                    <li><a class="btn-floating blue"><i class="material-icons">attach_file</i></a></li>
-                </ul>
-            </div>
-            <p>{{ctrl.selectedPatient.firstName}} {{ctrl.selectedPatient.lastName}}</p>
-        </div>
-        <div class="card-tabs">
-            <ul class="tabs tabs-fixed-width">
-                <li class="tab"><a href="#personalInfoTab">Personal information</a></li>
-                <li class="tab"><a class="active" href="#dentalChartTab">Dental chart</a></li>
-                <li class="tab"><a href="#photoTab">Photo</a></li>
-            </ul>
-        </div>
-        <div class="card-content grey lighten-4">
-            <div id="personalInfoTab">
-                Date of birth: {{ctrl.selectedPatient.dateOfBirth}}
-            </div>
-            <div id="dentalChartTab">
-                <table ng-if="ctrl.selectedPatient != null">
-                    <tbody>
-                        <tr>
-                            <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(0,16)">
-                                <a href="#" ng-click="ctrl.selectTooth(tooth)">
-                                    <div class="chip">
-                                        {{tooth.number}}
-                                    </div>
-                                </a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(16,32)">
-                                <a href="#" ng-click="ctrl.selectTooth(tooth)">
-                                    <div class="chip">
-                                        {{tooth.number}}
-                                    </div>
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div id="photoTab">Photo</div>
-        </div>
-
-        <div class="col s12 m7" ng-if="ctrl.selectedTooth != null">
-            <h2 class="header">{{ctrl.selectedTooth.number}}</h2>
-            <div class="card horizontal">
-                <div class="card-image">
-                    <img src="https://is4-ssl.mzstatic.com/image/thumb/Purple1/v4/be/e1/e9/bee1e951-cfb3-95d2-f996-78f454bde70d/source/256x256bb.jpg">
-                </div>
-                <div class="card-stacked">
+        <style>
+            div#customerManagement {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        </style>
+        <main>
+            <div ng-controller="MainController as ctrl">
+                <div class="card scale-transition" ng-class="{ 'scale-out': ctrl.selectedPatient == null, 'scale-in':ctrl.selectedPatient != null}">
                     <div class="card-content">
-                        <h4>Roots</h4>
-                        <table class="striped">
+                        <a class="btn-floating btn-small waves-effect waves-light red" ng-click="ctrl.deselectPatient()"><i class="material-icons">done</i></a>
+
+                        <div class="fixed-action-btn horizontal" ng-if="ctrl.selectedTooth != null">
+                            <a class="btn-floating btn-large red">
+                                <i class="large material-icons">mode_edit</i>
+                            </a>
+                            <ul>
+                                <li><a class="btn-floating red"><i class="material-icons">insert_chart</i></a></li>
+                                <li><a class="btn-floating yellow darken-1"><i class="material-icons">format_quote</i></a></li>
+                                <li><a class="btn-floating green"><i class="material-icons">publish</i></a></li>
+                                <li><a class="btn-floating blue"><i class="material-icons">attach_file</i></a></li>
+                            </ul>
+                        </div>
+                        <p>{{ctrl.selectedPatient.firstName}} {{ctrl.selectedPatient.lastName}}</p>
+                    </div>
+                    <div class="card-tabs">
+                        <ul class="tabs tabs-fixed-width">
+                            <li class="tab"><a href="#personalInfoTab">Personal information</a></li>
+                            <li class="tab"><a class="active" href="#dentalChartTab">Dental chart</a></li>
+                            <li class="tab"><a href="#photoTab">Photo</a></li>
+                        </ul>
+                    </div>
+                    <div class="card-content grey lighten-4">
+                        <div id="personalInfoTab">
+                            Date of birth: {{ctrl.selectedPatient.dateOfBirth}}
+                        </div>
+                        <div id="dentalChartTab">
+                            <table ng-if="ctrl.selectedPatient != null">
+                                <tbody>
+                                    <tr>
+                                        <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(0,16)">
+                                            <a href="#" ng-click="ctrl.selectTooth(tooth)">
+                                                <div class="chip">
+                                                    {{tooth.number}}
+                                                </div>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(16,32)">
+                                            <a href="#" ng-click="ctrl.selectTooth(tooth)">
+                                                <div class="chip">
+                                                    {{tooth.number}}
+                                                </div>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="photoTab">Photo</div>
+                    </div>
+
+                    <div class="col s12 m7" ng-if="ctrl.selectedTooth != null">
+                        <h2 class="header">{{ctrl.selectedTooth.number}}</h2>
+                        <div class="card horizontal">
+                            <div class="card-image">
+                                <img src="https://is4-ssl.mzstatic.com/image/thumb/Purple1/v4/be/e1/e9/bee1e951-cfb3-95d2-f996-78f454bde70d/source/256x256bb.jpg">
+                            </div>
+                            <div class="card-stacked">
+                                <div class="card-content">
+                                    <h4>Roots</h4>
+                                    <table class="striped">
+                                        <thead>
+                                            <tr>
+                                                <td>Name</td>
+                                                <td>Size</td>
+                                                <td>Thickness</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="root in ctrl.selectedTooth.details.roots">
+                                                <td>{{root.name}}</td>
+                                                <td>{{root.size}}</td>
+                                                <td>{{root.thickness}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <hr />
+                                    <h4>Medicament</h4>
+                                    <p>{{ctrl.selectedTooth.medicament}}</p>
+                                    <hr />
+                                    <h4>Next visit</h4>
+                                    <p>{{ctrl.selectedTooth.nextVisit}}</p>
+                                    <hr />
+                                    <h4>Notes</h4>
+                                    <p>{{ctrl.selectedTooth.notes}}</p>
+
+                                </div>
+                                <div class="card-action">
+                                    <a href="#" ng-click="ctrl.deselectTooth()">Close</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="customerManagement" ng-if="ctrl.selectedPatient == null">
+                    <div class="row">
+                        <form class="col s12">
+                            <div class="row">
+                                <div class="input-field col s3">
+                                    <i class="material-icons prefix">account_circle</i>
+                                    <input id="icon_prefix_firstName" type="text" class="validate" ng-model="ctrl.firstName">
+                                    <label for="icon_prefix_firstName">First Name</label>
+                                </div>
+                                <div class="input-field col s3">
+                                    <input id="icon_prefix_lastName" type="text" class="validate" ng-model="ctrl.lastName">
+                                    <label for="icon_prefix_lastName">Last Name</label>
+                                </div>
+                                <div class="input-field col s3">
+                                    <i class="material-icons prefix">date_range</i>
+                                    <input id="birthday" type="date" placeholder="yyyy-MM-dd" ng-model="ctrl.birthday.value">
+                                </div>
+                                <div class="input-field col s3">
+                                    <a class="btn-floating btn-small waves-effect waves-light red" ng-click="ctrl.addPatient()"><i class="material-icons">add</i></a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="row">
+                        <table id="allpatients" class="highlight scale-transition">
                             <thead>
-                                <tr>
-                                    <td>Name</td>
-                                    <td>Size</td>
-                                    <td>Thickness</td>
-                                </tr>
+                            <tr>
+                                <th>Patient id</th>
+                                <th>First name</th>
+                                <th>Last Name</th>
+                            </tr>
                             </thead>
+
                             <tbody>
-                                <tr ng-repeat="root in ctrl.selectedTooth.details.roots">
-                                    <td>{{root.name}}</td>
-                                    <td>{{root.size}}</td>
-                                    <td>{{root.thickness}}</td>
+                                <tr ng-click="ctrl.selectPatient(patient)" ng-repeat="patient in ctrl.allPatients">
+                                    <td>{{patient.patientId}}</td>
+                                    <td>{{patient.firstName}}</td>
+                                    <td>{{patient.lastName}}</td>
                                 </tr>
                             </tbody>
                         </table>
-                        <hr />
-                        <h4>Medicament</h4>
-                        <p>{{ctrl.selectedTooth.medicament}}</p>
-                        <hr />
-                        <h4>Next visit</h4>
-                        <p>{{ctrl.selectedTooth.nextVisit}}</p>
-                        <hr />
-                        <h4>Notes</h4>
-                        <p>{{ctrl.selectedTooth.notes}}</p>
-
-                    </div>
-                    <div class="card-action">
-                        <a href="#" ng-click="ctrl.deselectTooth()">Close</a>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="row" id="customerManagement" ng-if="ctrl.selectedPatient == null">
-        <div class="row">
-            <form class="col s12">
-                <div class="row">
-                    <div class="input-field col s3">
-                        <i class="material-icons prefix">account_circle</i>
-                        <input id="icon_prefix_firstName" type="text" class="validate" ng-model="ctrl.firstName">
-                        <label for="icon_prefix_firstName">First Name</label>
-                    </div>
-                    <div class="input-field col s3">
-                        <input id="icon_prefix_lastName" type="text" class="validate" ng-model="ctrl.lastName">
-                        <label for="icon_prefix_lastName">Last Name</label>
-                    </div>
-                    <div class="input-field col s3">
-                        <i class="material-icons prefix">date_range</i>
-                        <input id="birthday" type="date" placeholder="yyyy-MM-dd" ng-model="ctrl.birthday.value">
-                    </div>
-                    <div class="input-field col s3">
-                        <a class="btn-floating btn-small waves-effect waves-light red" ng-click="ctrl.addPatient()"><i class="material-icons">add</i></a>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <div class="row">
-            <table id="allpatients" class="highlight scale-transition">
-                <thead>
-                <tr>
-                    <th>Patient id</th>
-                    <th>First name</th>
-                    <th>Last Name</th>
-                </tr>
-                </thead>
-
-                <tbody ng-repeat="patient in ctrl.allPatients">
-                    <tr ng-click="ctrl.selectPatient(patient)">
-                        <td>{{patient.patientId}}</td>
-                        <td>{{patient.firstName}}</td>
-                        <td>{{patient.lastName}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-</body>
+        </main>
+    </body>
 </html>
