@@ -32,6 +32,24 @@ app.controller('MainController', function($q, $http) {
         value: new Date(1985, 5, 15)
     };
 
+    ctrl.toothEditMode = false;
+
+    ctrl.enableEditMode = function() {
+        ctrl.toothEditMode = true;
+    };
+
+    ctrl.toothEditing = {
+        medicament: "",
+        notes: "",
+        nextVisit: ""
+    };
+
+    ctrl.rootDetails = {
+        rootName: "",
+        rootSize: "",
+        rootThinkness: ""
+    };
+
     function formatDate(date) {
         var month = date.getMonth() + 1;
         var day = date.getDate();
