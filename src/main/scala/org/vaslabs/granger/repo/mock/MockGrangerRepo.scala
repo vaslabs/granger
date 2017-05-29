@@ -31,19 +31,9 @@ class MockGrangerRepo extends GrangerRepo[Future] {
   }
 
   private[this] def getTeeth(): List[Tooth] = {
-    val teeth11To18 = (11 to 18).map(
+    ((11 to 18) ++ (21 to 28) ++ (31 to 38) ++ (41 to 48)).map(
       Tooth(_, getToothDetails())
-    )
-    val teeth21To28 = (21 to 28).map(
-      Tooth(_, getToothDetails())
-    )
-    val teeth31To38 = (31 to 38).map(
-      Tooth(_, getToothDetails())
-    )
-    val teeth41To48 = (41 to 48).map(
-      Tooth(_, getToothDetails())
-    )
-    (teeth11To18 ++ teeth21To28 ++ teeth31To38 ++ teeth41To48).toList
+    ).toList
   }
 
   private[this] def getRandomFirstName(): String = {
