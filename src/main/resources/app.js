@@ -29,11 +29,11 @@ app.controller('MainController', function($q, $http) {
     };
 
     ctrl.birthday = {
-        value: new Date(1985, 6, 15)
+        value: new Date(1985, 5, 15)
     };
 
     function formatDate(date) {
-        var month = date.getMonth();
+        var month = date.getMonth() + 1;
         var day = date.getDate();
         var year = date.getFullYear();
         month = month < 10 ? '0'+month : month;
@@ -58,6 +58,9 @@ app.controller('MainController', function($q, $http) {
             data: data
         }).then(function(resp) {
             ctrl.allPatients.push(resp.data)
+            ctrl.firstName = "";
+            ctrl.lastName = "";
+            ctrl.birthday.value = new Date(1985, 5, 15);
         });
     };
 
