@@ -9,7 +9,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
-import org.vaslabs.granger.model.Patient
+import org.vaslabs.granger.model.{Patient, Tooth, ToothUpdateRequest}
 import org.vaslabs.granger.model.json._
 import org.vaslabs.granger.repo.GrangerRepo
 import org.vaslabs.granger.spa.StaticResources
@@ -31,6 +31,13 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
         entity(as[Patient]) {
           patient =>
             complete(addPatient(patient))
+        }
+      }
+    } ~
+    path("update") {
+      post {
+        entity(as[ToothUpdateRequest]) {
+          toothRq => complete(addToothDetails(toothRq.patientId, toothRq.tooth))
         }
       }
     }

@@ -47,8 +47,22 @@ app.controller('MainController', function($q, $http) {
     ctrl.rootDetails = {
         rootName: "",
         rootSize: "",
-        rootThinkness: ""
+        rootThickness: ""
     };
+
+    function clearEditData() {
+        ctrl.toothEditing = {
+            medicament: "",
+            notes: "",
+            nextVisit: ""
+        };
+        ctrl.rootDetails = {
+            rootName: "",
+            rootSize: "",
+            rootThickness: ""
+        };
+        ctrl.toothEditMode = false;
+    }
 
     function formatDate(date) {
         var month = date.getMonth() + 1;
@@ -96,6 +110,40 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.secondTeethRow = function(criteria) {
         return criteria.number > 28;
+    };
+
+    ctrl.pushChanges = function() {
+        var data = {
+            "patientId": ctrl.selectedPatient.patientId,
+            "tooth": {
+                "number": ctrl.selectedTooth.number,
+                "details": {
+                    "roots": [
+                    ],
+                    "medicament": ctrl.toothEditing.medicament,
+                    "notes": ctrl.toothEditing.notes,
+                    "nextVisit": ctrl.toothEditing.nextVisit
+                }
+            }
+        };
+
+        if (ctrl.rootDetails.rootName != "" && ctrl.rootDetails.rootSize != "" && ctrl.rootDetails.rootThickness != "") {
+            data.tooth.details.roots.push(
+                {
+                    "name": ctrl.rootDetails.rootName,
+                    "size": ctrl.rootDetails.rootSize,
+                    "thickness": ctrl.rootDetails.rootThickness
+                }
+            );
+        }
+        $http({
+            method: "post",
+            url: '/update',
+            data: data
+        }).then(function(resp) {
+            ctrl.selectedPatient = resp.data;
+            clearEditData();
+        });
     };
 
     getAllPatients().then(function(patients) {

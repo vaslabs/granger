@@ -79,6 +79,32 @@ class MockGrangerRepo extends GrangerRepo[Future] {
     repo = repo + (id -> patientEntry)
     Future.successful(patientEntry)
   }
+
+  def updateChart(dentalChart: DentalChart, tooth: Tooth): DentalChart = {
+    val toothOption = for {
+      toothToUpdate <- dentalChart.teeth.find(_.number == tooth.number)
+
+    } yield Tooth(toothToUpdate.number, toothToUpdate.details.merge(tooth.details))
+    toothOption.map(updatedTooth =>
+      {
+        println(updatedTooth)
+        updatedTooth :: dentalChart.teeth.filterNot(_.number == updatedTooth.number)
+      }
+    ).map(_.sorted).map(DentalChart(_))
+    .getOrElse(dentalChart)
+  }
+
+  def addToothDetails(patientId: PatientId, tooth: Tooth): Future[Patient] = {
+    val patient: Option[Patient] = for {
+      patient <- repo.get(patientId)
+    } yield patient.copy(dentalChart = updateChart(patient.dentalChart, tooth))
+    patient.map(patient => {
+      repo = repo + (patientId -> patient)
+      patient
+    }).map(Future.successful(_)).getOrElse(Future.failed[Patient](PatientNotFoundException))
+  }
 }
 
 object MockGrangerRepo extends MockGrangerRepo
+
+object PatientNotFoundException extends RuntimeException("Patient not found: invalid request")

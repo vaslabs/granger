@@ -1,6 +1,6 @@
 package org.vaslabs.granger.repo
 
-import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
 
 import scala.concurrent.Future
 
@@ -15,5 +15,7 @@ trait GrangerRepo[F[_]] {
 
 
   def retrieveAllPatients(): F[List[Patient]]
+
+  def addToothDetails(patientId: PatientId, tooth: Tooth): F[Patient]
 
 }

@@ -38,7 +38,15 @@ object model {
 
   case class Root(size: Int, thickness: String, name: String)
 
-  case class ToothDetails(roots: List[Root], medicament: String, nextVisit: String, notes: String)
+  case class ToothDetails(roots: List[Root], medicament: String, nextVisit: String, notes: String) {
+    def merge(details: ToothDetails): ToothDetails = {
+      val combinedRoots = roots ++ details.roots
+      ToothDetails(combinedRoots, medicament + '\n' + details.medicament, nextVisit + "\n===========\n" + details.nextVisit,
+      notes + "\n============\n" + details.notes)
+    }
+  }
+
+  case class ToothUpdateRequest(patientId: PatientId, tooth: Tooth)
 
 
   case class Tooth(number: Int, details: ToothDetails)
