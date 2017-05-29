@@ -62,7 +62,7 @@
                 <table ng-if="ctrl.selectedPatient != null">
                     <tbody>
                         <tr>
-                            <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(0,15)">
+                            <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(0,16)">
                                 <a href="#" ng-click="ctrl.selectTooth(tooth)">
                                     <div class="chip">
                                         {{tooth.number}}
@@ -71,7 +71,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(16,31)">
+                            <td ng-repeat="tooth in ctrl.selectedPatient.dentalChart.teeth.slice(16,32)">
                                 <a href="#" ng-click="ctrl.selectTooth(tooth)">
                                     <div class="chip">
                                         {{tooth.number}}

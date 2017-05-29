@@ -30,9 +30,9 @@ object model {
 
   object DentalChart {
     def emptyChart(): DentalChart =
-      DentalChart((11 to 18).map(
+      DentalChart(((11 to 18) ++ (21 to 28) ++ (31 to 38) ++ (41 to 48)).map(
         Tooth(_, ToothDetails(List.empty, "", "", ""))
-      ).toList)
+      ).toList.sorted)
   }
 
 
