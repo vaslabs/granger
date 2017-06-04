@@ -1,10 +1,10 @@
 package org.vaslabs.granger.repo.mock
 
-import java.time.{LocalDate, Month}
+import java.time.LocalDate
 
 import org.vaslabs.granger.model
 import org.vaslabs.granger.model._
-import org.vaslabs.granger.repo.{GrangerRepo, PatientEntry}
+import org.vaslabs.granger.repo.GrangerRepo
 
 import scala.concurrent.Future
 import scala.util.Random

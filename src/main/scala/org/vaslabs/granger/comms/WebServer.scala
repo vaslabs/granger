@@ -1,39 +1,31 @@
 package org.vaslabs.granger.comms
 
-import akka.actor.{ActorSystem, Props}
+import java.io.File
+
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.vaslabs.granger.PatientManager
-import org.vaslabs.granger.repo.GrangerRepo
-import org.vaslabs.granger.repo.mock.MockGrangerRepo
+import org.vaslabs.granger.repo.GitBasedGrangerRepo
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
 /**
  * Created by vnicolaou on 28/05/17.
  */
-object WebServer extends MockGrangerRepo with HttpRouter {
+
+class WebServer()(implicit gitApi: Git, executionContext: ExecutionContext, actorSystem: ActorSystem, materializer: ActorMaterializer) extends GitBasedGrangerRepo with HttpRouter {
+
+
+  val patientManager = actorSystem.actorOf(PatientManager.props()(this))
+
 
   def start(): Unit = {
-    implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
-    implicit val grangerRepo: GrangerRepo[Future] = this
-    val patientManager = system.actorOf(Props(new PatientManager()))
-
     Http().bindAndHandle(routes, "0.0.0.0", 8080)
   }
-
-
-  def main(args: Array[String]): Unit = {
-    sys.addShutdownHook(
-      println("Shutting down")
-    )
-
-    start()
-  }
-
 
 }
