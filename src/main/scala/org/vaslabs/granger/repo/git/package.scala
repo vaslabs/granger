@@ -10,8 +10,8 @@ import collection.JavaConverters._
   * Created by vnicolaou on 04/06/17.
   */
 package object git {
-  def getFile(snapshotFile: String)(implicit git: Git): Either[WriteError, File] = {
-    Either.catchNonFatal(new File(s"${git.getRepository.getDirectory.getAbsolutePath}/${snapshotFile}"))
+  def getFile(snapshotFile: String, directory: File)(implicit git: Git): Either[WriteError, File] = {
+    Either.catchNonFatal(new File(s"${directory.getAbsolutePath}/${snapshotFile}"))
       .leftMap(t => WriteError(t.getMessage))
   }
 
@@ -32,19 +32,19 @@ package object git {
       val commitCommand = commit()
       commitCommand.setMessage(message).call()
       push().call()
-    }).leftMap(t => CommitError(t.getMessage))
+    }).leftMap(t => {println(t); CommitError(t.getMessage)})
       .map(_.asScala).map(_ => file)
   }
 
-  def saveTo(snapshotFile: String, payload: String, commitMessage: String)(implicit git: Git): Either[IOError, File] = {
-    val fileEither = getFile(snapshotFile)
+  def saveTo(snapshotFile: String, location: File, payload: String, commitMessage: String)(implicit git: Git): Either[IOError, File] = {
+    val fileEither = getFile(snapshotFile, location)
     val writerEither = fileEither.flatMap(getWriter(_))
     val writer = for {
       file <- fileEither
       writer <- writerEither
       writerAfterWrite <- write(payload, writer)
     } yield writer
-
+    writerEither.left.foreach(println(_))
     writerEither.foreach(_.close())
     fileEither.flatMap(commitChange(_, commitMessage))
   }

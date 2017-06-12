@@ -18,7 +18,7 @@ import scala.concurrent.Future
 /**
  * Created by vnicolaou on 28/05/17.
  */
-trait HttpRouter extends FailFastCirceSupport with StaticResources { this: GrangerRepo[Future] =>
+trait HttpRouter extends FailFastCirceSupport with StaticResources { this: GrangerApi[Future] =>
 
   private[this] def defineApi(implicit system: ActorSystem,
                               materializer: ActorMaterializer): Route = {
