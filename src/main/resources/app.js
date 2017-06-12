@@ -111,7 +111,6 @@ app.controller('MainController', function($q, $http) {
     ctrl.secondTeethRow = function(criteria) {
         return criteria.number > 28;
     };
-
     ctrl.pushChanges = function() {
         var data = {
             "patientId": ctrl.selectedPatient.patientId,

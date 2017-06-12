@@ -2,7 +2,6 @@ package org.vaslabs.granger.spa
 
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
-import akka.http.scaladsl.server.ContentNegotiator.Alternative.ContentType
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 
