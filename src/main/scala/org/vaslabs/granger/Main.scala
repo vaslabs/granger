@@ -5,8 +5,6 @@ import java.io.File
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.internal.storage.file.FileRepository
-import org.eclipse.jgit.lib.RepositoryBuilder
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.repo.GitBasedGrangerRepo

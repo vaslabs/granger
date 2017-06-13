@@ -2,7 +2,7 @@ package org.vaslabs.granger.repo
 
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.model
-import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.model.{Patient, PatientId, Root}
 
 import scala.concurrent.{ExecutionContext, Future}
 import org.vaslabs.granger.model.json._
@@ -11,6 +11,9 @@ import java.io._
 
 import cats.syntax.either._
 import io.circe._
+import org.vaslabs.granger.comms.api.model
+import org.vaslabs.granger.comms.api.model.{RootRequest, ToothNoteRequest}
+
 import scala.io.Source
 
 /**
@@ -27,7 +30,7 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
   val snapshotFile = "patients.json"
 
 
-  override def addPatient(patient: model.Patient): Future[model.Patient] = {
+  override def addPatient(patient: Patient): Future[Patient] = {
     Future {
       val patientId = PatientId(nextPatientId())
       val newState: Map[PatientId, Patient] = repo + (patientId -> patient.copy(patientId = patientId))
@@ -45,7 +48,7 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
       repo.keys.maxBy(_.id).id + 1L
   }
 
-  override def retrieveAllPatients(): Future[List[model.Patient]] = {
+  override def retrieveAllPatients(): Future[List[Patient]] = {
     Future {
       git.getFile(snapshotFile, dbLocation).map(
         file => {
@@ -60,22 +63,39 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
     }
   }
 
-  override def addToothDetails(patientId: model.PatientId, tooth: model.Tooth): Future[model.Patient] = {
+  override def addToothRoots(patientId: PatientId, rootRequest: RootRequest): Future[Patient] = {
     Future {
       repo.get(patientId).map(
         patient => {
-          val patientTeeth = tooth :: patient.dentalChart.teeth.filter(_.number != tooth.number)
-          patient.copy(dentalChart = patient.dentalChart.copy(patientTeeth))
+          patient.update(rootRequest.toothNumber, rootRequest.root)
         }
       ).map(
         patient => repo + (patient.patientId -> patient)
       ).map(newState =>
       {
-        val message = s"Adding info for tooth ${tooth.number} of patient ${patientId.id}"
+        val message = s"Adding root ${rootRequest.root} for tooth ${rootRequest.toothNumber} of patient ${patientId.id}"
         saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, message).foreach( _ =>
           repo = newState
         )
       })
+      repo.get(patientId).get
+    }
+  }
+
+  override def addToothNotes(patientId: PatientId, toothNoteRequest: ToothNoteRequest): Future[Patient] = {
+    Future {
+      repo.get(patientId).map(
+        _.update(toothNoteRequest.toothNumber, toothNoteRequest.toothNote)
+      ).map(
+        p => repo + (patientId -> p)
+      ).map(
+        newState => {
+          val message = s"Adding notes ${toothNoteRequest.toothNote} for tooth ${toothNoteRequest.toothNumber} of patient ${patientId}"
+          saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, message).foreach(
+            _ => repo = newState
+          )
+        }
+      )
       repo.get(patientId).get
     }
   }
