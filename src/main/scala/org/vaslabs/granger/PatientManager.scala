@@ -37,6 +37,6 @@ object PatientManager {
 
   case class AddPatient(patient: Patient)
 
-  case class AddToothNote(patientId: PatientId, toothNode: ToothNoteRequest)
+  case class AddToothNote(patientId: PatientId, toothNote: ToothNoteRequest)
   case class AddToothRoot(patientId: PatientId, root: RootRequest)
 }
