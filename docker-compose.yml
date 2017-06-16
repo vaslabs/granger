@@ -1,0 +1,4 @@
+granger:
+  image: fedora:latest
+  ports:
+    - "80:8080"

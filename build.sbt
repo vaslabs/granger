@@ -24,3 +24,9 @@ libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
   "com.github.pureconfig" %% "pureconfig" % "0.7.2"
 )
+
+Revolver.settings
+enablePlugins(JavaAppPackaging)
+enablePlugins(DockerComposePlugin)
+
+dockerImageCreationTask := (publishLocal in Docker).value
