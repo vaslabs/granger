@@ -1,8 +1,7 @@
 package org.vaslabs.granger.repo
 
 import org.eclipse.jgit.api.Git
-import org.vaslabs.granger.model
-import org.vaslabs.granger.model.{Activity, Patient, PatientId, Root}
+import org.vaslabs.granger.model.{Activity, Patient, PatientId}
 
 import scala.concurrent.{ExecutionContext, Future}
 import org.vaslabs.granger.model.json._
@@ -11,7 +10,6 @@ import java.io._
 
 import cats.syntax.either._
 import io.circe._
-import org.vaslabs.granger.comms.api.model
 import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 
 import scala.io.Source

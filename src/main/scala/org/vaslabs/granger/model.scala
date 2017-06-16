@@ -1,14 +1,12 @@
 package org.vaslabs.granger
 
-import java.time.{Clock, LocalDate, ZonedDateTime}
+import java.time.{LocalDate, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
 import io.circe.{Decoder, Encoder}
 import io.circe.java8._
 import io.circe.generic.semiauto._
 
-
-import scala.util.Try
 /**
  * Created by vnicolaou on 28/05/17.
  */
