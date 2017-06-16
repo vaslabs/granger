@@ -21,7 +21,19 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.selectPatient = function(patient) {
       ctrl.selectedPatient = patient;
+      getLatestActivity(ctrl.selectedPatient.patientId)
     };
+
+    function getLatestActivity(patientId) {
+        return $http({
+            method: "get",
+            url: '/api/latestActivity/'+patientId,
+        }).then(function(resp) {
+            if (ctrl.selectedPatient != null) {
+                ctrl.selectedPatient.latestActivity = resp.data;
+            }
+        });
+    }
 
     ctrl.deselectPatient = function() {
         ctrl.selectedPatient = null;
@@ -111,30 +123,38 @@ app.controller('MainController', function($q, $http) {
     ctrl.secondTeethRow = function(criteria) {
         return criteria.number > 28;
     };
+
     ctrl.pushChanges = function() {
+        var now = (new Date()).toISOString()
         var data = {
             "patientId": ctrl.selectedPatient.patientId,
-            "tooth": {
-                "number": ctrl.selectedTooth.number,
-                "details": {
-                    "roots": [
-                    ],
-                    "medicament": ctrl.toothEditing.medicament,
-                    "notes": ctrl.toothEditing.notes,
-                    "nextVisit": ctrl.toothEditing.nextVisit
-                }
+            "toothNumber": ctrl.selectedTooth.number,
+            "medicament": {
+                "name":ctrl.toothEditing.medicament,
+                "date":now
+            },
+            "nextVisit":{
+                "notes": ctrl.toothEditing.nextVisit,
+                "dateOfNextVisit": now,
+                "dateOfNote": now
+            },
+            "toothNote": {
+                "note": ctrl.toothEditing.notes,
+                "dateOfNote": now
             }
         };
+        console.log(data);
 
         if (ctrl.rootDetails.rootName != "" && ctrl.rootDetails.rootSize != "" && ctrl.rootDetails.rootThickness != "") {
-            data.tooth.details.roots.push(
+            data.roots = [
                 {
                     "name": ctrl.rootDetails.rootName,
                     "size": ctrl.rootDetails.rootSize,
                     "thickness": ctrl.rootDetails.rootThickness
                 }
-            );
+            ];
         }
+
         $http({
             method: "post",
             url: '/update',

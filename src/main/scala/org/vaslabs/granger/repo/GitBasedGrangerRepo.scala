@@ -2,7 +2,7 @@ package org.vaslabs.granger.repo
 
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.model
-import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.model.{Activity, Patient, PatientId, Root}
 
 import scala.concurrent.{ExecutionContext, Future}
 import org.vaslabs.granger.model.json._
@@ -11,6 +11,9 @@ import java.io._
 
 import cats.syntax.either._
 import io.circe._
+import org.vaslabs.granger.comms.api.model
+import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
+
 import scala.io.Source
 
 /**
@@ -27,10 +30,10 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
   val snapshotFile = "patients.json"
 
 
-  override def addPatient(patient: model.Patient): Future[model.Patient] = {
+  override def addPatient(patient: Patient): Future[Patient] = {
     Future {
       val patientId = PatientId(nextPatientId())
-      val newState: Map[PatientId, Patient] = repo + (patientId -> patient.copy(patientId = patientId))
+      val newState: Map[PatientId, Patient] = repo + (patientId -> patient.update(patientId))
       val payload = newState.asJson.noSpaces
       saveTo(snapshotFile, dbLocation, payload, s"Adding new patient with id ${patientId}")
       repo = newState
@@ -45,7 +48,7 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
       repo.keys.maxBy(_.id).id + 1L
   }
 
-  override def retrieveAllPatients(): Future[List[model.Patient]] = {
+  override def retrieveAllPatients(): Future[List[Patient]] = {
     Future {
       git.getFile(snapshotFile, dbLocation).map(
         file => {
@@ -60,23 +63,31 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
     }
   }
 
-  override def addToothDetails(patientId: model.PatientId, tooth: model.Tooth): Future[model.Patient] = {
+  override def addToothInfo(rq: AddToothInformationRequest): Future[Patient] =
     Future {
-      repo.get(patientId).map(
+      val patient = repo.get(rq.patientId)
+      patient.foreach(
         patient => {
-          val patientTeeth = tooth :: patient.dentalChart.teeth.filter(_.number != tooth.number)
-          patient.copy(dentalChart = patient.dentalChart.copy(patientTeeth))
-        }
-      ).map(
-        patient => repo + (patient.patientId -> patient)
-      ).map(newState =>
-      {
-        val message = s"Adding info for tooth ${tooth.number} of patient ${patientId.id}"
-        saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, message).foreach( _ =>
-          repo = newState
-        )
-      })
-      repo.get(patientId).get
+        patient.dentalChart.teeth.find(_.number == rq.toothNumber).map(
+          tooth => tooth.update(rq.roots, rq.medicament, rq.nextVisit, rq.toothNote)
+      ).map(tooth => patient.update(tooth))
+      .map(p => repo + (patient.patientId -> p))
+      .foreach(newState => {
+        saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, s"New information for tooth ${rq.toothNumber} of patient ${patient.patientId}")
+        repo = newState
+      }
+      )
+    })
+    repo.get(rq.patientId).get
+  }
+
+
+  override def getLatestActivity(patientId: PatientId): Future[List[Activity]] = {
+    Future {
+      val patient = repo.get(patientId)
+      patient.map(
+        _.extractLatestActivity
+      ).getOrElse(List.empty)
     }
   }
 }
