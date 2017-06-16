@@ -12,7 +12,7 @@ import java.io._
 import cats.syntax.either._
 import io.circe._
 import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.comms.api.model.{RootRequest, ToothNoteRequest}
+import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 
 import scala.io.Source
 
@@ -33,7 +33,7 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
   override def addPatient(patient: Patient): Future[Patient] = {
     Future {
       val patientId = PatientId(nextPatientId())
-      val newState: Map[PatientId, Patient] = repo + (patientId -> patient.copy(patientId = patientId))
+      val newState: Map[PatientId, Patient] = repo + (patientId -> patient.update(patientId))
       val payload = newState.asJson.noSpaces
       saveTo(snapshotFile, dbLocation, payload, s"Adding new patient with id ${patientId}")
       repo = newState
@@ -63,42 +63,23 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
     }
   }
 
-  override def addToothRoots(patientId: PatientId, rootRequest: RootRequest): Future[Patient] = {
+  override def addToothInfo(rq: AddToothInformationRequest): Future[Patient] =
     Future {
-      repo.get(patientId).map(
+      val patient = repo.get(rq.patientId)
+      patient.foreach(
         patient => {
-          patient.update(rootRequest.toothNumber, rootRequest.root)
-        }
-      ).map(
-        patient => repo + (patient.patientId -> patient)
-      ).map(newState =>
-      {
-        val message = s"Adding root ${rootRequest.root} for tooth ${rootRequest.toothNumber} of patient ${patientId.id}"
-        saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, message).foreach( _ =>
-          repo = newState
-        )
-      })
-      repo.get(patientId).get
-    }
+        patient.dentalChart.teeth.find(_.number == rq.toothNumber).map(
+          tooth => tooth.update(rq.roots, rq.medicament, rq.nextVisit, rq.toothNote)
+      ).map(tooth => patient.update(tooth))
+      .map(p => repo + (patient.patientId -> p))
+      .map(newState =>
+        saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, s"New information for tooth ${rq.toothNumber} of patient ${patient.patientId}")
+        .foreach(_ => repo = newState)
+      )
+    })
+    repo.get(rq.patientId).get
   }
 
-  override def addToothNotes(patientId: PatientId, toothNoteRequest: ToothNoteRequest): Future[Patient] = {
-    Future {
-      repo.get(patientId).map(
-        _.update(toothNoteRequest.toothNumber, toothNoteRequest.toothNote)
-      ).map(
-        p => repo + (patientId -> p)
-      ).map(
-        newState => {
-          val message = s"Adding notes ${toothNoteRequest.toothNote} for tooth ${toothNoteRequest.toothNumber} of patient ${patientId}"
-          saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, message).foreach(
-            _ => repo = newState
-          )
-        }
-      )
-      repo.get(patientId).get
-    }
-  }
 }
 
 object GitBasedGrangerRepo {

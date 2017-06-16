@@ -7,7 +7,7 @@ import org.vaslabs.granger.repo.GrangerRepo
 import scala.concurrent.Future
 import akka.pattern.pipe
 import cats.syntax.either._
-import org.vaslabs.granger.comms.api.model.{RootRequest, ToothNoteRequest}
+import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 /**
   * Created by vnicolaou on 29/05/17.
   */
@@ -21,12 +21,9 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
       grangerRepo.retrieveAllPatients() pipeTo senderRef
     case AddPatient(patient) =>
       val senderRef = sender()
-      println(s"Adding patient ${patient}")
       grangerRepo.addPatient(patient) pipeTo senderRef
-    case AddToothNote(id, toothNoteRequest) =>
-      grangerRepo.addToothNotes(id, toothNoteRequest) pipeTo sender()
-    case AddToothRoot(id, rootRequest) =>
-      grangerRepo.addToothRoots(id, rootRequest) pipeTo sender()
+    case rq: AddToothInformationRequest =>
+      grangerRepo.addToothInfo(rq) pipeTo sender()
   }
 }
 
@@ -37,6 +34,4 @@ object PatientManager {
 
   case class AddPatient(patient: Patient)
 
-  case class AddToothNote(patientId: PatientId, toothNote: ToothNoteRequest)
-  case class AddToothRoot(patientId: PatientId, root: RootRequest)
 }

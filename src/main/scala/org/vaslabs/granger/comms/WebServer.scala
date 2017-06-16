@@ -3,14 +3,12 @@ package org.vaslabs.granger.comms
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import org.vaslabs.granger.model
 
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
-import org.vaslabs.granger.PatientManager.{AddPatient, AddToothNote, AddToothRoot, FetchAllPatients}
+import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients}
 import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.comms.api.model.{RootRequest, ToothNoteRequest}
 import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
 
 import scala.concurrent.duration._
@@ -32,9 +30,7 @@ class WebServer(patientManager: ActorRef)(implicit executionContext: ExecutionCo
   override def retrieveAllPatients(): Future[List[Patient]] =
     (patientManager ? FetchAllPatients).mapTo[List[Patient]]
 
-  override def addToothNotes(addToothNote: AddToothNote): Future[Patient] =
-    (patientManager ? addToothNote).mapTo[Patient]
-
-  override def addToothRoots(addRootRequest: AddToothRoot): Future[Patient] =
-    (patientManager ? addRootRequest).mapTo[Patient]
+  override def addToothInfo(rq: model.AddToothInformationRequest): Future[Patient] = {
+    (patientManager ? rq).mapTo[Patient]
+  }
 }

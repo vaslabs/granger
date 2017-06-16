@@ -12,7 +12,7 @@ import org.vaslabs.granger.model.Patient
 import org.vaslabs.granger.repo.GrangerRepo
 import org.vaslabs.granger.spa.StaticResources
 import io.circe.generic.auto._
-import org.vaslabs.granger.PatientManager.{AddToothNote, AddToothRoot}
+import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 import org.vaslabs.granger.model.json._
 
 import scala.concurrent.Future
@@ -36,17 +36,10 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
         }
       }
     } ~
-    path("update" / "root") {
+    path("update") {
       post {
-        entity(as[AddToothRoot]) {
-          rq => complete(addToothRoots(rq))
-        }
-      }
-    } ~
-    path("update" / "notes") {
-      post {
-        entity(as[AddToothNote]) {
-          rq => complete(addToothNotes(rq))
+        entity(as[AddToothInformationRequest]) {
+          rq => complete(addToothInfo(rq))
         }
       }
     }

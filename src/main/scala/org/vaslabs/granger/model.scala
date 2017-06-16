@@ -5,6 +5,10 @@ import java.time.format.DateTimeFormatter
 
 import io.circe.{Decoder, Encoder}
 import io.circe.java8._
+import io.circe.generic.semiauto._
+
+
+import scala.util.Try
 /**
  * Created by vnicolaou on 28/05/17.
  */
@@ -27,41 +31,81 @@ object model {
   case class Patient(patientId: PatientId, firstName: String, lastName: String, dateOfBirth: LocalDate, dentalChart: DentalChart) {
     def update(tooth: Tooth): Patient =
       copy(dentalChart = dentalChart.update(tooth))
-    def update(id: Int, root: Root): Patient =
-      dentalChart.teeth.find(_.number == id).map(_.update(root)).map(update(_))
-        .getOrElse(this)
-    def update(id: Int, toothNote: ToothNote): Patient =
-      dentalChart.teeth.find(_.number == id).map(
-        t => t.update(toothNote)
-      ).map(update(_)).getOrElse(this)
+
+    def update(patientId: PatientId): Patient = {
+      copy(patientId, dentalChart = DentalChart.emptyChart())
+    }
   }
 
   case class DentalChart(teeth: List[Tooth]) {
 
     def update(tooth: Tooth): DentalChart = {
-      DentalChart(tooth::teeth.filterNot(_.number == tooth.number))
+      DentalChart(tooth::teeth.filterNot(_.number == tooth.number).sorted)
     }
 
   }
 
   object DentalChart {
-    def emptyChart()(implicit clock: Clock): DentalChart =
+    def emptyChart(): DentalChart =
       DentalChart(((11 to 18) ++ (21 to 28) ++ (31 to 38) ++ (41 to 48)).map(
-        Tooth(_, List.empty, List(ToothNote("", "", "", ZonedDateTime.now(clock))))
+        Tooth(_)
       ).toList.sorted)
   }
 
 
   case class Root(size: Int, thickness: String, name: String)
 
-  case class ToothNote(medicament: String, nextVisit: String, notes: String, dateOfNote: ZonedDateTime)
+  case class Medicament(name: String, date: ZonedDateTime)
+
+  private[this] def isNullOrEmpty(name: String): Boolean = name == null || name.isEmpty
+
+  private[this] def verifyNonEmptyString[A](value: String, a: A): Either[String, A] = {
+    if (isNullOrEmpty(value))
+      Left("Value is empty")
+    else
+      Right(a)
+  }
+
+  object Medicament {
+
+    import json._
+
+    implicit val medicamentDecoder: Decoder[Option[Medicament]] = deriveDecoder[Medicament].map(
+      medicament => verifyNonEmptyString(medicament.name, medicament).toOption
+    )
+  }
+
+  case class NextVisit(notes: String, dateOfNextVisit: ZonedDateTime, dateOfNote: ZonedDateTime)
+
+  object NextVisit {
+    import json._
+    implicit val nextVisitDecoder: Decoder[Option[NextVisit]] = deriveDecoder[NextVisit].map(
+      nv => verifyNonEmptyString[NextVisit](nv.notes, nv).toOption
+    )
+  }
+
+  case class ToothNote(note: String, dateOfNote: ZonedDateTime)
+
+  object ToothNote {
+    import json._
+    implicit val toothNoteDecoder: Decoder[Option[ToothNote]] = deriveDecoder[ToothNote].map(
+      tn => verifyNonEmptyString[ToothNote](tn.note, tn).toOption
+    )
+  }
 
 
-  case class Tooth(number: Int, roots: List[Root], details: List[ToothNote]) {
-    def update(root: Root): Tooth =
-      copy(roots = root :: roots)
-    def update(toothNote: ToothNote) =
-      copy(details = toothNote :: details)
+  case class Tooth(number: Int, roots: List[Root] = List.empty,
+                   notes: List[ToothNote] = List.empty,
+                   medicaments: List[Medicament] = List.empty,
+                   nextVisits: List[NextVisit] = List.empty) {
+    def update(rootList: Option[List[Root]], medicament: Option[Medicament], nextVisit: Option[NextVisit], note: Option[ToothNote]): Tooth = {
+      println(s"Updating with ${rootList}, ${medicament}, ${nextVisit}, ${note}")
+      val newRoots = rootList.getOrElse(roots)
+      val newMedicaments = medicament.map(_::medicaments).getOrElse(medicaments)
+      val newNextVisits = nextVisit.map(_::nextVisits).getOrElse(nextVisits)
+      val newNotes = note.map(_::notes).getOrElse(notes)
+      copy(roots = newRoots, medicaments = newMedicaments, nextVisits = newNextVisits, notes = newNotes)
+    }
   }
 
   object Tooth {

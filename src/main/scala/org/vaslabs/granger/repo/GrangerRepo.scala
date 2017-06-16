@@ -1,10 +1,7 @@
 package org.vaslabs.granger.repo
 
-import org.vaslabs.granger.comms.api.model.{RootRequest, ToothNoteRequest}
-import org.vaslabs.granger.model
-import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
-
-import scala.concurrent.Future
+import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
+import org.vaslabs.granger.model.{Patient, PatientId}
 
 /**
   * Created by vnicolaou on 28/05/17.
@@ -13,13 +10,10 @@ import scala.concurrent.Future
 case class PatientEntry(patientId: PatientId, patient: Patient)
 
 trait GrangerRepo[F[_]] {
+  def addToothInfo(rq: AddToothInformationRequest): F[Patient]
+
   def addPatient(patient: Patient): F[Patient]
 
   def retrieveAllPatients(): F[List[Patient]]
-
-  def addToothNotes(patientId: PatientId, toothNoteRequest: ToothNoteRequest): F[Patient]
-
-  def addToothRoots(patientId: model.PatientId, rootRequest: RootRequest): Future[model.Patient]
-
 
 }

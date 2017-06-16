@@ -1,12 +1,18 @@
 package org.vaslabs.granger.comms.api
 
-import org.vaslabs.granger.model.{Root, ToothNote}
+import org.vaslabs.granger.model._
 
 /**
   * Created by vnicolaou on 13/06/17.
   */
 object model {
 
-  case class RootRequest(toothNumber: Int, root: Root)
-  case class ToothNoteRequest(toothNumber: Int, toothNote: ToothNote)
+  case class AddToothInformationRequest(
+                                       patientId: PatientId,
+                                       toothNumber: Int,
+                                       medicament: Option[Medicament],
+                                       nextVisit: Option[NextVisit],
+                                       roots: Option[List[Root]],
+                                       toothNote: Option[ToothNote]
+                                       )
 }
