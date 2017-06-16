@@ -122,24 +122,39 @@
                                     </table>
                                     <hr />
                                     <h4>Medicaments</h4>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <td>Name</td>
+                                                    <td>Date</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="med in ctrl.selectedTooth.medicaments">
+                                                    <td>{{med.name}}</td>
+                                                    <td>{{med.date}}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <input type="text" class="validate" ng-model="ctrl.toothEditing.medicament" ng-if="ctrl.toothEditMode">
+                                    <hr />
+                                    <h4>Next visit notes</h4>
                                     <table>
                                         <thead>
                                             <tr>
-                                                <td>Name</td>
-                                                <td>Date</td>
+                                                <td>Notes</td>
+                                                <td>Appointment date</td>
+                                                <td>Note taken on</td>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr ng-repeat="med in ctrl.selectedTooth.medicaments">
-                                                <td>{{med.name}}</td>
-                                                <td>{{med.date}}</td>
+                                            <tr ng-repeat="nextVisit in ctrl.selectedTooth.nextVisits">
+                                                <td>{{nextVisit.notes}}</td>
+                                                <td>{{nextVisit.dateOfNextVisit}}</td>
+                                                <td>{{nextVisit.dateOfNote}}</td>
                                             </tr>
                                         </tbody>
                                     </table>
-                                        <input type="text" class="validate" ng-model="ctrl.toothEditing.medicament" ng-if="ctrl.toothEditMode">
-                                    <hr />
-                                    <h4>Next visit</h4>
-                                    <p>{{ctrl.selectedTooth.details.nextVisit}}</p>
                                     <input type="text" class="validate" ng-model="ctrl.toothEditing.nextVisit" ng-if="ctrl.toothEditMode">
                                     <hr />
                                     <h4>Notes</h4>
