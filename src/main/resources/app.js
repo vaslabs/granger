@@ -134,7 +134,7 @@ app.controller('MainController', function($q, $http) {
         console.log(data);
 
         if (ctrl.rootDetails.rootName != "" && ctrl.rootDetails.rootSize != "" && ctrl.rootDetails.rootThickness != "") {
-            data.tooth.details.roots = [
+            data.roots = [
                 {
                     "name": ctrl.rootDetails.rootName,
                     "size": ctrl.rootDetails.rootSize,

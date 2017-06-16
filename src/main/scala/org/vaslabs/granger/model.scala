@@ -40,7 +40,7 @@ object model {
   case class DentalChart(teeth: List[Tooth]) {
 
     def update(tooth: Tooth): DentalChart = {
-      DentalChart(tooth::teeth.filterNot(_.number == tooth.number).sorted)
+      DentalChart((tooth::teeth.filterNot(_.number == tooth.number)).sorted)
     }
 
   }

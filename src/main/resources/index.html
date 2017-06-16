@@ -102,7 +102,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr ng-repeat="root in ctrl.selectedTooth.details.roots">
+                                            <tr ng-repeat="root in ctrl.selectedTooth.roots">
                                                 <td>{{root.name}}</td>
                                                 <td>{{root.size}}</td>
                                                 <td>{{root.thickness}}</td>
@@ -158,7 +158,20 @@
                                     <input type="text" class="validate" ng-model="ctrl.toothEditing.nextVisit" ng-if="ctrl.toothEditMode">
                                     <hr />
                                     <h4>Notes</h4>
-                                    <p>{{ctrl.selectedTooth.details.notes}}</p>
+                                        <table>
+                                            <thead>
+                                            <tr>
+                                                <td>Note</td>
+                                                <td>Note taken on</td>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr ng-repeat="note in ctrl.selectedTooth.notes">
+                                                <td>{{note.note}}</td>
+                                                <td>{{note.dateOfNote}}</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
                                     <textarea class="materialize-textarea" ng-model="ctrl.toothEditing.notes" ng-if="ctrl.toothEditMode"></textarea>
                                 </div>
                                 <div class="card-action">

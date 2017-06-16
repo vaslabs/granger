@@ -72,9 +72,10 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
           tooth => tooth.update(rq.roots, rq.medicament, rq.nextVisit, rq.toothNote)
       ).map(tooth => patient.update(tooth))
       .map(p => repo + (patient.patientId -> p))
-      .map(newState =>
+      .foreach(newState => {
         saveTo(snapshotFile, dbLocation, newState.asJson.noSpaces, s"New information for tooth ${rq.toothNumber} of patient ${patient.patientId}")
-        .foreach(_ => repo = newState)
+        repo = newState
+      }
       )
     })
     repo.get(rq.patientId).get
