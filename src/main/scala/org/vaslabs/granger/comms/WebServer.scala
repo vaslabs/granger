@@ -7,6 +7,7 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
+import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients}
 import org.vaslabs.granger.comms.api.model
 import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
@@ -16,12 +17,12 @@ import scala.concurrent.duration._
  * Created by vnicolaou on 28/05/17.
  */
 
-class WebServer(patientManager: ActorRef)(implicit executionContext: ExecutionContext, actorSystem: ActorSystem, materializer: ActorMaterializer) extends GrangerApi[Future] with HttpRouter {
+class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit executionContext: ExecutionContext, actorSystem: ActorSystem, materializer: ActorMaterializer) extends GrangerApi[Future] with HttpRouter {
 
   implicit val timeout = Timeout(5 seconds)
 
   def start(): Unit = {
-    Http().bindAndHandle(routes, "0.0.0.0", 8080)
+    Http().bindAndHandle(routes, config.bindAddress, config.bindPort)
   }
 
   override def addPatient(patient: Patient): Future[Patient] =

@@ -21,5 +21,6 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-parser" % circeVersion,
   "io.circe" %% "circe-java8" % circeVersion,
   "de.heikoseeberger" %% "akka-http-circe" % "1.16.0",
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r"
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
+  "com.github.pureconfig" %% "pureconfig" % "0.7.2"
 )

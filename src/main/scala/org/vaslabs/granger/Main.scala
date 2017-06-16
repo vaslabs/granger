@@ -8,7 +8,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.repo.GitBasedGrangerRepo
-
+import pureconfig._
 /**
   * Created by vnicolaou on 04/06/17.
   */
@@ -24,34 +24,35 @@ object Main {
 
     implicit val executionContext = system.dispatcher
 
+    loadConfig[GrangerConfig](GrangerConfig.Namespace).map(
+      config => {
+
+        val dbDirectory = new File(config.repoLocation)
+
+        if (!dbDirectory.exists()) {
+          Git.init().setDirectory(dbDirectory)
+            .setBare(false)
+            .call()
+        }
+
+        val repository = {
+          val builder = new FileRepositoryBuilder
+          builder.setMustExist(true).findGitDir(dbDirectory)
+            .build()
+        }
 
 
-    val dbDirectory = new File("/home/vnicolaou/.granger_repo")
+        implicit val git: Git = new Git(repository)
 
-    if (!dbDirectory.exists()) {
-      Git.init().setDirectory(dbDirectory)
-        .setBare(false)
-      .call()
-    }
+        val grangerRepo = new GitBasedGrangerRepo(dbDirectory)
 
-    val repository = {
-      val builder = new FileRepositoryBuilder
-      builder.setMustExist(true).findGitDir(dbDirectory)
-      .build()
-    }
+        val patientManager = system.actorOf(PatientManager.props(grangerRepo))
 
 
-
-
-
-    implicit val git: Git = new Git(repository)
-
-    val grangerRepo = new GitBasedGrangerRepo(dbDirectory)
-
-    val patientManager = system.actorOf(PatientManager.props(grangerRepo))
-
-
-    val webServer = new WebServer(patientManager)
-    webServer.start()
+        val webServer = new WebServer(patientManager, config)
+        webServer.start()
+      }).left.foreach(
+      println(_)
+    )
   }
 }
