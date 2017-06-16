@@ -80,6 +80,22 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            <table ng-if="ctrl.selectedPatient != null">
+                                <thead>
+                                    <tr>
+                                        <td>Tooth</td>
+                                        <td>Activity type</td>
+                                        <td>Date</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="activity in ctrl.selectedPatient.latestActivity">
+                                        <td>{{activity.tooth}}</td>
+                                        <td>{{activity.type}}</td>
+                                        <td>{{activity.date}}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                         <div id="photoTab">Photo</div>
                     </div>

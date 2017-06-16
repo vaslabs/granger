@@ -29,6 +29,10 @@ object model {
   }
 
   case class Patient(patientId: PatientId, firstName: String, lastName: String, dateOfBirth: LocalDate, dentalChart: DentalChart) {
+    def extractLatestActivity: List[Activity] = {
+      dentalChart.teeth.flatMap(_.allActivity()).sorted
+    }
+
     def update(tooth: Tooth): Patient =
       copy(dentalChart = dentalChart.update(tooth))
 
@@ -54,6 +58,14 @@ object model {
 
 
   case class Root(size: Int, thickness: String, name: String)
+
+  case class Activity(date: ZonedDateTime, tooth: Int, `type`: String)
+
+  object Activity {
+    implicit val ordering: Ordering[Activity] = (a1, a2) => {
+      a2.date.compareTo(a1.date)
+    }
+  }
 
   case class Medicament(name: String, date: ZonedDateTime)
 
@@ -105,6 +117,13 @@ object model {
       val newNextVisits = nextVisit.map(_::nextVisits).getOrElse(nextVisits)
       val newNotes = note.map(_::notes).getOrElse(notes)
       copy(roots = newRoots, medicaments = newMedicaments, nextVisits = newNextVisits, notes = newNotes)
+    }
+
+    def allActivity(): List[Activity] = {
+      val notesActivity: List[Activity] = notes.map(note => Activity(note.dateOfNote, number, "Note"))
+      val medicamentsActivity: List[Activity] = medicaments.map(m => Activity(m.date, number, "Medicament"))
+      val nextVisitsActivity: List[Activity] = nextVisits.map(nv => Activity(nv.dateOfNote, number, "Next visit note"))
+      notesActivity ++ medicamentsActivity ++ nextVisitsActivity
     }
   }
 

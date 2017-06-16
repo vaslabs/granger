@@ -21,7 +21,19 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.selectPatient = function(patient) {
       ctrl.selectedPatient = patient;
+      getLatestActivity(ctrl.selectedPatient.patientId)
     };
+
+    function getLatestActivity(patientId) {
+        return $http({
+            method: "get",
+            url: '/api/latestActivity/'+patientId,
+        }).then(function(resp) {
+            if (ctrl.selectedPatient != null) {
+                ctrl.selectedPatient.latestActivity = resp.data;
+            }
+        });
+    }
 
     ctrl.deselectPatient = function() {
         ctrl.selectedPatient = null;

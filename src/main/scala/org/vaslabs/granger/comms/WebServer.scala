@@ -8,9 +8,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
-import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients}
+import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients, LatestActivity}
 import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
+import org.vaslabs.granger.model.{Activity, Patient, PatientId, Tooth}
 
 import scala.concurrent.duration._
 /**
@@ -34,4 +34,8 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
   override def addToothInfo(rq: model.AddToothInformationRequest): Future[Patient] = {
     (patientManager ? rq).mapTo[Patient]
   }
+
+  def getLatestActivity(patientId: PatientId): Future[List[Activity]] =
+    (patientManager ? LatestActivity(patientId)).mapTo[List[Activity]]
+
 }

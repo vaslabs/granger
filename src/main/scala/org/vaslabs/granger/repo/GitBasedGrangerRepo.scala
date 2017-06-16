@@ -2,7 +2,7 @@ package org.vaslabs.granger.repo
 
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.model
-import org.vaslabs.granger.model.{Patient, PatientId, Root}
+import org.vaslabs.granger.model.{Activity, Patient, PatientId, Root}
 
 import scala.concurrent.{ExecutionContext, Future}
 import org.vaslabs.granger.model.json._
@@ -81,6 +81,15 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
     repo.get(rq.patientId).get
   }
 
+
+  override def getLatestActivity(patientId: PatientId): Future[List[Activity]] = {
+    Future {
+      val patient = repo.get(patientId)
+      patient.map(
+        _.extractLatestActivity
+      ).getOrElse(List.empty)
+    }
+  }
 }
 
 object GitBasedGrangerRepo {

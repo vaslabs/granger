@@ -24,6 +24,7 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
       grangerRepo.addPatient(patient) pipeTo senderRef
     case rq: AddToothInformationRequest =>
       grangerRepo.addToothInfo(rq) pipeTo sender()
+    case LatestActivity(patientId) => grangerRepo.getLatestActivity(patientId) pipeTo sender()
   }
 }
 
@@ -33,5 +34,7 @@ object PatientManager {
   object FetchAllPatients
 
   case class AddPatient(patient: Patient)
+
+  case class LatestActivity(patientId: PatientId)
 
 }
