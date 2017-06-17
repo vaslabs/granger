@@ -1,7 +1,7 @@
 package org.vaslabs.granger.comms
 
-import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
-import org.vaslabs.granger.model.{Activity, Patient, PatientId}
+import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
+import org.vaslabs.granger.model.{Patient, PatientId}
 
 /**
   * Created by vnicolaou on 12/06/17.

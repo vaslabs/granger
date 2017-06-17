@@ -6,11 +6,14 @@ import java.time.format.DateTimeFormatter
 import io.circe.{Decoder, Encoder}
 import io.circe.java8._
 import io.circe.generic.semiauto._
+import org.vaslabs.granger.comms.api.model.Activity
 
 /**
  * Created by vnicolaou on 28/05/17.
  */
 object model {
+
+  import Activity._
 
   final class PatientId(val id: Long) extends AnyVal{
     override def toString: String = id.toString
@@ -57,15 +60,16 @@ object model {
 
   case class Root(size: Int, thickness: String, name: String)
 
-  case class Activity(date: ZonedDateTime, tooth: Int, `type`: String)
-
-  object Activity {
-    implicit val ordering: Ordering[Activity] = (a1, a2) => {
-      a2.date.compareTo(a1.date)
-    }
-  }
-
   case class Medicament(name: String, date: ZonedDateTime)
+
+  object Medicament {
+
+    import json._
+
+    implicit val medicamentDecoder: Decoder[Option[Medicament]] = deriveDecoder[Medicament].map(
+      medicament => verifyNonEmptyString(medicament.name, medicament).toOption
+    )
+  }
 
   private[this] def isNullOrEmpty(name: String): Boolean = name == null || name.isEmpty
 
@@ -76,14 +80,6 @@ object model {
       Right(a)
   }
 
-  object Medicament {
-
-    import json._
-
-    implicit val medicamentDecoder: Decoder[Option[Medicament]] = deriveDecoder[Medicament].map(
-      medicament => verifyNonEmptyString(medicament.name, medicament).toOption
-    )
-  }
 
   case class NextVisit(notes: String, dateOfNextVisit: ZonedDateTime, dateOfNote: ZonedDateTime)
 
@@ -117,10 +113,15 @@ object model {
       copy(roots = newRoots, medicaments = newMedicaments, nextVisits = newNextVisits, notes = newNotes)
     }
 
+
+    implicit val m_transformer: Transformer[Medicament] = (a: Medicament) => Activity(a.date, number, "Medicament")
+    implicit val nv_transformer: Transformer[NextVisit] = (nv: NextVisit) => Activity(nv.dateOfNote, number, "Next visit note")
+    implicit val tn_transformer: Transformer[ToothNote] = (n: ToothNote) => Activity(n.dateOfNote, number, "Note")
+
     def allActivity(): List[Activity] = {
-      val notesActivity: List[Activity] = notes.map(note => Activity(note.dateOfNote, number, "Note"))
-      val medicamentsActivity: List[Activity] = medicaments.map(m => Activity(m.date, number, "Medicament"))
-      val nextVisitsActivity: List[Activity] = nextVisits.map(nv => Activity(nv.dateOfNote, number, "Next visit note"))
+      val notesActivity: List[Activity] = notes.map(_.asActivity)
+      val medicamentsActivity: List[Activity] = medicaments.map(_.asActivity)
+      val nextVisitsActivity: List[Activity] = nextVisits.map(_.asActivity)
       notesActivity ++ medicamentsActivity ++ nextVisitsActivity
     }
   }

@@ -9,7 +9,6 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.vaslabs.granger.model.{Patient, PatientId}
-import org.vaslabs.granger.repo.GrangerRepo
 import org.vaslabs.granger.spa.StaticResources
 import io.circe.generic.auto._
 import org.vaslabs.granger.comms.api.model.AddToothInformationRequest

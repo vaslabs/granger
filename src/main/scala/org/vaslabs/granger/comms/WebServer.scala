@@ -10,7 +10,8 @@ import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients, LatestActivity}
 import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.model.{Activity, Patient, PatientId, Tooth}
+import org.vaslabs.granger.comms.api.model.Activity
+import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
 
 import scala.concurrent.duration._
 /**

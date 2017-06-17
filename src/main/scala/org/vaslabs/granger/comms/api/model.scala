@@ -1,5 +1,7 @@
 package org.vaslabs.granger.comms.api
 
+import java.time.ZonedDateTime
+
 import org.vaslabs.granger.model._
 
 /**
@@ -15,4 +17,21 @@ object model {
                                        roots: Option[List[Root]],
                                        toothNote: Option[ToothNote]
                                        )
+
+  case class Activity(date: ZonedDateTime, tooth: Int, `type`: String)
+
+  object Activity {
+    implicit val ordering: Ordering[Activity] = (a1, a2) => {
+      a2.date.compareTo(a1.date)
+    }
+
+    trait Transformer[A] {
+      def transform(a: A): Activity
+    }
+
+    implicit final class ActivityConverter[A](val `class`: A)(implicit transformer: Transformer[A]) {
+      def asActivity(): Activity =
+        transformer.transform(`class`)
+    }
+  }
 }
