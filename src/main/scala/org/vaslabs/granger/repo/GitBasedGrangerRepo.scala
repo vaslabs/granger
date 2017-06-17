@@ -100,6 +100,9 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
         remoteAddCommand.setName("origin")
         remoteAddCommand.setUri(new URIish(gitRepo.uri))
         remoteAddCommand.call()
+        val file = new File(s"${dbLocation.getAbsolutePath}/$snapshotFile")
+        file.createNewFile()
+        saveTo(snapshotFile, dbLocation, "[]", "Empty db file")
       }.map(_ => StatusCodes.Created)
       .getOrElse(StatusCodes.InternalServerError)
     }
