@@ -2,19 +2,21 @@ package org.vaslabs.granger.comms
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.StatusCode
 import akka.stream.ActorMaterializer
 
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
-import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients, LatestActivity}
+import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients, InitRepo, LatestActivity}
 import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.comms.api.model.Activity
+import org.vaslabs.granger.comms.api.model.{Activity, PubKey}
 import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
 import org.vaslabs.granger.repo.NotReady
 
 import scala.concurrent.duration._
+import scala.io.Source
 /**
  * Created by vnicolaou on 28/05/17.
  */
@@ -40,4 +42,12 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
   def getLatestActivity(patientId: PatientId): Future[List[Activity]] =
     (patientManager ? LatestActivity(patientId)).mapTo[List[Activity]]
 
+  def getPublicKey(): Future[PubKey] =
+    Future {
+      val keyValue = Source.fromFile(s"${config.keysLocation}/id_rsa.pub").mkString
+      PubKey(keyValue)
+    }
+
+  override def initGitRepo(gitRepo: model.GitRepo): Future[StatusCode] =
+    (patientManager ? InitRepo(gitRepo)).mapTo[StatusCode]
 }

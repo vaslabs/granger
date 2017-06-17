@@ -198,7 +198,7 @@
                     </div>
                 </div>
 
-                <div class="row" id="customerManagement" ng-if="ctrl.selectedPatient == null">
+                <div class="row" id="customerManagement" ng-if="ctrl.selectedPatient == null && ctrl.repoReady">
                     <div class="row">
                         <form class="col s12">
                             <div class="row">
@@ -241,6 +241,31 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <div class="row" ng-if="!ctrl.repoReady">
+                    <form class="col s12">
+                        <div class="row" ng-if="ctrl.publicKey == null">
+                            <div class="input-field col s12">
+                                <input id="gitRepo" type="text" class="validate" ng-model="ctrl.repo">
+                                <label for="gitRepo">Store url</label>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="input-field col s12">
+                                <p>
+                                    {{ctrl.publicKey}}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <button class="btn waves-effect waves-light" type="submit" name="action" ng-click="ctrl.requestPublicKey()" ng-if="ctrl.publicKey == null">Submit
+                                <i class="material-icons right">send</i>
+                            </button>
+                            <button class="btn waves-effect waves-light" type="submit" name="action" ng-click="ctrl.initialiseRepo()" ng-if="ctrl.publicKey != null">Submit
+                                <i class="material-icons right">send</i>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </main>

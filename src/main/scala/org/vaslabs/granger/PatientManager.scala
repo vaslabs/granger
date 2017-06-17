@@ -6,7 +6,7 @@ import org.vaslabs.granger.repo.GrangerRepo
 
 import scala.concurrent.Future
 import akka.pattern.pipe
-import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, GitRepo}
 /**
   * Created by vnicolaou on 29/05/17.
   */
@@ -24,6 +24,8 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
     case rq: AddToothInformationRequest =>
       grangerRepo.addToothInfo(rq) pipeTo sender()
     case LatestActivity(patientId) => grangerRepo.getLatestActivity(patientId) pipeTo sender()
+    case InitRepo(gitRepo) =>
+      grangerRepo.setUpRepo(gitRepo) pipeTo sender()
   }
 }
 
@@ -35,5 +37,7 @@ object PatientManager {
   case class AddPatient(patient: Patient)
 
   case class LatestActivity(patientId: PatientId)
+
+  case class InitRepo(gitRepo: GitRepo)
 
 }

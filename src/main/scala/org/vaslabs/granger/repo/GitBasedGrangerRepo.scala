@@ -8,11 +8,15 @@ import org.vaslabs.granger.model.json._
 import io.circe.syntax._
 import java.io._
 
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import cats.syntax.either._
 import io.circe._
+import org.eclipse.jgit.transport.{RemoteConfig, URIish}
+import org.vaslabs.granger.comms.api.model
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 
 import scala.io.Source
+import scala.util.Try
 
 /**
   * Created by vnicolaou on 03/06/17.
@@ -86,6 +90,18 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
       patient.map(
         _.extractLatestActivity
       ).getOrElse(List.empty)
+    }
+  }
+
+  override def setUpRepo(gitRepo: model.GitRepo): Future[StatusCode] = {
+    Future {
+      Try {
+        val remoteAddCommand = gitApi.remoteAdd()
+        remoteAddCommand.setName("origin")
+        remoteAddCommand.setUri(new URIish(gitRepo.uri))
+        remoteAddCommand.call()
+      }.map(_ => StatusCodes.Created)
+      .getOrElse(StatusCodes.InternalServerError)
     }
   }
 }

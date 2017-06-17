@@ -34,4 +34,8 @@ object model {
         transformer.transform(`class`)
     }
   }
+
+  case class PubKey(value: String)
+
+  case class GitRepo(uri: String)
 }

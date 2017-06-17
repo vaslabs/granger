@@ -19,6 +19,33 @@ app.controller('MainController', function($q, $http) {
         });
     }
 
+    ctrl.publicKey = null;
+
+    ctrl.requestPublicKey = function() {
+        return $http({
+            method: "get",
+            url: '/pub_key',
+        }).then(function(resp) {
+            ctrl.publicKey = resp.data.value;
+        });
+    };
+
+    ctrl.repo = null;
+
+    ctrl.initialiseRepo = function() {
+        var data = {
+            uri: ctrl.repo
+        };
+        $http({
+            method: "post",
+            url: '/init',
+            data: data
+        }).then(function(resp) {
+            ctrl.repoReady = true;
+        });
+    };
+
+
     ctrl.selectPatient = function(patient) {
       ctrl.selectedPatient = patient;
       getLatestActivity(ctrl.selectedPatient.patientId)
@@ -168,7 +195,15 @@ app.controller('MainController', function($q, $http) {
         });
     };
 
+    ctrl.repoReady = true;
+
+
     getAllPatients().then(function(patients) {
-       ctrl.allPatients = patients;
+       if ("error" in patients) {
+        ctrl.repoReady = false;
+       } else {
+        ctrl.repoReady = true;
+        ctrl.allPatients = patients;
+       }
     });
 });
