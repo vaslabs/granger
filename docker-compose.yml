@@ -1,4 +1,6 @@
-granger:
-  image: fedora:latest
-  ports:
-    - "80:8080"
+version: '2'
+services:
+  granger:
+    image: org.vaslabs/granger
+    command: /app/bin/granger
+    ports: ["8080:8080"]

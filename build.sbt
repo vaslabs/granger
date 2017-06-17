@@ -25,8 +25,24 @@ libraryDependencies ++= Seq(
   "com.github.pureconfig" %% "pureconfig" % "0.7.2"
 )
 
+enablePlugins(sbtdocker.DockerPlugin)
 Revolver.settings
-enablePlugins(JavaAppPackaging)
+enablePlugins(JavaServerAppPackaging)
 enablePlugins(DockerComposePlugin)
+
+dockerfile in docker := {
+  val appDir: File = stage.value
+  val targetDir = "/app"
+
+  new Dockerfile {
+    from("java")
+    entryPoint(s"$targetDir/bin/${executableScriptName.value}")
+    copy(appDir, targetDir)
+    runRaw("apt-get update && apt-get install -y git && git config --global user.name \"granger\" && git config --global user.email \"granger@vaslabs.org\"")
+    env("HOME", "/opt/docker")
+
+  }
+}
+buildOptions in docker := BuildOptions(cache = false)
 
 dockerImageCreationTask := (publishLocal in Docker).value
