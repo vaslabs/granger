@@ -12,6 +12,7 @@ import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients, LatestA
 import org.vaslabs.granger.comms.api.model
 import org.vaslabs.granger.comms.api.model.Activity
 import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
+import org.vaslabs.granger.repo.NotReady
 
 import scala.concurrent.duration._
 /**
@@ -29,8 +30,8 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
   override def addPatient(patient: Patient): Future[Patient] =
     (patientManager ? AddPatient(patient)).mapTo[Patient]
 
-  override def retrieveAllPatients(): Future[List[Patient]] =
-    (patientManager ? FetchAllPatients).mapTo[List[Patient]]
+  override def retrieveAllPatients(): Future[Either[NotReady, List[Patient]]] =
+    (patientManager ? FetchAllPatients).mapTo[Either[NotReady, List[Patient]]]
 
   override def addToothInfo(rq: model.AddToothInformationRequest): Future[Patient] = {
     (patientManager ? rq).mapTo[Patient]

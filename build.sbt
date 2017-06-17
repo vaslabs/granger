@@ -22,8 +22,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-java8" % circeVersion,
   "de.heikoseeberger" %% "akka-http-circe" % "1.16.0",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
-  "com.github.pureconfig" %% "pureconfig" % "0.7.2",
-  "com.github.pathikrit" %% "better-files" % "3.0.0"
+  "com.github.pureconfig" %% "pureconfig" % "0.7.2"
 )
 
 enablePlugins(sbtdocker.DockerPlugin)
@@ -39,7 +38,7 @@ dockerfile in docker := {
     from("java")
     entryPoint(s"$targetDir/bin/${executableScriptName.value}")
     copy(appDir, targetDir)
-    runRaw("apt-get update && apt-get install -y openssh-client git && git config --global user.name \"granger\" && git config --global user.email \"granger@vaslabs.org\"")
+    runRaw("apt-get update && apt-get install -y zip unzip openssh-client git && git config --global user.name \"granger\" && git config --global user.email \"granger@vaslabs.org\"")
     env("HOME", "/home/granger")
     runRaw("mkdir -p $HOME/.ssh && cd $HOME/.ssh && ssh-keygen -q -t rsa -N '' -f id_rsa")
   }

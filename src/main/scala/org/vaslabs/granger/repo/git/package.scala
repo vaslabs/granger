@@ -12,7 +12,10 @@ import collection.JavaConverters._
 package object git {
   def getFile(snapshotFile: String, directory: File)(implicit git: Git): Either[WriteError, File] = {
     Either.catchNonFatal(new File(s"${directory.getAbsolutePath}/${snapshotFile}"))
-      .leftMap(t => WriteError(t.getMessage))
+      .leftMap(t => WriteError(t.getMessage)).flatMap(file => file match {
+        case file: File if file.exists() => Right(file)
+        case _ => Left(WriteError("File does not exist"))
+      })
   }
 
   def getWriter(file: File): Either[WriteError, PrintWriter] = {

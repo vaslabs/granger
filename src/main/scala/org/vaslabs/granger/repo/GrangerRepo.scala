@@ -8,6 +8,7 @@ import org.vaslabs.granger.model.{Patient, PatientId}
   */
 
 case class PatientEntry(patientId: PatientId, patient: Patient)
+case class NotReady(error: String)
 
 trait GrangerRepo[F[_]] {
   def getLatestActivity(patientId: PatientId): F[List[Activity]]
@@ -16,6 +17,6 @@ trait GrangerRepo[F[_]] {
 
   def addPatient(patient: Patient): F[Patient]
 
-  def retrieveAllPatients(): F[List[Patient]]
+  def retrieveAllPatients(): F[Either[NotReady, List[Patient]]]
 
 }

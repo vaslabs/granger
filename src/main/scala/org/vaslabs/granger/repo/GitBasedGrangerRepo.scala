@@ -46,7 +46,7 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
       repo.keys.maxBy(_.id).id + 1L
   }
 
-  override def retrieveAllPatients(): Future[List[Patient]] = {
+  override def retrieveAllPatients(): Future[Either[NotReady, List[Patient]]] = {
     Future {
       git.getFile(snapshotFile, dbLocation).map(
         file => {
@@ -55,9 +55,9 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
             _.as[Map[PatientId, Patient]]
           ).toOption
           newState.foreach(repo = _)
+          repo.values.toList
         }
-      )
-      repo.values.toList
+      ).left.map(e => NotReady(e.error))
     }
   }
 
