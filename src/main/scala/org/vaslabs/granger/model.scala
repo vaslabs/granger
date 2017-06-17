@@ -106,7 +106,7 @@ object model {
                    nextVisits: List[NextVisit] = List.empty) {
     def update(rootList: Option[List[Root]], medicament: Option[Medicament], nextVisit: Option[NextVisit], note: Option[ToothNote]): Tooth = {
       println(s"Updating with ${rootList}, ${medicament}, ${nextVisit}, ${note}")
-      val newRoots = rootList.getOrElse(roots)
+      val newRoots = rootList.map(_ ++ roots).getOrElse(roots)
       val newMedicaments = medicament.map(_::medicaments).getOrElse(medicaments)
       val newNextVisits = nextVisit.map(_::nextVisits).getOrElse(nextVisits)
       val newNotes = note.map(_::notes).getOrElse(notes)
