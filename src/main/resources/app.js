@@ -154,6 +154,12 @@ app.controller('MainController', function($q, $http) {
         return criteria.number > 28;
     };
 
+    ctrl.toLocalDateTime = function(dateString) {
+        var date = new Date(dateString);
+        var localeDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
+        return localeDateTime.toLocaleString();
+    };
+
     ctrl.pushChanges = function() {
         var now = (new Date()).toISOString()
         var data = {
