@@ -92,7 +92,7 @@
                                     <tr ng-repeat="activity in ctrl.selectedPatient.latestActivity">
                                         <td>{{activity.tooth}}</td>
                                         <td>{{activity.type}}</td>
-                                        <td>{{activity.date}}</td>
+                                        <td>{{ctrl.toLocalDateTime(activity.date)}}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -148,7 +148,7 @@
                                             <tbody>
                                                 <tr ng-repeat="med in ctrl.selectedTooth.medicaments">
                                                     <td>{{med.name}}</td>
-                                                    <td>{{med.date}}</td>
+                                                    <td>{{ctrl.toLocalDateTime(med.date)}}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -166,12 +166,21 @@
                                         <tbody>
                                             <tr ng-repeat="nextVisit in ctrl.selectedTooth.nextVisits">
                                                 <td>{{nextVisit.notes}}</td>
-                                                <td>{{nextVisit.dateOfNextVisit}}</td>
-                                                <td>{{nextVisit.dateOfNote}}</td>
+                                                <td>{{ctrl.toLocalDateTime(nextVisit.dateOfNextVisit)}}</td>
+                                                <td>{{ctrl.toLocalDateTime(nextVisit.dateOfNote)}}</td>
+                                            </tr>
+                                            <tr ng-if="ctrl.toothEditMode">
+                                                <td>
+                                                    <input type="text" class="validate" ng-model="ctrl.toothEditing.nextVisit">
+                                                </td>
+                                                <td>
+                                                    <input type="datetime-local" class="validate" ng-model="ctrl.toothEditing.nextVisitDate">
+                                                </td>
+                                                <td></td>
                                             </tr>
                                         </tbody>
                                     </table>
-                                    <input type="text" class="validate" ng-model="ctrl.toothEditing.nextVisit" ng-if="ctrl.toothEditMode">
+
                                     <hr />
                                     <h4>Notes</h4>
                                         <table>
@@ -184,7 +193,7 @@
                                             <tbody>
                                             <tr ng-repeat="note in ctrl.selectedTooth.notes">
                                                 <td>{{note.note}}</td>
-                                                <td>{{note.dateOfNote}}</td>
+                                                <td>{{ctrl.toLocalDateTime(note.dateOfNote)}}</td>
                                             </tr>
                                             </tbody>
                                         </table>

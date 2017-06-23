@@ -77,10 +77,13 @@ app.controller('MainController', function($q, $http) {
         ctrl.toothEditMode = true;
     };
 
+    var today = new Date();
+
     ctrl.toothEditing = {
         medicament: "",
         notes: "",
-        nextVisit: ""
+        nextVisit: "",
+        nextVisitDate: (new Date(today.getFullYear(), today.getMonth(), today.getDate(), today.getHours(), today.getMinutes()))
     };
 
     ctrl.rootDetails = {
@@ -151,6 +154,12 @@ app.controller('MainController', function($q, $http) {
         return criteria.number > 28;
     };
 
+    ctrl.toLocalDateTime = function(dateString) {
+        var date = new Date(dateString);
+        var localeDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
+        return localeDateTime.toLocaleString();
+    };
+
     ctrl.pushChanges = function() {
         var now = (new Date()).toISOString()
         var data = {
@@ -162,7 +171,7 @@ app.controller('MainController', function($q, $http) {
             },
             "nextVisit":{
                 "notes": ctrl.toothEditing.nextVisit,
-                "dateOfNextVisit": now,
+                "dateOfNextVisit": ctrl.toothEditing.nextVisitDate.toISOString(),
                 "dateOfNote": now
             },
             "toothNote": {
