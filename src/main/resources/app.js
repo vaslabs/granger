@@ -1,5 +1,19 @@
 var app = angular.module('grangerApp', []);
 
+app.directive('ngEnter', function() {
+        return function(scope, element, attrs) {
+            element.bind("keydown keypress", function(event) {
+                if(event.which === 13) {
+                        scope.$apply(function(){
+                                scope.$eval(attrs.ngEnter);
+                        });
+
+                        event.preventDefault();
+                }
+            });
+        };
+});
+
 app.controller('MainController', function($q, $http) {
 
     var ctrl = this;
@@ -64,7 +78,7 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.deselectPatient = function() {
         ctrl.selectedPatient = null;
-        ctrl.selectedTooth = null;
+        ctrl.deselectTooth();
     };
 
     ctrl.birthday = {
@@ -75,6 +89,7 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.enableEditMode = function() {
         ctrl.toothEditMode = true;
+        ctrl.rootDetails = ctrl.selectedTooth.roots.concat(ctrl.rootDetails);
     };
 
     var today = new Date();
@@ -86,11 +101,11 @@ app.controller('MainController', function($q, $http) {
         nextVisitDate: (new Date(today.getFullYear(), today.getMonth(), today.getDate(), today.getHours(), today.getMinutes()))
     };
 
-    ctrl.rootDetails = {
-        rootName: "",
-        rootSize: "",
-        rootThickness: ""
-    };
+    ctrl.rootDetails = [{
+        name: "",
+        size: "",
+        thickness: ""
+    }];
 
     function clearEditData() {
         ctrl.toothEditing = {
@@ -99,9 +114,9 @@ app.controller('MainController', function($q, $http) {
             nextVisit: ""
         };
         ctrl.rootDetails = {
-            rootName: "",
-            rootSize: "",
-            rootThickness: ""
+            name: "",
+            size: "",
+            thickness: ""
         };
         ctrl.toothEditMode = false;
     }
@@ -140,6 +155,11 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.deselectTooth = function() {
         ctrl.selectedTooth = null;
+        ctrl.rootDetails = [{
+           name: "",
+           size: "",
+           thickness: ""
+        }];
     };
 
     ctrl.selectTooth = function(tooth) {
@@ -181,15 +201,8 @@ app.controller('MainController', function($q, $http) {
         };
         console.log(data);
 
-        if (ctrl.rootDetails.rootName != "" && ctrl.rootDetails.rootSize != "" && ctrl.rootDetails.rootThickness != "") {
-            data.roots = [
-                {
-                    "name": ctrl.rootDetails.rootName,
-                    "size": ctrl.rootDetails.rootSize,
-                    "thickness": ctrl.rootDetails.rootThickness
-                }
-            ];
-        }
+        data.roots = ctrl.rootDetails.filter(function(item) {return item.name != "" && item.size != "" && item.thickness != "";});
+
 
         $http({
             method: "post",
@@ -215,4 +228,15 @@ app.controller('MainController', function($q, $http) {
         ctrl.allPatients = patients;
        }
     });
+
+    ctrl.addRootRow = function() {
+        var emptyRows = ctrl.rootDetails.filter(function(item) {return item.name == "" || item.size == "" || item.thickness == "";});
+        if (emptyRows.length == 0) {
+            ctrl.rootDetails.push({
+              name: "",
+              size: "",
+              thickness: ""
+            });
+        }
+    };
 });
