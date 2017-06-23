@@ -118,20 +118,20 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr ng-repeat="root in ctrl.selectedTooth.roots">
+                                            <tr ng-if="!ctrl.toothEditMode" ng-repeat="root in ctrl.selectedTooth.roots">
                                                 <td>{{root.name}}</td>
                                                 <td>{{root.size}}</td>
                                                 <td>{{root.thickness}}</td>
                                             </tr>
-                                            <tr ng-if="ctrl.toothEditMode">
+                                            <tr ng-if="ctrl.toothEditMode" ng-repeat="root in ctrl.rootDetails">
                                                 <td>
-                                                    <input type="text" class="validate" ng-model="ctrl.rootDetails.rootName">
+                                                    <input type="text" class="validate" ng-model="root.name" ng-enter="ctrl.addRootRow()">
                                                 </td>
                                                 <td>
-                                                    <input type="text" class="validate" ng-model="ctrl.rootDetails.rootSize">
+                                                    <input type="text" class="validate" ng-model="root.size" ng-enter="ctrl.addRootRow()">
                                                 </td>
                                                 <td>
-                                                    <input type="text" class="validate" ng-model="ctrl.rootDetails.rootThickness">
+                                                    <input type="text" class="validate" ng-model="root.thickness" ng-enter="ctrl.addRootRow()">
                                                 </td>
                                             </tr>
                                         </tbody>
