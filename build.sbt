@@ -29,6 +29,8 @@ enablePlugins(sbtdocker.DockerPlugin)
 Revolver.settings
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(DockerComposePlugin)
+enablePlugins(UniversalPlugin)
+
 
 dockerfile in docker := {
   val appDir: File = stage.value
@@ -46,3 +48,11 @@ dockerfile in docker := {
 buildOptions in docker := BuildOptions(cache = false)
 
 dockerImageCreationTask := (publishLocal in Docker).value
+
+name in Universal := name.value
+
+name in UniversalDocs <<= name in Universal
+
+name in UniversalSrc <<= name in Universal
+
+packageName in Universal := packageName.value
