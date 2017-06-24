@@ -34,9 +34,8 @@ package object git {
       add.addFilepattern(file.getName).call()
       val commitCommand = commit()
       commitCommand.setMessage(message).call()
-      push().call()
     }).leftMap(t => {println(t); CommitError(t.getMessage)})
-      .map(_.asScala).map(_ => file)
+      .map(_ => file)
   }
 
   def saveTo(snapshotFile: String, location: File, payload: String, commitMessage: String)(implicit git: Git): Either[IOError, File] = {

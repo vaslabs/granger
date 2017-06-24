@@ -25,4 +25,6 @@ trait GrangerRepo[F[_]] {
 
   def retrieveAllPatients(): F[Either[NotReady, List[Patient]]]
 
+  def pushChanges(): Unit
+
 }
