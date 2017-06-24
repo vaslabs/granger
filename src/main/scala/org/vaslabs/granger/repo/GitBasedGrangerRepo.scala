@@ -106,6 +106,14 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
       .getOrElse(StatusCodes.InternalServerError)
     }
   }
+
+  override def pushChanges(): Unit = {
+    Future {
+      gitApi.push().call()
+      ()
+    }
+    ()
+  }
 }
 
 object GitBasedGrangerRepo {
