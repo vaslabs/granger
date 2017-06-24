@@ -183,13 +183,11 @@ app.controller('MainController', function($q, $http) {
     ctrl.flatActivity = function(activityMap) {
         if (activityMap == null)
             return [];
-        console.log(activityMap);
         var flatActivities = [];
         $.each(activityMap, function (key, activities) {
             if (activities.length > 0)
                 flatActivities.push(activities[0]);
         });
-        console.log(flatActivities);
         return flatActivities;
     };
 
