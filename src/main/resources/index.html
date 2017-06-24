@@ -21,15 +21,13 @@
     <body ng-app="grangerApp">
 
         <style>
-            div#customerManagement {
-                position: absolute;
-                left: 0;
-                top: 0;
+            .invisible {
+                display: none
             }
         </style>
         <main>
-            <div ng-controller="MainController as ctrl">
-                <div class="card scale-transition" ng-class="{ 'scale-out': ctrl.selectedPatient == null, 'scale-in':ctrl.selectedPatient != null}">
+            <div class="row" ng-controller="MainController as ctrl">
+                <div class="card scale-transition" ng-class="{ 'invisible': ctrl.selectedPatient == null, 'scale-in':ctrl.selectedPatient != null}">
                     <div class="card-content">
                         <a class="btn-floating btn-small waves-effect waves-light red" ng-click="ctrl.deselectPatient()"><i class="material-icons">done</i></a>
 
