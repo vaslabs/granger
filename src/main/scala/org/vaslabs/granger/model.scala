@@ -30,8 +30,8 @@ object model {
   }
 
   case class Patient(patientId: PatientId, firstName: String, lastName: String, dateOfBirth: LocalDate, dentalChart: DentalChart) {
-    def extractLatestActivity: List[Activity] = {
-      dentalChart.teeth.flatMap(_.allActivity()).sorted
+    def extractLatestActivity: Map[Int, List[Activity]] = {
+      dentalChart.teeth.flatMap(_.allActivity()).groupBy(_.tooth).mapValues(_.sorted)
     }
 
     def update(tooth: Tooth): Patient =

@@ -17,7 +17,7 @@ case class NotReady(error: String)
 trait GrangerRepo[F[_]] {
   def setUpRepo(gitRepo: model.GitRepo): Future[StatusCode]
 
-  def getLatestActivity(patientId: PatientId): F[List[Activity]]
+  def getLatestActivity(patientId: PatientId): F[Map[Int, List[Activity]]]
 
   def addToothInfo(rq: AddToothInformationRequest): F[Patient]
 

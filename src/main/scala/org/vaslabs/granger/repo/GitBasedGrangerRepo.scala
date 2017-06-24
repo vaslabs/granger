@@ -84,12 +84,11 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
   }
 
 
-  override def getLatestActivity(patientId: PatientId): Future[List[Activity]] = {
+  override def getLatestActivity(patientId: PatientId): Future[Map[Int, List[Activity]]] = {
     Future {
       val patient = repo.get(patientId)
-      patient.map(
-        _.extractLatestActivity
-      ).getOrElse(List.empty)
+      patient.map(_.extractLatestActivity
+      ).getOrElse(Map.empty)
     }
   }
 
