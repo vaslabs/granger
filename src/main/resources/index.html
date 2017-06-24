@@ -84,12 +84,12 @@
                                 <thead>
                                     <tr>
                                         <td>Tooth</td>
-                                        <td>Activity type</td>
-                                        <td>Date</td>
+                                        <td>Last activity type</td>
+                                        <td>Last activity date</td>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr ng-repeat="activity in ctrl.selectedPatient.latestActivity">
+                                    <tr ng-repeat="activity in ctrl.flatActivity(ctrl.selectedPatient.latestActivity) | orderBy: '-date'">
                                         <td>{{activity.tooth}}</td>
                                         <td>{{activity.type}}</td>
                                         <td>{{ctrl.toLocalDateTime(activity.date)}}</td>

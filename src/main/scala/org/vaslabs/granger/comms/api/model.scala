@@ -21,8 +21,8 @@ object model {
   case class Activity(date: ZonedDateTime, tooth: Int, `type`: String)
 
   object Activity {
-    implicit val ordering: Ordering[Activity] = (a1, a2) => {
-      a2.date.compareTo(a1.date)
+    implicit val ordering: Ordering[Activity] = (lhsActivity: Activity, rhsActivity: Activity) => {
+      rhsActivity.date.compareTo(lhsActivity.date)
     }
 
     trait Transformer[A] {

@@ -39,8 +39,8 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
     (patientManager ? rq).mapTo[Patient]
   }
 
-  def getLatestActivity(patientId: PatientId): Future[List[Activity]] =
-    (patientManager ? LatestActivity(patientId)).mapTo[List[Activity]]
+  def getLatestActivity(patientId: PatientId): Future[Map[Int, List[Activity]]] =
+    (patientManager ? LatestActivity(patientId)).mapTo[Map[Int, List[Activity]]]
 
   def getPublicKey(): Future[PubKey] =
     Future {

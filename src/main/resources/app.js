@@ -180,6 +180,19 @@ app.controller('MainController', function($q, $http) {
         return localeDateTime.toLocaleString();
     };
 
+    ctrl.flatActivity = function(activityMap) {
+        if (activityMap == null)
+            return [];
+        console.log(activityMap);
+        var flatActivities = [];
+        $.each(activityMap, function (key, activities) {
+            if (activities.length > 0)
+                flatActivities.push(activities[0]);
+        });
+        console.log(flatActivities);
+        return flatActivities;
+    };
+
     ctrl.pushChanges = function() {
         var now = (new Date()).toISOString()
         var data = {

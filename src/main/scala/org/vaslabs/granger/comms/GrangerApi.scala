@@ -18,7 +18,7 @@ trait GrangerApi[F[_]] {
 
   def addToothInfo(rq: AddToothInformationRequest): F[Patient]
 
-  def getLatestActivity(patientId: PatientId): F[List[Activity]]
+  def getLatestActivity(patientId: PatientId): F[Map[Int, List[Activity]]]
 
   def getPublicKey(): Future[PubKey]
 
