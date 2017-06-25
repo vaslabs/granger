@@ -1,12 +1,13 @@
 package org.vaslabs.granger
 
 import akka.actor.{Actor, ActorLogging, Props}
-import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
 import org.vaslabs.granger.repo.GrangerRepo
 
 import scala.concurrent.Future
 import akka.pattern.pipe
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, GitRepo}
+
 import scala.concurrent.duration._
 /**
   * Created by vnicolaou on 29/05/17.
@@ -57,5 +58,8 @@ object PatientManager {
   case class LatestActivity(patientId: PatientId)
 
   case class InitRepo(gitRepo: GitRepo)
+
+  case class StartTreatment(patientId: PatientId, toothId: Int, info: String)
+  case class FinishTreatment(patientId: PatientId, toothId: Int)
 
 }

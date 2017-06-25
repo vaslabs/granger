@@ -1,19 +1,21 @@
 package org.vaslabs.granger.repo
 
 import org.eclipse.jgit.api.Git
-import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.model.{Patient, PatientId, Tooth, Treatment}
 
 import scala.concurrent.{ExecutionContext, Future}
 import org.vaslabs.granger.model.json._
 import io.circe.syntax._
 import java.io._
+import java.time.{Clock, ZonedDateTime}
 
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import cats.syntax.either._
 import io.circe._
-import org.eclipse.jgit.transport.{RemoteConfig, URIish}
+import org.eclipse.jgit.transport.URIish
 import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
+import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, GitRepo}
+import org.vaslabs.granger.model
 
 import scala.io.Source
 import scala.util.Try
@@ -21,7 +23,7 @@ import scala.util.Try
 /**
   * Created by vnicolaou on 03/06/17.
   */
-class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: ExecutionContext, gitApi: Git)
+class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: ExecutionContext, gitApi: Git, clock: Clock)
                                                               extends GrangerRepo[Future]{
 
   import git._
@@ -92,7 +94,7 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
     }
   }
 
-  override def setUpRepo(gitRepo: model.GitRepo): Future[StatusCode] = {
+  override def setUpRepo(gitRepo: GitRepo): Future[StatusCode] = {
     Future {
       Try {
         val remoteAddCommand = gitApi.remoteAdd()
@@ -113,6 +115,36 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
       ()
     }
     ()
+  }
+
+  override def startTreatment(patientId: PatientId, toothId: Int, info: String): Future[Patient] = Future {
+    val treatment = Treatment(ZonedDateTime.now(clock), info = info)
+    val patient = repo.get(patientId).get
+    val toothWithTreatment =
+      patient.dentalChart.teeth.find(_.number == toothId)
+                               .flatMap(_.update(treatment).toOption)
+    toothWithTreatment.map( t =>
+      patient.update(t)
+    ).map( p => repo + (patientId -> p))
+      .foreach(newRepo => {
+        saveTo(snapshotFile, dbLocation, newRepo.asJson.noSpaces, s"Started treatment for tooth $toothId on patient $patientId")
+          .foreach(_ => repo = newRepo)
+      })
+    repo.get(patientId).get
+  }
+
+  override def finishTreatment(patientId: PatientId, toothId: Int): Future[Patient] = Future {
+    val newRepo = repo.get(patientId)
+        .flatMap( p => {
+          p.dentalChart.teeth.find(_.number == toothId).flatMap(
+            t => t.finishTreatment()
+          ).map(p.update(_))
+        }).map(p => repo + (patientId -> p))
+    newRepo.foreach { newRepo =>
+      saveTo(snapshotFile, dbLocation, newRepo.asJson.noSpaces, s"Finished treatment for tooth $toothId on patient $patientId")
+        .foreach(_ => repo = newRepo)
+    }
+    repo.get(patientId).get
   }
 }
 

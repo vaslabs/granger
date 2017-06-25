@@ -1,6 +1,6 @@
 package org.vaslabs.granger
 
-import java.time.{LocalDate, ZonedDateTime}
+import java.time.{Clock, LocalDate, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
 import io.circe.{Decoder, Encoder}
@@ -103,14 +103,35 @@ object model {
   case class Tooth(number: Int, roots: List[Root] = List.empty,
                    notes: List[ToothNote] = List.empty,
                    medicaments: List[Medicament] = List.empty,
-                   nextVisits: List[NextVisit] = List.empty) {
+                   nextVisits: List[NextVisit] = List.empty,
+                   treatments: List[Treatment] = List.empty) {
+
     def update(rootList: Option[List[Root]], medicament: Option[Medicament], nextVisit: Option[NextVisit], note: Option[ToothNote]): Tooth = {
-      println(s"Updating with ${rootList}, ${medicament}, ${nextVisit}, ${note}")
       val newRoots = rootList.getOrElse(roots)
       val newMedicaments = medicament.map(_::medicaments).getOrElse(medicaments)
       val newNextVisits = nextVisit.map(_::nextVisits).getOrElse(nextVisits)
       val newNotes = note.map(_::notes).getOrElse(notes)
       copy(roots = newRoots, medicaments = newMedicaments, nextVisits = newNextVisits, notes = newNotes)
+    }
+
+    def update(treatment: Treatment): Either[Treatment, Tooth] = {
+      if (treatments.size == 0)
+        Right(copy(treatments = List(treatment)))
+      else
+        treatments.head.dateCompleted.map(_ => Right(copy(treatments = treatment :: treatments))).getOrElse(Left(treatments.head))
+    }
+
+    def finishTreatment()(implicit clock: Clock): Option[Tooth] = {
+      treatments.headOption.flatMap(
+        treatment =>
+          treatment.dateCompleted.fold[Option[Treatment]]
+            (Some(treatment.copy(dateCompleted = Some(ZonedDateTime.now(clock)))))
+            (_ => None)
+      ).map(
+        t => {
+          t :: treatments.drop(1)
+        }
+      ).map(ts => copy(treatments = ts))
     }
 
 
@@ -165,5 +186,7 @@ object model {
     implicit val zonedDateTimeDecoder: Decoder[ZonedDateTime] =
       time.decodeZonedDateTime(zonedDateTimeFormatter)
   }
+
+  case class Treatment(dateStarted: ZonedDateTime, dateCompleted: Option[ZonedDateTime] = None, info: String)
 
 }
