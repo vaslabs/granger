@@ -58,7 +58,11 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
         file => {
           val json = Source.fromFile(file).getLines().mkString
           val newState: Option[Map[PatientId, Patient]] = parser.parse(json).flatMap(
-            _.as[Map[PatientId, Patient]]
+            json => {
+              val repo = json.as[Map[PatientId, Patient]]
+              println(repo)
+              repo
+            }
           ).toOption
           newState.foreach(repo = _)
           repo.values.toList

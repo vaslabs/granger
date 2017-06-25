@@ -104,7 +104,9 @@ object model {
                    notes: List[ToothNote] = List.empty,
                    medicaments: List[Medicament] = List.empty,
                    nextVisits: List[NextVisit] = List.empty,
-                   treatments: List[Treatment] = List.empty) {
+                   _treatments: Option[List[Treatment]] = None) {
+
+    lazy val treatments: List[Treatment] = _treatments.getOrElse(List.empty)
 
     def update(rootList: Option[List[Root]], medicament: Option[Medicament], nextVisit: Option[NextVisit], note: Option[ToothNote]): Tooth = {
       val newRoots = rootList.getOrElse(roots)
@@ -116,9 +118,9 @@ object model {
 
     def update(treatment: Treatment): Either[Treatment, Tooth] = {
       if (treatments.size == 0)
-        Right(copy(treatments = List(treatment)))
+        Right(copy(_treatments = Some(List(treatment))))
       else
-        treatments.head.dateCompleted.map(_ => Right(copy(treatments = treatment :: treatments))).getOrElse(Left(treatments.head))
+        treatments.head.dateCompleted.map(_ => Right(copy(_treatments = Some(treatment :: treatments)))).getOrElse(Left(treatments.head))
     }
 
     def finishTreatment()(implicit clock: Clock): Option[Tooth] = {
@@ -131,7 +133,7 @@ object model {
         t => {
           t :: treatments.drop(1)
         }
-      ).map(ts => copy(treatments = ts))
+      ).map(ts => copy(_treatments = Some(ts)))
     }
 
 
