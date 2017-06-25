@@ -33,6 +33,7 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
       grangerRepo.setUpRepo(gitRepo) pipeTo sender()
     case PushChanges =>
       grangerRepo.pushChanges()
+      pushScheduled = false
   }
 
   private[this] def schedulePushJob(): Unit = {
