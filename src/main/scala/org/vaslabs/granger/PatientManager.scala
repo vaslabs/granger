@@ -22,16 +22,18 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
   override def receive: Receive = {
     case FetchAllPatients =>
       val senderRef = sender()
-      schedulePushJob()
       grangerRepo.retrieveAllPatients() pipeTo senderRef
     case AddPatient(patient) =>
       val senderRef = sender()
+      schedulePushJob()
       grangerRepo.addPatient(patient) pipeTo senderRef
     case rq: AddToothInformationRequest =>
+      schedulePushJob()
       grangerRepo.addToothInfo(rq) pipeTo sender()
     case LatestActivity(patientId) => grangerRepo.getLatestActivity(patientId) pipeTo sender()
     case InitRepo(gitRepo) =>
       grangerRepo.setUpRepo(gitRepo) pipeTo sender()
+      schedulePushJob()
     case PushChanges =>
       grangerRepo.pushChanges()
       pushScheduled = false

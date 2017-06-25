@@ -63,7 +63,7 @@ class GitBasedGrangerRepo(dbLocation: File)(implicit executionContext: Execution
           newState.foreach(repo = _)
           repo.values.toList
         }
-      ).left.map(e => NotReady(e.error))
+      ).left.map(e => {println(e); NotReady(e.error)})
     }
   }
 
