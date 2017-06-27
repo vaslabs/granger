@@ -37,6 +37,10 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
     case PushChanges =>
       grangerRepo.pushChanges()
       pushScheduled = false
+    case StartTreatment(patientId, toothId, info) =>
+      grangerRepo.startTreatment(patientId, toothId, info) pipeTo sender()
+    case FinishTreatment(patientId, toothId) =>
+      grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
   }
 
   private[this] def schedulePushJob(): Unit = {
