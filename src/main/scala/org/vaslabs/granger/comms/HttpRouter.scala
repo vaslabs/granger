@@ -14,6 +14,7 @@ import io.circe.generic.auto._
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, GitRepo}
 import org.vaslabs.granger.model.json._
 import cats.syntax.either._
+import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
 
 import scala.concurrent.Future
 
@@ -60,6 +61,19 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
     } ~ path ("init") {
       entity(as[GitRepo]) {
         repo => complete(initGitRepo(repo))
+      }
+    } ~
+    path("treatment" / "start") {
+      post {
+        entity(as[StartTreatment]) {
+          rq => complete(startNewTreatment(rq))
+        }
+      }
+    } ~ path ("treatment" / "finish") {
+      post {
+        entity(as[FinishTreatment]) {
+          rq => complete(finishTreatment(rq))
+        }
       }
     }
   }

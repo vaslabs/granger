@@ -9,10 +9,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
-import org.vaslabs.granger.PatientManager.{AddPatient, FetchAllPatients, InitRepo, LatestActivity}
-import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.comms.api.model.{Activity, PubKey}
-import org.vaslabs.granger.model.{Patient, PatientId, Tooth}
+import org.vaslabs.granger.PatientManager._
+import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, GitRepo, PubKey}
+import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
 import org.vaslabs.granger.repo.NotReady
 
 import scala.concurrent.duration._
@@ -35,7 +34,7 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
   override def retrieveAllPatients(): Future[Either[NotReady, List[Patient]]] =
     (patientManager ? FetchAllPatients).mapTo[Either[NotReady, List[Patient]]]
 
-  override def addToothInfo(rq: model.AddToothInformationRequest): Future[Patient] = {
+  override def addToothInfo(rq: AddToothInformationRequest): Future[Patient] = {
     (patientManager ? rq).mapTo[Patient]
   }
 
@@ -48,6 +47,13 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
       PubKey(keyValue)
     }
 
-  override def initGitRepo(gitRepo: model.GitRepo): Future[StatusCode] =
+  override def initGitRepo(gitRepo: GitRepo): Future[StatusCode] =
     (patientManager ? InitRepo(gitRepo)).mapTo[StatusCode]
+
+  override def startNewTreatment(startTreatment: StartTreatment): Future[Patient] =
+    (patientManager ? startTreatment).mapTo[Patient]
+
+  override def finishTreatment(finishTreatment: FinishTreatment): Future[Patient] =
+    (patientManager ? finishTreatment).mapTo[Patient]
+
 }

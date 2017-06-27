@@ -1,6 +1,6 @@
 package org.vaslabs.granger
 
-import java.time.{LocalDate, ZonedDateTime}
+import java.time.{Clock, LocalDate, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
 import io.circe.{Decoder, Encoder}
@@ -103,9 +103,12 @@ object model {
   case class Tooth(number: Int, roots: List[Root] = List.empty,
                    notes: List[ToothNote] = List.empty,
                    medicaments: List[Medicament] = List.empty,
-                   nextVisits: List[NextVisit] = List.empty) {
+                   nextVisits: List[NextVisit] = List.empty,
+                   _treatments: Option[List[Treatment]] = None) {
+
+    lazy val treatments: List[Treatment] = _treatments.getOrElse(List.empty)
+
     def update(rootList: Option[List[Root]], medicament: Option[Medicament], nextVisit: Option[NextVisit], note: Option[ToothNote]): Tooth = {
-      println(s"Updating with ${rootList}, ${medicament}, ${nextVisit}, ${note}")
       val newRoots = rootList.getOrElse(roots)
       val newMedicaments = medicament.map(_::medicaments).getOrElse(medicaments)
       val newNextVisits = nextVisit.map(_::nextVisits).getOrElse(nextVisits)
@@ -113,16 +116,42 @@ object model {
       copy(roots = newRoots, medicaments = newMedicaments, nextVisits = newNextVisits, notes = newNotes)
     }
 
+    def update(treatment: Treatment): Either[Treatment, Tooth] = {
+      if (treatments.size == 0)
+        Right(copy(_treatments = Some(List(treatment))))
+      else
+        treatments.head.dateCompleted.map(_ => Right(copy(_treatments = Some(treatment :: treatments)))).getOrElse(Left(treatments.head))
+    }
+
+    def finishTreatment()(implicit clock: Clock): Option[Tooth] = {
+      treatments.headOption.flatMap(
+        treatment =>
+          treatment.dateCompleted.fold[Option[Treatment]]
+            (Some(treatment.copy(dateCompleted = Some(ZonedDateTime.now(clock)))))
+            (_ => None)
+      ).map(
+        t => {
+          t :: treatments.drop(1)
+        }
+      ).map(ts => copy(_treatments = Some(ts)))
+    }
+
 
     implicit val m_transformer: Transformer[Medicament] = (a: Medicament) => Activity(a.date, number, "Medicament")
     implicit val nv_transformer: Transformer[NextVisit] = (nv: NextVisit) => Activity(nv.dateOfNote, number, "Next visit note")
     implicit val tn_transformer: Transformer[ToothNote] = (n: ToothNote) => Activity(n.dateOfNote, number, "Note")
+    implicit val t_transformer: Transformer[Treatment] = (t: Treatment) => {
+      val date = t.dateCompleted.getOrElse(t.dateStarted)
+      val note = t.dateCompleted.map(_ => "Finished treatment").getOrElse("Started treatment")
+      Activity(date, number, note)
+    }
 
     def allActivity(): List[Activity] = {
       val notesActivity: List[Activity] = notes.map(_.asActivity)
       val medicamentsActivity: List[Activity] = medicaments.map(_.asActivity)
       val nextVisitsActivity: List[Activity] = nextVisits.map(_.asActivity)
-      notesActivity ++ medicamentsActivity ++ nextVisitsActivity
+      val treatmentsActivity: List[Activity] = treatments.map(_.asActivity())
+      notesActivity ++ medicamentsActivity ++ nextVisitsActivity ++ treatmentsActivity
     }
   }
 
@@ -165,5 +194,7 @@ object model {
     implicit val zonedDateTimeDecoder: Decoder[ZonedDateTime] =
       time.decodeZonedDateTime(zonedDateTimeFormatter)
   }
+
+  case class Treatment(dateStarted: ZonedDateTime, dateCompleted: Option[ZonedDateTime] = None, info: String)
 
 }

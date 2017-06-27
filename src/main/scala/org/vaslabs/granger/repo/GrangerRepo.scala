@@ -3,7 +3,7 @@ package org.vaslabs.granger.repo
 import akka.http.scaladsl.model.StatusCode
 import org.vaslabs.granger.comms.api.model
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
-import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
 
 import scala.concurrent.Future
 
@@ -26,5 +26,9 @@ trait GrangerRepo[F[_]] {
   def retrieveAllPatients(): F[Either[NotReady, List[Patient]]]
 
   def pushChanges(): Unit
+
+  def startTreatment(patientId: PatientId, toothId: Int, info: String): Future[Patient]
+
+  def finishTreatment(patientId: PatientId, toothId: Int): Future[Patient]
 
 }

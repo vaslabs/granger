@@ -1,6 +1,7 @@
 package org.vaslabs.granger
 
 import java.io.File
+import java.time.Clock
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -21,6 +22,7 @@ object Main {
 
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
+    implicit val clock: Clock = Clock.systemUTC()
 
     implicit val executionContext = system.dispatcher
 

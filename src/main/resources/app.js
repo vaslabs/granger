@@ -65,6 +65,52 @@ app.controller('MainController', function($q, $http) {
       getLatestActivity(ctrl.selectedPatient.patientId)
     };
 
+    ctrl.treatmentInfo = null;
+
+    ctrl.newTreatment = function() {
+        if (ctrl.treatmentInfo == null || ctrl.treatmentInfo == "")
+            return;
+        var data = {
+            "patientId": ctrl.selectedPatient.patientId,
+            "toothId": ctrl.selectedTooth.number,
+            "info": ctrl.treatmentInfo
+        };
+
+        return $http({
+            method: "post",
+            url: '/treatment/start',
+            data: data
+        }).then(function(resp) {
+            updatePatient(resp);
+            ctrl.treatmentInfo = null;
+        });
+    };
+
+    ctrl.treatmentsCompletedClass = function(tooth) {
+        if (tooth._treatments == null || tooth._treatments.length == 0)
+            return "";
+        if (tooth._treatments[0].dateCompleted == null)
+            return "orange";
+        else
+            return "green";
+    };
+
+    ctrl.completeTreatment = function() {
+            var data = {
+                "patientId": ctrl.selectedPatient.patientId,
+                "toothId": ctrl.selectedTooth.number,
+            };
+
+            return $http({
+                method: "post",
+                url: '/treatment/finish',
+                data: data
+            }).then(function(resp) {
+                updatePatient(resp);
+                ctrl.treatmentInfo = null;
+            });
+        };
+
     function getLatestActivity(patientId) {
         return $http({
             method: "get",
@@ -84,7 +130,6 @@ app.controller('MainController', function($q, $http) {
     ctrl.birthday = {
         value: new Date(1985, 5, 15)
     };
-
     ctrl.toothEditMode = false;
 
     ctrl.enableEditMode = function() {
@@ -175,6 +220,8 @@ app.controller('MainController', function($q, $http) {
     };
 
     ctrl.toLocalDateTime = function(dateString) {
+        if (dateString == null || dateString == "")
+            return "";
         var date = new Date(dateString);
         var localeDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes());
         return localeDateTime.toLocaleString();
@@ -210,8 +257,6 @@ app.controller('MainController', function($q, $http) {
                 "dateOfNote": now
             }
         };
-        console.log(data);
-
         data.roots = ctrl.rootDetails.filter(function(item) {return item.name != "" && item.size != "" && item.thickness != "";});
 
 
@@ -220,13 +265,17 @@ app.controller('MainController', function($q, $http) {
             url: '/update',
             data: data
         }).then(function(resp) {
-            ctrl.selectedPatient = resp.data;
-            ctrl.allPatients = ctrl.allPatients.filter(function(patient) { return patient.patientId != ctrl.selectedPatient.patientId;});
-            ctrl.allPatients.push(ctrl.selectedPatient);
-            ctrl.selectedTooth = ctrl.selectedPatient.dentalChart.teeth.find(function(tooth) { return tooth.number == ctrl.selectedTooth.number;});
+            updatePatient(resp);
             clearEditData();
         });
     };
+
+    function updatePatient(resp) {
+        ctrl.selectedPatient = resp.data;
+        ctrl.allPatients = ctrl.allPatients.filter(function(patient) { return patient.patientId != ctrl.selectedPatient.patientId;});
+        ctrl.allPatients.push(ctrl.selectedPatient);
+        ctrl.selectedTooth = ctrl.selectedPatient.dentalChart.teeth.find(function(tooth) { return tooth.number == ctrl.selectedTooth.number;});
+    }
 
     ctrl.repoReady = true;
 
