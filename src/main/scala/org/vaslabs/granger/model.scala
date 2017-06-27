@@ -140,12 +140,18 @@ object model {
     implicit val m_transformer: Transformer[Medicament] = (a: Medicament) => Activity(a.date, number, "Medicament")
     implicit val nv_transformer: Transformer[NextVisit] = (nv: NextVisit) => Activity(nv.dateOfNote, number, "Next visit note")
     implicit val tn_transformer: Transformer[ToothNote] = (n: ToothNote) => Activity(n.dateOfNote, number, "Note")
+    implicit val t_transformer: Transformer[Treatment] = (t: Treatment) => {
+      val date = t.dateCompleted.getOrElse(t.dateStarted)
+      val note = t.dateCompleted.map(_ => "Finished treatment").getOrElse("Started treatment")
+      Activity(date, number, note)
+    }
 
     def allActivity(): List[Activity] = {
       val notesActivity: List[Activity] = notes.map(_.asActivity)
       val medicamentsActivity: List[Activity] = medicaments.map(_.asActivity)
       val nextVisitsActivity: List[Activity] = nextVisits.map(_.asActivity)
-      notesActivity ++ medicamentsActivity ++ nextVisitsActivity
+      val treatmentsActivity: List[Activity] = treatments.map(_.asActivity())
+      notesActivity ++ medicamentsActivity ++ nextVisitsActivity ++ treatmentsActivity
     }
   }
 
