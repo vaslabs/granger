@@ -16,9 +16,7 @@ import pureconfig._
 object Main {
 
   def main(args: Array[String]): Unit = {
-    sys.addShutdownHook(
-      println("Shutting down")
-    )
+
 
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
@@ -53,6 +51,13 @@ object Main {
 
         val webServer = new WebServer(patientManager, config)
         webServer.start()
+
+        sys.addShutdownHook(
+          {
+            println("Shutting down")
+            webServer.shutDown().foreach(_ => println("Http service is shut down"))
+          }
+        )
       }).left.foreach(
       println(_)
     )

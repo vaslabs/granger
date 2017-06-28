@@ -28,6 +28,12 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
     Http().bindAndHandle(routes, config.bindAddress, config.bindPort)
   }
 
+  def shutDown(): Future[Unit] = {
+    Http().shutdownAllConnectionPools() andThen {
+      case _ => actorSystem.terminate()
+    }
+  }
+
   override def addPatient(patient: Patient): Future[Patient] =
     (patientManager ? AddPatient(patient)).mapTo[Patient]
 

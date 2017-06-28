@@ -12,7 +12,8 @@ val circeVersion = "0.8.0"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-  "com.typesafe.akka" %% "akka-http" % "10.0.7",
+  "com.typesafe.akka" %% "akka-http" % "10.0.9",
+  "com.typesafe.akka" %% "akka-http-testkit" % "10.0.9" % Test,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "commons-io" % "commons-io" % "2.4" % "test",
@@ -30,6 +31,7 @@ Revolver.settings
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(DockerComposePlugin)
 enablePlugins(UniversalPlugin)
+parallelExecution in ThisBuild := false
 
 
 dockerfile in docker := {
