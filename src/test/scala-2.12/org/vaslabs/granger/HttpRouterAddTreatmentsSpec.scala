@@ -15,6 +15,7 @@ class HttpRouterAddTreatmentsSpec extends BaseSpec{
 
   import model.json._
   import GitBasedGrangerRepo._
+  import scala.collection.JavaConverters._
   "only one open treatment" should "exist per tooth" in {
     withHttpRouter(system, config) {
       httpRouter =>
@@ -25,15 +26,19 @@ class HttpRouterAddTreatmentsSpec extends BaseSpec{
           Post("/treatment/start", StartTreatment(PatientId(1), 11, "A treatment")) ~> httpRouter.routes ~> check {
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), None, "A treatment"))
           }
+          git.log().call().asScala.head.getFullMessage shouldBe "Started treatment for tooth 11 on patient 1"
           Post("/treatment/start", StartTreatment(PatientId(1), 11, "B treatment")) ~> httpRouter.routes ~> check {
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), None, "A treatment"))
           }
+          git.log().call().asScala.head.getFullMessage shouldBe "Started treatment for tooth 11 on patient 1"
           Post("/treatment/finish", FinishTreatment(PatientId(1), 11)) ~> httpRouter.routes ~> check {
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), Some(ZonedDateTime.now(clock)), "A treatment"))
           }
+          git.log().call().asScala.head.getFullMessage shouldBe "Finished treatment for tooth 11 on patient 1"
           Post("/treatment/start", StartTreatment(PatientId(1), 11, "B treatment")) ~> httpRouter.routes ~> check {
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), None, "B treatment"), Treatment(ZonedDateTime.now(clock), Some(ZonedDateTime.now(clock)), "A treatment"))
           }
+          git.log().call().asScala.head.getFullMessage shouldBe "Started treatment for tooth 11 on patient 1"
         }
     }
   }
