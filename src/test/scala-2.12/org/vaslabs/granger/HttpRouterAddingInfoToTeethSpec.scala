@@ -1,10 +1,13 @@
 package org.vaslabs.granger
 
+import java.io.File
 import java.time.ZonedDateTime
 
 import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 import org.vaslabs.granger.model._
-import org.vaslabs.granger.repo.GitBasedGrangerRepo
+import org.vaslabs.granger.repo.SingleStateGrangerRepo
+
+import scala.io.Source
 
 /**
   * Created by vnicolaou on 28/06/17.
@@ -14,7 +17,6 @@ class HttpRouterAddingInfoToTeethSpec extends BaseSpec{
   import io.circe.syntax._
   import io.circe.parser._
   import model.json._
-  import GitBasedGrangerRepo._
   "when adding roots to a tooth of a patient it" should "persist" in {
     withHttpRouter(system, config) {
       httpRouter =>
@@ -35,6 +37,9 @@ class HttpRouterAddingInfoToTeethSpec extends BaseSpec{
           tooth.roots shouldBe List(Root(20, "F2", "MB"))
         }
         git.log().call().asScala.head.getFullMessage shouldBe "New information for tooth 17 of patient 1"
+        val tooth = gitRepo.getState().toOption.get.get(PatientId(1)).get.dentalChart.teeth.find(_.number == 17).get
+        tooth.medicaments shouldBe List(Medicament("some medicament", ZonedDateTime.now(clock)))
+        tooth.roots shouldBe List(Root(20, "F2", "MB"))
     }
   }
 }

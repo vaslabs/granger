@@ -9,7 +9,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.scalatest._
 import org.vaslabs.granger.comms.{GrangerApi, HttpRouter, WebServer}
-import org.vaslabs.granger.repo.GitBasedGrangerRepo
+import org.vaslabs.granger.repo.SingleStateGrangerRepo
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.http.scaladsl.server._
 import Directives._
@@ -30,7 +30,6 @@ class HttpRouterAddingPatientsSpec extends BaseSpec {
   import io.circe.generic.auto._
 
   import model.json._
-  import GitBasedGrangerRepo._
   "adding a new patient" should "persist across restarts" in {
     withHttpRouter[Future](system, config) {
       httpRouter => {
@@ -45,6 +44,8 @@ class HttpRouterAddingPatientsSpec extends BaseSpec {
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]] shouldBe List(Patient(PatientId(1), "FirstName", "LastName", ZonedDateTime.now(clock).toLocalDate, DentalChart.emptyChart()))
         }
+        gitRepo.getState().toOption.get.get(PatientId(1)).get shouldBe Patient(PatientId(1), "FirstName", "LastName", ZonedDateTime.now(clock).toLocalDate, DentalChart.emptyChart())
+
       }
     }
   }

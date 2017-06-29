@@ -4,7 +4,7 @@ import java.time.ZonedDateTime
 
 import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
 import org.vaslabs.granger.model.{DentalChart, Patient, PatientId, Treatment}
-import org.vaslabs.granger.repo.GitBasedGrangerRepo
+import org.vaslabs.granger.repo.SingleStateGrangerRepo
 
 /**
   * Created by vnicolaou on 28/06/17.
@@ -14,7 +14,6 @@ class HttpRouterAddTreatmentsSpec extends BaseSpec{
   import io.circe.generic.auto._
 
   import model.json._
-  import GitBasedGrangerRepo._
   import scala.collection.JavaConverters._
   "only one open treatment" should "exist per tooth" in {
     withHttpRouter(system, config) {
@@ -39,6 +38,8 @@ class HttpRouterAddTreatmentsSpec extends BaseSpec{
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), None, "B treatment"), Treatment(ZonedDateTime.now(clock), Some(ZonedDateTime.now(clock)), "A treatment"))
           }
           git.log().call().asScala.head.getFullMessage shouldBe "Started treatment for tooth 11 on patient 1"
+          gitRepo.getState().toOption.flatMap(_.get(PatientId(1))).get.dentalChart.teeth
+            .find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), None, "B treatment"), Treatment(ZonedDateTime.now(clock), Some(ZonedDateTime.now(clock)), "A treatment"))
         }
     }
   }

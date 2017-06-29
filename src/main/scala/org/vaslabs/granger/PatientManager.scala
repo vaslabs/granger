@@ -1,23 +1,29 @@
 package org.vaslabs.granger
 
+import java.io.File
+
 import akka.actor.{Actor, ActorLogging, Props}
 import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
-import org.vaslabs.granger.repo.GrangerRepo
+import org.vaslabs.granger.repo.{GrangerRepo, Repo}
 
 import scala.concurrent.Future
 import akka.pattern.pipe
-import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, GitRepo}
+import org.eclipse.jgit.api.Git
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
+import org.vaslabs.granger.repo.git.GitRepo
 
 import scala.concurrent.duration._
 /**
   * Created by vnicolaou on 29/05/17.
   */
 
-class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor with ActorLogging{
+class PatientManager private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Future], grangerConfig: GrangerConfig)(implicit gitApi: Git) extends Actor with ActorLogging{
   import context.dispatcher
   import PatientManager._
 
   var pushScheduled = false
+
+  implicit val gitRepo: GitRepo = new GitRepo(new File(grangerConfig.repoLocation), "patients.json")
 
   override def receive: Receive = {
     case FetchAllPatients =>
@@ -31,8 +37,8 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
       schedulePushJob()
       grangerRepo.addToothInfo(rq) pipeTo sender()
     case LatestActivity(patientId) => grangerRepo.getLatestActivity(patientId) pipeTo sender()
-    case InitRepo(gitRepo) =>
-      grangerRepo.setUpRepo(gitRepo) pipeTo sender()
+    case InitRepo(remoteRepo) =>
+      grangerRepo.setUpRepo(remoteRepo) pipeTo sender()
       schedulePushJob()
     case PushChanges =>
       grangerRepo.pushChanges()
@@ -53,7 +59,7 @@ class PatientManager private (grangerRepo: GrangerRepo[Future]) extends Actor wi
 }
 
 object PatientManager {
-  def props(grangerRepo: GrangerRepo[Future]): Props = Props(new PatientManager(grangerRepo))
+  def props(grangerRepo: GrangerRepo[Map[PatientId, Patient],Future], grangerConfig: GrangerConfig)(implicit gitApi: Git): Props = Props(new PatientManager(grangerRepo, grangerConfig))
 
   private case object PushChanges
 
@@ -63,7 +69,7 @@ object PatientManager {
 
   case class LatestActivity(patientId: PatientId)
 
-  case class InitRepo(gitRepo: GitRepo)
+  case class InitRepo(remoteRepo: RemoteRepo)
 
   case class StartTreatment(patientId: PatientId, toothId: Int, info: String)
   case class FinishTreatment(patientId: PatientId, toothId: Int)

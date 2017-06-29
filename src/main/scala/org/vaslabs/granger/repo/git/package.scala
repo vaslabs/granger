@@ -38,13 +38,13 @@ package object git {
       .map(_ => file)
   }
 
-  def saveTo(snapshotFile: String, location: File, payload: String, commitMessage: String)(implicit git: Git): Either[IOError, File] = {
+  def saveTo[A](snapshotFile: String, location: File, a: A, commitMessage: String)(implicit git: Git, payloadEncoder: PayloadEncoder[A]): Either[IOError, File] = {
     val fileEither = getFile(snapshotFile, location)
     val writerEither = fileEither.flatMap(getWriter(_))
     val writer = for {
       file <- fileEither
       writer <- writerEither
-      writerAfterWrite <- write(payload, writer)
+      writerAfterWrite <- write(payloadEncoder.encode(a), writer)
     } yield writer
     writerEither.left.foreach(println(_))
     writerEither.foreach(_.close())

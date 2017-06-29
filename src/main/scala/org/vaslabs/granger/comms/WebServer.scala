@@ -10,8 +10,8 @@ import akka.pattern._
 import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager._
-import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, GitRepo, PubKey}
-import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
+import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, PubKey, RemoteRepo}
+import org.vaslabs.granger.model.{Patient, PatientId}
 import org.vaslabs.granger.repo.NotReady
 
 import scala.concurrent.duration._
@@ -53,8 +53,8 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
       PubKey(keyValue)
     }
 
-  override def initGitRepo(gitRepo: GitRepo): Future[StatusCode] =
-    (patientManager ? InitRepo(gitRepo)).mapTo[StatusCode]
+  override def initGitRepo(remoteRepo: RemoteRepo): Future[StatusCode] =
+    (patientManager ? InitRepo(remoteRepo)).mapTo[StatusCode]
 
   override def startNewTreatment(startTreatment: StartTreatment): Future[Patient] =
     (patientManager ? startTreatment).mapTo[Patient]

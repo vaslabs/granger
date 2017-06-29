@@ -11,7 +11,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.vaslabs.granger.model.{Patient, PatientId}
 import org.vaslabs.granger.spa.StaticResources
 import io.circe.generic.auto._
-import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, GitRepo}
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.model.json._
 import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
 
@@ -58,7 +58,7 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
         complete(getPublicKey())
       }
     } ~ path ("init") {
-      entity(as[GitRepo]) {
+      entity(as[RemoteRepo]) {
         repo => complete(initGitRepo(repo))
       }
     } ~
