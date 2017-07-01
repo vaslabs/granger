@@ -6,7 +6,7 @@ scalaVersion := "2.12.2"
 
 organization := "org.vaslabs"
 
-val akkaVersion = "2.4.17"
+val akkaVersion = "2.5.2"
 val circeVersion = "0.8.0"
 
 

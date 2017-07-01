@@ -2,7 +2,7 @@ package org.vaslabs.granger
 
 import java.io.File
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
 import org.vaslabs.granger.repo.{GrangerRepo, Repo}
 
@@ -21,9 +21,9 @@ class PatientManager private (grangerRepo: GrangerRepo[Map[PatientId, Patient], 
   import context.dispatcher
   import PatientManager._
 
-  var pushScheduled = false
-
   implicit val gitRepo: GitRepo = new GitRepo(new File(grangerConfig.repoLocation), "patients.json")
+
+  val gitRepoPusher: ActorRef = context.actorOf(GitRepoPusher.props(grangerRepo))
 
   override def receive: Receive = {
     case FetchAllPatients =>
@@ -40,9 +40,6 @@ class PatientManager private (grangerRepo: GrangerRepo[Map[PatientId, Patient], 
     case InitRepo(remoteRepo) =>
       grangerRepo.setUpRepo(remoteRepo) pipeTo sender()
       schedulePushJob()
-    case PushChanges =>
-      grangerRepo.pushChanges()
-      pushScheduled = false
     case StartTreatment(patientId, toothId, info) =>
       grangerRepo.startTreatment(patientId, toothId, info) pipeTo sender()
     case FinishTreatment(patientId, toothId) =>
@@ -50,10 +47,7 @@ class PatientManager private (grangerRepo: GrangerRepo[Map[PatientId, Patient], 
   }
 
   private[this] def schedulePushJob(): Unit = {
-    if (!pushScheduled) {
-      pushScheduled = true
-      context.system.scheduler.scheduleOnce(15 seconds, self, PushChanges)
-    }
+    gitRepoPusher ! GitRepoPusher.PushChanges
   }
 
 }
@@ -61,7 +55,6 @@ class PatientManager private (grangerRepo: GrangerRepo[Map[PatientId, Patient], 
 object PatientManager {
   def props(grangerRepo: GrangerRepo[Map[PatientId, Patient],Future], grangerConfig: GrangerConfig)(implicit gitApi: Git): Props = Props(new PatientManager(grangerRepo, grangerConfig))
 
-  private case object PushChanges
 
   case object FetchAllPatients
 
