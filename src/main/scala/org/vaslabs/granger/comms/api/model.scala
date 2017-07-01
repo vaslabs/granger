@@ -37,5 +37,5 @@ object model {
 
   case class PubKey(value: String)
 
-  case class GitRepo(uri: String)
+  case class RemoteRepo(uri: String)
 }

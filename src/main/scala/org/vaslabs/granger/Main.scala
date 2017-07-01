@@ -8,7 +8,7 @@ import akka.stream.ActorMaterializer
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.vaslabs.granger.comms.WebServer
-import org.vaslabs.granger.repo.GitBasedGrangerRepo
+import org.vaslabs.granger.repo.SingleStateGrangerRepo
 import pureconfig._
 /**
   * Created by vnicolaou on 04/06/17.
@@ -16,9 +16,7 @@ import pureconfig._
 object Main {
 
   def main(args: Array[String]): Unit = {
-    sys.addShutdownHook(
-      println("Shutting down")
-    )
+
 
     implicit val system = ActorSystem()
     implicit val materializer = ActorMaterializer()
@@ -46,13 +44,20 @@ object Main {
 
         implicit val git: Git = new Git(repository)
 
-        val grangerRepo = new GitBasedGrangerRepo(dbDirectory)
+        val grangerRepo = new SingleStateGrangerRepo()
 
-        val patientManager = system.actorOf(PatientManager.props(grangerRepo))
+        val patientManager = system.actorOf(PatientManager.props(grangerRepo, config))
 
 
         val webServer = new WebServer(patientManager, config)
         webServer.start()
+
+        sys.addShutdownHook(
+          {
+            println("Shutting down")
+            webServer.shutDown().foreach(_ => println("Http service is shut down"))
+          }
+        )
       }).left.foreach(
       println(_)
     )

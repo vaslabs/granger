@@ -66,8 +66,8 @@ object model {
 
     import json._
 
-    implicit val medicamentDecoder: Decoder[Option[Medicament]] = deriveDecoder[Medicament].map(
-      medicament => verifyNonEmptyString(medicament.name, medicament).toOption
+    implicit val medicamentDecoder: Decoder[Medicament] = deriveDecoder[Medicament].emap(
+      medicament => verifyNonEmptyString(medicament.name, medicament)
     )
   }
 
@@ -85,8 +85,8 @@ object model {
 
   object NextVisit {
     import json._
-    implicit val nextVisitDecoder: Decoder[Option[NextVisit]] = deriveDecoder[NextVisit].map(
-      nv => verifyNonEmptyString[NextVisit](nv.notes, nv).toOption
+    implicit val nextVisitDecoder: Decoder[NextVisit] = deriveDecoder[NextVisit].emap(
+      nv => verifyNonEmptyString[NextVisit](nv.notes, nv)
     )
   }
 
@@ -94,8 +94,8 @@ object model {
 
   object ToothNote {
     import json._
-    implicit val toothNoteDecoder: Decoder[Option[ToothNote]] = deriveDecoder[ToothNote].map(
-      tn => verifyNonEmptyString[ToothNote](tn.note, tn).toOption
+    implicit val toothNoteDecoder: Decoder[ToothNote] = deriveDecoder[ToothNote].emap(
+      tn => verifyNonEmptyString[ToothNote](tn.note, tn)
     )
   }
 

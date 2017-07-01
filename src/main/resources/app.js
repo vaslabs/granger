@@ -238,24 +238,45 @@ app.controller('MainController', function($q, $http) {
         return flatActivities;
     };
 
+    function medicament() {
+        if (ctrl.toothEditing.medicament == null || ctrl.toothEditing.medicament == "")
+            return null;
+        return {
+            "name":ctrl.toothEditing.medicament,
+            "date":now()
+        };
+    }
+
+    function nextVisit() {
+        if (ctrl.toothEditing.nextVisit == null || ctrl.toothEditing.nextVisit == "")
+            return null;
+        return {
+           "notes": ctrl.toothEditing.nextVisit,
+           "dateOfNextVisit": ctrl.toothEditing.nextVisitDate.toISOString(),
+           "dateOfNote": now()
+        }
+    }
+
+    function now() {
+        return (new Date()).toISOString();
+    }
+
+    function toothNote() {
+        if (ctrl.toothEditing.notes == null || ctrl.toothEditing.notes == "")
+            return null;
+        return {
+            "note": ctrl.toothEditing.notes,
+            "dateOfNote": now()
+        };
+    }
+
     ctrl.pushChanges = function() {
-        var now = (new Date()).toISOString()
         var data = {
             "patientId": ctrl.selectedPatient.patientId,
             "toothNumber": ctrl.selectedTooth.number,
-            "medicament": {
-                "name":ctrl.toothEditing.medicament,
-                "date":now
-            },
-            "nextVisit":{
-                "notes": ctrl.toothEditing.nextVisit,
-                "dateOfNextVisit": ctrl.toothEditing.nextVisitDate.toISOString(),
-                "dateOfNote": now
-            },
-            "toothNote": {
-                "note": ctrl.toothEditing.notes,
-                "dateOfNote": now
-            }
+            "medicament": medicament(),
+            "nextVisit": nextVisit(),
+            "toothNote": toothNote()
         };
         data.roots = ctrl.rootDetails.filter(function(item) {return item.name != "" && item.size != "" && item.thickness != "";});
 
