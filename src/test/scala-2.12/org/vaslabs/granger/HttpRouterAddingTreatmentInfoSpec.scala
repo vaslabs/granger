@@ -24,8 +24,24 @@ class HttpRouterAddingTreatmentInfoSpec extends BaseSpec with FailFastCirceSuppo
           responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), None, "A treatment"))
         }
         val request = AddToothInformationRequest(PatientId(1), 11, None, None, Some(List(Root("MB2", 19, "F2"))), None).asJson
-        Post("/update", request.asJson) ~> httpRouter.routes ~> check {
+        Post("/update", request) ~> httpRouter.routes ~> check {
           responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments.head.roots shouldBe List(Root("MB2", 19, "F2"))
+        }
+        Post("/treatment/finish", StartTreatment(PatientId(1), 11, "A treatment")) ~> httpRouter.routes ~> check {
+          responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments.head.dateCompleted shouldBe Some(ZonedDateTime.now(clock))
+        }
+        val anotherRequest = AddToothInformationRequest(PatientId(1), 11, None, None, Some(List(Root("MB", 19, "F1"))), None).asJson
+        Post("/update", anotherRequest) ~> httpRouter.routes ~> check {
+          responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments.head.roots shouldBe List(Root("MB2", 19, "F2"))
+        }
+        Post("/treatment/start", StartTreatment(PatientId(1), 11, "B treatment")) ~> httpRouter.routes ~> check {
+          val treatments = responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments
+          treatments.head shouldBe Treatment(ZonedDateTime.now(clock), None, "B treatment")
+          treatments.apply(1).roots shouldBe List(Root("MB2", 19, "F2"))
+          treatments.head.roots shouldBe List.empty
+        }
+        Post("/update", anotherRequest) ~> httpRouter.routes ~> check {
+          responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments.head.roots shouldBe List(Root("MB", 19, "F1"))
         }
       }
     }

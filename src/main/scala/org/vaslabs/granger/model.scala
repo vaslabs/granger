@@ -259,10 +259,7 @@ object modelv2 {
     def update(roots: Option[List[Root]], medicament: Option[Medicament], nextVisit: Option[NextVisit], treatmentNote: Option[TreatmentNote]): Tooth = {
       treatments.headOption.map(
         t => t.dateCompleted.toLeft(t).map(
-          t => {
-            println(t)
-            t.update(roots, treatmentNote, medicament, nextVisit)
-          }
+          t => t.update(roots, treatmentNote, medicament, nextVisit)
         ).getOrElse(t)
       ).map( t => t :: treatments.drop(1)).map(ts => Tooth(number, ts)).getOrElse(this)
     }

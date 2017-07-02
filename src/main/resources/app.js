@@ -87,9 +87,9 @@ app.controller('MainController', function($q, $http) {
     };
 
     ctrl.treatmentsCompletedClass = function(tooth) {
-        if (tooth._treatments == null || tooth._treatments.length == 0)
+        if (tooth.treatments == null || tooth.treatments.length == 0)
             return "";
-        if (tooth._treatments[0].dateCompleted == null)
+        if (tooth.treatments[0].dateCompleted == null)
             return "orange";
         else
             return "green";
@@ -134,7 +134,7 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.enableEditMode = function() {
         ctrl.toothEditMode = true;
-        ctrl.rootDetails = ctrl.selectedTooth.roots.concat(ctrl.rootDetails);
+        ctrl.rootDetails = ctrl.selectedTreatment.roots.concat(ctrl.rootDetails);
     };
 
     var today = new Date();
@@ -161,7 +161,7 @@ app.controller('MainController', function($q, $http) {
         ctrl.rootDetails = {
             name: "",
             size: "",
-            thickness: ""
+            length: ""
         };
         ctrl.toothEditMode = false;
     }
@@ -200,10 +200,11 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.deselectTooth = function() {
         ctrl.selectedTooth = null;
+        ctrl.selectedTreatment = null;
         ctrl.rootDetails = [{
            name: "",
            size: "",
-           thickness: ""
+           length: ""
         }];
     };
 
@@ -270,6 +271,12 @@ app.controller('MainController', function($q, $http) {
         };
     }
 
+    ctrl.selectedTreatment = null;
+
+    ctrl.selectTreatment = function(treatment) {
+        ctrl.selectedTreatment = treatment;
+    };
+
     ctrl.pushChanges = function() {
         var data = {
             "patientId": ctrl.selectedPatient.patientId,
@@ -278,7 +285,7 @@ app.controller('MainController', function($q, $http) {
             "nextVisit": nextVisit(),
             "toothNote": toothNote()
         };
-        data.roots = ctrl.rootDetails.filter(function(item) {return item.name != "" && item.size != "" && item.thickness != "";});
+        data.roots = ctrl.rootDetails.filter(function(item) {return item.name != "" && item.size != "" && item.length != "";});
 
 
         $http({
