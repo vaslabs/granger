@@ -111,7 +111,7 @@
                                             </thead>
                                             <tbody>
                                                 <tr ng-repeat="treatment in ctrl.selectedTooth.treatments">
-                                                    <td><a href="#" ng-click="ctrl.selectTreatment(treatment)">{{treatment.info}}</a></td>
+                                                    <td><a href="#Roots" ng-click="ctrl.selectTreatment(treatment)">{{treatment.info}}</a></td>
                                                     <td>{{ctrl.toLocalDateTime(treatment.dateStarted)}}</td>
                                                     <td>{{ctrl.toLocalDateTime(treatment.dateCompleted)}}</td>
                                                     <td>

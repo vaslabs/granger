@@ -149,7 +149,7 @@ app.controller('MainController', function($q, $http) {
     ctrl.rootDetails = [{
         name: "",
         size: "",
-        thickness: ""
+        length: ""
     }];
 
     function clearEditData() {
@@ -303,6 +303,7 @@ app.controller('MainController', function($q, $http) {
         ctrl.allPatients = ctrl.allPatients.filter(function(patient) { return patient.patientId != ctrl.selectedPatient.patientId;});
         ctrl.allPatients.push(ctrl.selectedPatient);
         ctrl.selectedTooth = ctrl.selectedPatient.dentalChart.teeth.find(function(tooth) { return tooth.number == ctrl.selectedTooth.number;});
+        ctrl.selectedTreatment = ctrl.selectedTooth.treatments[0];
     }
 
     ctrl.repoReady = true;
@@ -318,12 +319,12 @@ app.controller('MainController', function($q, $http) {
     });
 
     ctrl.addRootRow = function() {
-        var emptyRows = ctrl.rootDetails.filter(function(item) {return item.name == "" || item.size == "" || item.thickness == "";});
+        var emptyRows = ctrl.rootDetails.filter(function(item) {return item.name == "" || item.size == "" || item.length == "";});
         if (emptyRows.length == 0) {
             ctrl.rootDetails.push({
               name: "",
               size: "",
-              thickness: ""
+              length: ""
             });
         }
     };
