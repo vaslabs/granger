@@ -8,10 +8,10 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import de.heikoseeberger.akkahttpcirce.{FailFastCirceSupport, FailFastUnmarshaller}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.scalatest.{Assertion, AsyncFlatSpecLike, BeforeAndAfterAll, Matchers}
+import org.vaslabs.granger.PatientManager.LoadData
 import org.vaslabs.granger.comms.{HttpRouter, WebServer}
 import org.vaslabs.granger.repo.SingleStateGrangerRepo
 import org.vaslabs.granger.repo.git.GitRepo
@@ -21,7 +21,7 @@ import scala.concurrent.Await
 /**
   * Created by vnicolaou on 28/06/17.
   */
-trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll with ScalatestRouteTest with FailFastCirceSupport with FailFastUnmarshaller {
+trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll with ScalatestRouteTest {
   val tmpDir = System.getProperty("java.io.tmpdir") + s"/${this.getClass.getName}/.granger_repo/"
 
   val config = GrangerConfig(tmpDir, keysLocation = "/tmp/.ssh")
@@ -64,6 +64,7 @@ trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll wi
   }
   implicit val git: Git = new Git(repository)
 
+  import akka.pattern._
 
   def withHttpRouter[F[_]](actorSystem: ActorSystem, grangerConfig: GrangerConfig)(f: HttpRouter => F[Assertion]): F[Assertion] = {
     implicit val system = actorSystem
@@ -71,6 +72,7 @@ trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll wi
     val grangerRepo = new SingleStateGrangerRepo()
 
     val patientManager = actorSystem.actorOf(PatientManager.props(grangerRepo, config))
+    patientManager ! LoadData
 
     val httpRouter = new WebServer(patientManager, grangerConfig) with HttpRouter
     httpRouter.start()

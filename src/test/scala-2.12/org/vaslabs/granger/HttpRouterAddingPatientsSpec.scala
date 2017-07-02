@@ -1,35 +1,17 @@
 package org.vaslabs.granger
 
-import java.io.{File, FileWriter, PrintWriter}
-import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.scalatest._
-import org.vaslabs.granger.comms.{GrangerApi, HttpRouter, WebServer}
-import org.vaslabs.granger.repo.SingleStateGrangerRepo
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.http.scaladsl.server._
-import Directives._
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
-import de.heikoseeberger.akkahttpcirce.{FailFastCirceSupport, FailFastUnmarshaller}
-import org.vaslabs.granger.model.{DentalChart, Patient, PatientId}
-import pureconfig._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Success
-
-
+import scala.concurrent.Future
+import io.circe.generic.auto._
 /**
   * Created by vnicolaou on 28/06/17.
   */
-class HttpRouterAddingPatientsSpec extends BaseSpec {
-  import io.circe.generic.auto._
+class HttpRouterAddingPatientsSpec extends BaseSpec with FailFastCirceSupport {
 
-  import model.json._
   "adding a new patient" should "persist across restarts" in {
     withHttpRouter[Future](system, config) {
       httpRouter => {

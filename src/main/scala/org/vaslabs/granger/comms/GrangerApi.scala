@@ -3,7 +3,7 @@ package org.vaslabs.granger.comms
 import akka.http.scaladsl.model.StatusCode
 import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, PubKey, RemoteRepo}
-import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
+import org.vaslabs.granger.modelv2.{Patient, PatientId, Treatment}
 import org.vaslabs.granger.repo.NotReady
 
 import scala.concurrent.Future

@@ -1,31 +1,48 @@
 package org.vaslabs.granger
 
 import java.io.File
+import java.time.Clock
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
-import org.vaslabs.granger.repo.{GrangerRepo, Repo}
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import org.vaslabs.granger.repo.GrangerRepo
 
 import scala.concurrent.Future
 import akka.pattern.pipe
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.git.GitRepo
 
-import scala.concurrent.duration._
+import scala.io.Source
+
 /**
   * Created by vnicolaou on 29/05/17.
   */
 
-class PatientManager private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Future], grangerConfig: GrangerConfig)(implicit gitApi: Git) extends Actor with ActorLogging{
+class PatientManager private (grangerRepo: GrangerRepo[Map[modelv2.PatientId, modelv2.Patient], Future], grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock) extends Actor with ActorLogging{
   import context.dispatcher
   import PatientManager._
 
-  implicit val gitRepo: GitRepo = new GitRepo(new File(grangerConfig.repoLocation), "patients.json")
+  implicit val gitRepo: GitRepo =
+    new GitRepo(new File(grangerConfig.repoLocation), "patients.json")
 
   val gitRepoPusher: ActorRef = context.actorOf(GitRepoPusher.props(grangerRepo))
 
   override def receive: Receive = {
+    case LoadData =>
+      grangerRepo.loadData() pipeTo self
+    case LoadDataSuccess =>
+      context.become(receivePostLoad)
+    case LoadDataFailure =>
+      Migrations.attemptSchemaMigrationToV2(grangerConfig) pipeTo self
+    case MigrationFailure =>
+      log.error(s"Fatal error: Schema migration failed")
+      self ! PoisonPill
+    case MigrationSuccess =>
+      self ! LoadData
+  }
+
+  def receivePostLoad: Receive = {
     case FetchAllPatients =>
       val senderRef = sender()
       grangerRepo.retrieveAllPatients() pipeTo senderRef
@@ -53,12 +70,12 @@ class PatientManager private (grangerRepo: GrangerRepo[Map[PatientId, Patient], 
 }
 
 object PatientManager {
-  def props(grangerRepo: GrangerRepo[Map[PatientId, Patient],Future], grangerConfig: GrangerConfig)(implicit gitApi: Git): Props = Props(new PatientManager(grangerRepo, grangerConfig))
+  def props(grangerRepo: GrangerRepo[Map[modelv2.PatientId, modelv2.Patient],Future], grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock): Props = Props(new PatientManager(grangerRepo, grangerConfig))
 
 
   case object FetchAllPatients
 
-  case class AddPatient(patient: Patient)
+  case class AddPatient(patient: modelv2.Patient)
 
   case class LatestActivity(patientId: PatientId)
 
@@ -66,5 +83,12 @@ object PatientManager {
 
   case class StartTreatment(patientId: PatientId, toothId: Int, info: String)
   case class FinishTreatment(patientId: PatientId, toothId: Int)
+
+  case object LoadData
+  trait LoadDataOutcome
+  case object LoadDataSuccess extends LoadDataOutcome
+  case object LoadDataFailure extends LoadDataOutcome
+  case object MigrationFailure extends LoadDataOutcome
+  case object MigrationSuccess extends LoadDataOutcome
 
 }

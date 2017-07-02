@@ -2,8 +2,10 @@ package org.vaslabs.granger.comms.api
 
 import java.time.ZonedDateTime
 
-import org.vaslabs.granger.model._
+import io.circe.{Decoder, Encoder}
+import org.vaslabs.granger.modelv2._
 
+import io.circe.generic.semiauto._
 /**
   * Created by vnicolaou on 13/06/17.
   */
@@ -15,8 +17,14 @@ object model {
                                        medicament: Option[Medicament],
                                        nextVisit: Option[NextVisit],
                                        roots: Option[List[Root]],
-                                       toothNote: Option[ToothNote]
+                                       toothNote: Option[TreatmentNote]
                                        )
+  object AddToothInformationRequest {
+    import io.circe.generic.auto._
+    import org.vaslabs.granger.json._
+    implicit val encoder: Encoder[AddToothInformationRequest] = deriveEncoder[AddToothInformationRequest]
+    implicit val decoder: Decoder[AddToothInformationRequest] = deriveDecoder[AddToothInformationRequest]
+  }
 
   case class Activity(date: ZonedDateTime, tooth: Int, `type`: String)
 

@@ -7,6 +7,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.vaslabs.granger.PatientManager.LoadData
 import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.repo.SingleStateGrangerRepo
 import pureconfig._
@@ -47,6 +48,8 @@ object Main {
         val grangerRepo = new SingleStateGrangerRepo()
 
         val patientManager = system.actorOf(PatientManager.props(grangerRepo, config))
+
+        patientManager ! LoadData
 
 
         val webServer = new WebServer(patientManager, config)

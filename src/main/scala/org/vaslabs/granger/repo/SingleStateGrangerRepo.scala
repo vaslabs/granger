@@ -3,8 +3,10 @@ package org.vaslabs.granger.repo
 import java.io._
 import java.time.{Clock, ZonedDateTime}
 
+import org.vaslabs.granger.PatientManager
+import org.vaslabs.granger.PatientManager.{LoadDataFailure, LoadDataSuccess}
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
-import org.vaslabs.granger.model.{Patient, PatientId, Treatment}
+import org.vaslabs.granger.modelv2._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -98,6 +100,11 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext, 
         .foreach(_ => state = newRepo)
     }
     state.get(patientId).get
+  }
+
+  override def loadData()(implicit repo: Repo[Map[PatientId, Patient]]): Future[PatientManager.LoadDataOutcome] = {
+    retrieveAllPatients().map(_.map(_ => LoadDataSuccess)
+          .getOrElse(LoadDataFailure))
   }
 }
 

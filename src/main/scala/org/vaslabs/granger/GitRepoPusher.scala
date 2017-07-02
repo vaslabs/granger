@@ -2,7 +2,8 @@ package org.vaslabs.granger
 
 import java.time.ZonedDateTime
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, Props}
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.git.GitRepo
 
 import scala.concurrent.duration._
@@ -14,13 +15,13 @@ import scala.concurrent.Future
   * Created by vnicolaou on 01/07/17.
   */
 object GitRepoPusher {
-  def props(grangerRepo: GrangerRepo[Map[model.PatientId, model.Patient], Future])(implicit repo: GitRepo): Props =
+  def props(grangerRepo: GrangerRepo[Map[PatientId, Patient], Future])(implicit repo: GitRepo): Props =
     Props(new GitRepoPusher(grangerRepo))
 
   case object PushChanges
 
 }
-class GitRepoPusher private (grangerRepo: GrangerRepo[Map[model.PatientId, model.Patient], Future])(implicit repo: GitRepo) extends Actor with ActorLogging{
+class GitRepoPusher private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Future])(implicit repo: GitRepo) extends Actor with ActorLogging{
 
   import context.dispatcher
   import org.vaslabs.granger.GitRepoPusher._

@@ -2,18 +2,16 @@ package org.vaslabs.granger
 
 import java.time.ZonedDateTime
 
+import de.heikoseeberger.akkahttpcirce.{FailFastCirceSupport}
 import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
-import org.vaslabs.granger.model.{DentalChart, Patient, PatientId, Treatment}
-import org.vaslabs.granger.repo.SingleStateGrangerRepo
-
+import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId, Treatment}
+import io.circe.generic.auto._
 /**
   * Created by vnicolaou on 28/06/17.
   */
-class HttpRouterAddTreatmentsSpec extends BaseSpec{
+class HttpRouterAddTreatmentsSpec extends BaseSpec with FailFastCirceSupport{
 
-  import io.circe.generic.auto._
 
-  import model.json._
   import scala.collection.JavaConverters._
   "only one open treatment" should "exist per tooth" in {
     withHttpRouter(system, config) {
@@ -43,5 +41,4 @@ class HttpRouterAddTreatmentsSpec extends BaseSpec{
         }
     }
   }
-
 }

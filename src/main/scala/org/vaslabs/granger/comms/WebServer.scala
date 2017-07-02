@@ -11,7 +11,7 @@ import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, PubKey, RemoteRepo}
-import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.repo.NotReady
 
 import scala.concurrent.duration._
