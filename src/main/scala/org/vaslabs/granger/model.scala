@@ -73,7 +73,7 @@ object model {
 
   private[this] def isNullOrEmpty(name: String): Boolean = name == null || name.isEmpty
 
-  private[this] def verifyNonEmptyString[A](value: String, a: A): Either[String, A] = {
+  def verifyNonEmptyString[A](value: String, a: A): Either[String, A] = {
     if (isNullOrEmpty(value))
       Left("Value is empty")
     else
@@ -197,4 +197,32 @@ object model {
 
   case class Treatment(dateStarted: ZonedDateTime, dateCompleted: Option[ZonedDateTime] = None, info: String)
 
+}
+
+object modelv2 {
+  import model.json._
+
+
+  case class TreatmentNote(note: String, dateOfNote: ZonedDateTime)
+
+  object ToothNote {
+    implicit val treatmentNoteDecoder: Decoder[TreatmentNote] = deriveDecoder[TreatmentNote].emap(
+      tn => model.verifyNonEmptyString[TreatmentNote](tn.note, tn)
+    )
+  }
+
+  case class Treatment(dateStarted: ZonedDateTime, dateCompleted: Option[ZonedDateTime] = None, info: String,
+                       number: Int, roots: List[Root] = List.empty,
+                       notes: List[TreatmentNote] = List.empty,
+                       medicaments: List[Medicament] = List.empty,
+                       nextVisits: List[NextVisit] = List.empty)
+
+  case class Tooth(treatments: Option[List[Treatment]] = None)
+
+  case class NextVisit(notes: String, dateOfNextVisit: ZonedDateTime, dateOfNote: ZonedDateTime)
+
+
+  case class Root(size: Int, thickness: String, name: String)
+
+  case class Medicament(name: String, date: ZonedDateTime)
 }
