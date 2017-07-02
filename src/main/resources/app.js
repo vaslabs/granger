@@ -65,15 +65,15 @@ app.controller('MainController', function($q, $http) {
       getLatestActivity(ctrl.selectedPatient.patientId)
     };
 
-    ctrl.treatmentInfo = null;
+    ctrl.treatmentCategory = null;
 
     ctrl.newTreatment = function() {
-        if (ctrl.treatmentInfo == null || ctrl.treatmentInfo == "")
+        if (ctrl.treatmentCategory == null || ctrl.treatmentCategory == "")
             return;
         var data = {
             "patientId": ctrl.selectedPatient.patientId,
             "toothId": ctrl.selectedTooth.number,
-            "info": ctrl.treatmentInfo
+            "category": ctrl.treatmentCategory
         };
 
         return $http({
@@ -82,7 +82,7 @@ app.controller('MainController', function($q, $http) {
             data: data
         }).then(function(resp) {
             updatePatient(resp);
-            ctrl.treatmentInfo = null;
+            ctrl.treatmentCategory = null;
         });
     };
 
@@ -107,7 +107,7 @@ app.controller('MainController', function($q, $http) {
                 data: data
             }).then(function(resp) {
                 updatePatient(resp);
-                ctrl.treatmentInfo = null;
+                ctrl.treatmentCategory = null;
             });
         };
 

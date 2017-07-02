@@ -39,7 +39,7 @@ trait GrangerRepo[State, F[_]] {
     }
 
 
-  def startTreatment(patientId: PatientId, toothId: Int, info: String)(implicit repo: Repo[State]): Future[Patient]
+  def startTreatment(patientId: PatientId, toothId: Int, treatmentCategory: TreatmentCategory)(implicit repo: Repo[State]): Future[Patient]
 
   def finishTreatment(patientId: PatientId, toothId: Int)(implicit repo: Repo[State]): Future[Patient]
 

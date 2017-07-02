@@ -10,7 +10,7 @@ import scala.concurrent.Future
 import akka.pattern.pipe
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.modelv2.{PatientId, TreatmentCategory}
 import org.vaslabs.granger.repo.git.GitRepo
 
 import scala.io.Source
@@ -57,8 +57,8 @@ class PatientManager private (grangerRepo: GrangerRepo[Map[modelv2.PatientId, mo
     case InitRepo(remoteRepo) =>
       grangerRepo.setUpRepo(remoteRepo) pipeTo sender()
       schedulePushJob()
-    case StartTreatment(patientId, toothId, info) =>
-      grangerRepo.startTreatment(patientId, toothId, info) pipeTo sender()
+    case StartTreatment(patientId, toothId, category) =>
+      grangerRepo.startTreatment(patientId, toothId, category) pipeTo sender()
     case FinishTreatment(patientId, toothId) =>
       grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
   }
@@ -81,7 +81,7 @@ object PatientManager {
 
   case class InitRepo(remoteRepo: RemoteRepo)
 
-  case class StartTreatment(patientId: PatientId, toothId: Int, info: String)
+  case class StartTreatment(patientId: PatientId, toothId: Int, category: TreatmentCategory)
   case class FinishTreatment(patientId: PatientId, toothId: Int)
 
   case object LoadData

@@ -237,7 +237,38 @@ object modelv2 {
     )
   }
 
-  case class Treatment(dateStarted: ZonedDateTime, dateCompleted: Option[ZonedDateTime] = None, info: String,
+  sealed trait TreatmentCategory
+  case class RootCanalTreatment() extends TreatmentCategory {
+    override def toString: String = "Re-RCT"
+  }
+  case class RepeatRootCanalTreatment() extends TreatmentCategory {
+    override def toString: String = "RCT"
+  }
+
+  object TreatmentCategory {
+    implicit val decoder: Decoder[TreatmentCategory] = Decoder[String].emap(s => s match {
+      case "RCT" => Right(RootCanalTreatment())
+      case "Re-RCT" => Right(RepeatRootCanalTreatment())
+      case _ => Left(s)
+    })
+    implicit val encoder: Encoder[TreatmentCategory] = Encoder[String].contramap[TreatmentCategory](
+      tc => tc match {
+      case _: RootCanalTreatment => "RCT"
+      case _: RepeatRootCanalTreatment => "Re-RCT"
+    }
+    )
+  }
+
+  object RootCanalTreatment {
+    implicit val encoder: Encoder[RootCanalTreatment] = Encoder[String].contramap[RootCanalTreatment](_ => "RCT")
+  }
+
+  object RepeatRootCanalTreatment {
+    implicit val encoder: Encoder[RepeatRootCanalTreatment] = Encoder[String].contramap[RepeatRootCanalTreatment](_ => "Re-RCT")
+  }
+
+
+  case class Treatment(dateStarted: ZonedDateTime, dateCompleted: Option[ZonedDateTime] = None, category: TreatmentCategory,
                        roots: List[Root] = List.empty,
                        notes: List[TreatmentNote] = List.empty,
                        medicaments: List[Medicament] = List.empty,
@@ -287,7 +318,7 @@ object modelv2 {
 
     implicit val t_transformer: Transformer[Treatment] = (t: Treatment) => {
       val date = t.dateCompleted.getOrElse(t.dateStarted)
-      val note = t.dateCompleted.map(_ => s"Finished treatment ${t.info}").getOrElse(s"Started treatment: ${t.info}")
+      val note = t.dateCompleted.map(_ => s"Finished treatment ${t.category.toString}").getOrElse(s"Started treatment: ${t.category.toString}")
       Activity(date, number, note)
     }
 
@@ -395,13 +426,16 @@ object modelv2 {
   def migrate(oldPatient: model.Patient): modelv2.Patient = {
     val newTeeth = oldPatient.dentalChart.teeth.map(oldTooth => {
       val newTreatments = oldTooth.treatments.map(oldTreatment => {
-        Treatment(oldTreatment.dateStarted, oldTreatment.dateCompleted, oldTreatment.info,
+        Treatment(oldTreatment.dateStarted, oldTreatment.dateCompleted, RepeatRootCanalTreatment(),
           oldTooth.roots.map(migrate(_)),
           oldTooth.notes.map(migrate(_)),
           oldTooth.medicaments.map(migrate(_)),
           oldTooth.nextVisits.map(migrate(_)))
       })
-      Tooth(oldTooth.number, newTreatments)
+      val refined = newTreatments.headOption.map(_.copy(category = RootCanalTreatment())).map(
+        _ :: newTreatments.drop(0)
+      ).getOrElse(newTreatments)
+      Tooth(oldTooth.number, refined)
     })
     modelv2.Patient(PatientId(oldPatient.patientId.id), oldPatient.firstName, oldPatient.lastName, oldPatient.dateOfBirth, DentalChart(newTeeth.sorted))
   }

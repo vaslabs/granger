@@ -98,7 +98,7 @@
                                         <table class="striped">
                                             <thead>
                                                 <tr>
-                                                    <td>Info</td>
+                                                    <td>Category</td>
                                                     <td>Date started</td>
                                                     <td>Date completed</td>
                                                     <td>
@@ -111,7 +111,7 @@
                                             </thead>
                                             <tbody>
                                                 <tr ng-repeat="treatment in ctrl.selectedTooth.treatments">
-                                                    <td><a href="#Roots" ng-click="ctrl.selectTreatment(treatment)">{{treatment.info}}</a></td>
+                                                    <td><a href="#Roots" ng-click="ctrl.selectTreatment(treatment)">{{treatment.category}}</a></td>
                                                     <td>{{ctrl.toLocalDateTime(treatment.dateStarted)}}</td>
                                                     <td>{{ctrl.toLocalDateTime(treatment.dateCompleted)}}</td>
                                                     <td>

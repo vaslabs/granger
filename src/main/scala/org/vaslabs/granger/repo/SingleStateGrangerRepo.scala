@@ -72,8 +72,8 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext, 
       ).getOrElse(Map.empty)
     }
 
-  override def startTreatment(patientId: PatientId, toothId: Int, info: String)(implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] = Future {
-    val treatment = Treatment(ZonedDateTime.now(clock), info = info)
+  override def startTreatment(patientId: PatientId, toothId: Int, category: TreatmentCategory)(implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] = Future {
+    val treatment = Treatment(ZonedDateTime.now(clock), category = category)
     val patient = state.get(patientId).get
     val toothWithTreatment =
       patient.dentalChart.teeth.find(_.number == toothId)
