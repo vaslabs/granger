@@ -26,13 +26,8 @@ trait StaticResources {
   }
 
   private[this] def getStaticFontResource(resource: Array[Byte]): HttpResponse = {
-    val contentTypeHeader: List[HttpHeader] = HttpHeader.parse("content-type", "application/font-woff2") match {
-      case ok: ParsingResult.Ok =>
-        List(ok.header)
-      case _ => List.empty
-    }
-
-    HttpResponse(OK, headers = contentTypeHeader, entity = HttpEntity(resource))
+    val contentType = ContentType.parse("application/font-woff2").getOrElse(ContentTypes.NoContentType)
+    HttpResponse(OK, entity = HttpEntity(contentType, resource))
   }
 
 
