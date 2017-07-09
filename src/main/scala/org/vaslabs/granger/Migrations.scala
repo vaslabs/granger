@@ -8,15 +8,14 @@ import org.vaslabs.granger.repo.git.PayloadEncoder
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
+import v2json._
 
 /**
   * Created by vnicolaou on 02/07/17.
   */
 object Migrations {
   import io.circe.syntax._
-  implicit val payloadEncoder: PayloadEncoder[Map[modelv2.PatientId, modelv2.Patient]] = new PayloadEncoder[Map[modelv2.PatientId, modelv2.Patient]] {
-    override def encode(a: Map[modelv2.PatientId, modelv2.Patient]): String = a.asJson.noSpaces
-  }
+  implicit val payloadEncoder: PayloadEncoder[Map[modelv2.PatientId, modelv2.Patient]] = (a: Map[modelv2.PatientId, modelv2.Patient]) => a.asJson.noSpaces
   import io.circe.generic.auto._
   import org.vaslabs.granger.repo.git._
   import io.circe.parser._

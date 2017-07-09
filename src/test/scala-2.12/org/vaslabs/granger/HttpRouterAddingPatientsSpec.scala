@@ -6,6 +6,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId}
 
 import scala.concurrent.Future
+import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
 /**
   * Created by vnicolaou on 28/06/17.

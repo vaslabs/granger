@@ -6,6 +6,7 @@ import java.time.{Clock, ZonedDateTime}
 import org.vaslabs.granger.PatientManager
 import org.vaslabs.granger.PatientManager.{LoadDataFailure, LoadDataSuccess}
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
+import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
 
 import scala.concurrent.{ExecutionContext, Future}

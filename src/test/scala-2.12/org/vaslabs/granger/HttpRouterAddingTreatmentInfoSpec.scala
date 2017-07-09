@@ -6,8 +6,10 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.vaslabs.granger.PatientManager.StartTreatment
 import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 import org.vaslabs.granger.modelv2._
-import io.circe.syntax._
+import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
+import io.circe.syntax._
+import org.vaslabs.granger.modeltreatments.{RepeatRootCanalTreatment, RootCanalTreatment}
 
 /**
   * Created by vnicolaou on 02/07/17.

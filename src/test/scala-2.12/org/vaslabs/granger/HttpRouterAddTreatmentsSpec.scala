@@ -4,7 +4,9 @@ import java.time.ZonedDateTime
 
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
+import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
+import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
 /**
   * Created by vnicolaou on 28/06/17.
@@ -17,6 +19,7 @@ class HttpRouterAddTreatmentsSpec extends BaseSpec with FailFastCirceSupport{
     withHttpRouter(system, config) {
       httpRouter =>
         {
+          import io.circe.generic.auto._
           Post("/api", Patient(PatientId(0), "FirstName", "LastName", ZonedDateTime.now(clock).toLocalDate, DentalChart(List.empty))) ~> httpRouter.routes ~> check {
             responseAs[Patient] shouldBe Patient(PatientId(1), "FirstName", "LastName", ZonedDateTime.now(clock).toLocalDate, DentalChart.emptyChart())
           }

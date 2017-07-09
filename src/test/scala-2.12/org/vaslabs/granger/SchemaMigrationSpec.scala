@@ -5,8 +5,9 @@ import org.scalatest.{FlatSpec, Matchers}
 import scala.io.Source
 import io.circe.parser._
 import org.vaslabs.granger.model.{Patient, PatientId}
+import org.vaslabs.granger.modeltreatments.RootCanalTreatment
+import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
-import org.vaslabs.granger.modelv2.RootCanalTreatment
 /**
   * Created by vnicolaou on 02/07/17.
   */

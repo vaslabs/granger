@@ -10,7 +10,8 @@ import scala.concurrent.Future
 import akka.pattern.pipe
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
-import org.vaslabs.granger.modelv2.{PatientId, TreatmentCategory}
+import org.vaslabs.granger.modeltreatments.TreatmentCategory
+import org.vaslabs.granger.modelv2.PatientId
 import org.vaslabs.granger.repo.git.GitRepo
 
 import scala.io.Source

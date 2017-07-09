@@ -3,7 +3,6 @@ package org.vaslabs.granger.repo.git
 import java.io.File
 
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
-import io.circe.generic.auto._
 import io.circe.parser
 import io.circe.syntax._
 import org.eclipse.jgit.api.Git
@@ -11,6 +10,7 @@ import org.eclipse.jgit.transport.URIish
 import org.vaslabs.granger.comms.api.model.RemoteRepo
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.{IOError, NotReady, Repo}
+import org.vaslabs.granger.v2json._
 
 import scala.io.Source
 import scala.util.Try
@@ -20,9 +20,7 @@ import scala.util.Try
   */
 class GitRepo(dbLocation: File, snapshotFile: String)(implicit gitApi: Git) extends Repo[Map[PatientId, Patient]]{
 
-  implicit val payloadEncoder: PayloadEncoder[Map[PatientId, Patient]] = new PayloadEncoder[Map[PatientId, Patient]] {
-    override def encode(a: Map[PatientId, Patient]): String = a.asJson.noSpaces
-  }
+  implicit val payloadEncoder: PayloadEncoder[Map[PatientId, Patient]] = (a: Map[PatientId, Patient]) => a.asJson.noSpaces
 
   private def setUpRemote(remoteRepo: RemoteRepo): StatusCode = {
     Try {
