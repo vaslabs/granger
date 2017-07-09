@@ -1,4 +1,6 @@
 # granger
+
+[![Join the chat at https://gitter.im/vaslabs-granger/Lobby](https://badges.gitter.im/vaslabs-granger/Lobby.svg)](https://gitter.im/vaslabs-granger/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 A patient manager for dentists
 
 The first version is built for root canal treatment (RCT) management
