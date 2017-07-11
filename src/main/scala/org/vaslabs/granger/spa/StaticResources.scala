@@ -50,7 +50,8 @@ trait StaticResources {
   private val recognisedFonts: Map[String, Array[Byte]] = Map(
     "Roboto-Regular.woff2" -> readBytes("/fonts/Roboto-Regular.woff2"),
     "Roboto-Medium.woff2" -> readBytes("/fonts/Roboto-Medium.woff2"),
-    "Roboto-Bold.woff2" -> readBytes("/fonts/Roboto-Bold.woff2")
+    "Roboto-Bold.woff2" -> readBytes("/fonts/Roboto-Bold.woff2"),
+    "material_icons.woff2" -> readBytes("/fonts/material_icons.woff2")
   )
 
   def staticResources: Route =
@@ -71,6 +72,9 @@ trait StaticResources {
     } ~
     path("css" / "materialize.css") {
       complete(getStaticCssResource("css/materialize.min.css"))
+    } ~
+      path("css" / "material_icons.css") {
+        complete(getStaticCssResource("css/material_icons.css"))
     } ~ path("js" / "jquery.js") {
       complete(getStaticJsResource("js/jquery-2.1.1.min.js"))
     } ~ path("fonts"/"roboto"/ Directives.RemainingPath ) {
