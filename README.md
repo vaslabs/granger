@@ -18,3 +18,8 @@ dockerComposeUp
 - Each container build will have a unique pair of RSA keys.
 - Use the public key to register the customer to a hosted git repo
 - Provide the git url from the webapp
+
+
+# Information for contributors
+
+- When you make a front-end change, please consult http://materializecss.com/
