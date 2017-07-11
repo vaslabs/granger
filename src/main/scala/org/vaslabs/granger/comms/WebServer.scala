@@ -10,17 +10,27 @@ import akka.pattern._
 import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager._
-import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, PubKey, RemoteRepo}
+import org.vaslabs.granger.comms.api.model.{
+  Activity,
+  AddToothInformationRequest,
+  PubKey,
+  RemoteRepo
+}
 import org.vaslabs.granger.modelv2._
-import org.vaslabs.granger.repo.NotReady
+import org.vaslabs.granger.repo.RepoErrorState
 
 import scala.concurrent.duration._
 import scala.io.Source
-/**
- * Created by vnicolaou on 28/05/17.
- */
 
-class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit executionContext: ExecutionContext, actorSystem: ActorSystem, materializer: ActorMaterializer) extends GrangerApi[Future] with HttpRouter {
+/**
+  * Created by vnicolaou on 28/05/17.
+  */
+class WebServer(patientManager: ActorRef, config: GrangerConfig)(
+    implicit executionContext: ExecutionContext,
+    actorSystem: ActorSystem,
+    materializer: ActorMaterializer)
+    extends GrangerApi[Future]
+    with HttpRouter {
 
   implicit val timeout = Timeout(5 seconds)
 
@@ -37,29 +47,36 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(implicit execut
   override def addPatient(patient: Patient): Future[Patient] =
     (patientManager ? AddPatient(patient)).mapTo[Patient]
 
-  override def retrieveAllPatients(): Future[Either[NotReady, List[Patient]]] =
-    (patientManager ? FetchAllPatients).mapTo[Either[NotReady, List[Patient]]]
+  override def retrieveAllPatients()
+    : Future[Either[RepoErrorState, List[Patient]]] =
+    (patientManager ? FetchAllPatients)
+      .mapTo[Either[RepoErrorState, List[Patient]]]
 
   override def addToothInfo(rq: AddToothInformationRequest): Future[Patient] = {
     (patientManager ? rq).mapTo[Patient]
   }
 
-  def getLatestActivity(patientId: PatientId): Future[Map[Int, List[Activity]]] =
-    (patientManager ? LatestActivity(patientId)).mapTo[Map[Int, List[Activity]]]
+  def getLatestActivity(
+      patientId: PatientId): Future[Map[Int, List[Activity]]] =
+    (patientManager ? LatestActivity(patientId))
+      .mapTo[Map[Int, List[Activity]]]
 
   def getPublicKey(): Future[PubKey] =
     Future {
-      val keyValue = Source.fromFile(s"${config.keysLocation}/id_rsa.pub").mkString
+      val keyValue =
+        Source.fromFile(s"${config.keysLocation}/id_rsa.pub").mkString
       PubKey(keyValue)
     }
 
   override def initGitRepo(remoteRepo: RemoteRepo): Future[StatusCode] =
     (patientManager ? InitRepo(remoteRepo)).mapTo[StatusCode]
 
-  override def startNewTreatment(startTreatment: StartTreatment): Future[Patient] =
+  override def startNewTreatment(
+      startTreatment: StartTreatment): Future[Patient] =
     (patientManager ? startTreatment).mapTo[Patient]
 
-  override def finishTreatment(finishTreatment: FinishTreatment): Future[Patient] =
+  override def finishTreatment(
+      finishTreatment: FinishTreatment): Future[Patient] =
     (patientManager ? finishTreatment).mapTo[Patient]
 
 }

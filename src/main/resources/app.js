@@ -310,7 +310,7 @@ app.controller('MainController', function($q, $http) {
 
 
     getAllPatients().then(function(patients) {
-       if ("error" in patients) {
+       if ("EmptyRepo" in patients) {
         ctrl.repoReady = false;
        } else {
         ctrl.repoReady = true;

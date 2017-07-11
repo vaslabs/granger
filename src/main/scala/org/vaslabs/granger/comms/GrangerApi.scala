@@ -2,9 +2,14 @@ package org.vaslabs.granger.comms
 
 import akka.http.scaladsl.model.StatusCode
 import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
-import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, PubKey, RemoteRepo}
-import org.vaslabs.granger.modelv2.{Patient, PatientId, Treatment}
-import org.vaslabs.granger.repo.NotReady
+import org.vaslabs.granger.comms.api.model.{
+  Activity,
+  AddToothInformationRequest,
+  PubKey,
+  RemoteRepo
+}
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.repo.{RepoErrorState}
 
 import scala.concurrent.Future
 
@@ -15,7 +20,7 @@ trait GrangerApi[F[_]] {
 
   def addPatient(patient: Patient): F[Patient]
 
-  def retrieveAllPatients(): F[Either[NotReady, List[Patient]]]
+  def retrieveAllPatients(): F[Either[RepoErrorState, List[Patient]]]
 
   def addToothInfo(rq: AddToothInformationRequest): F[Patient]
 

@@ -102,6 +102,13 @@
                                                     <td>Date started</td>
                                                     <td>Date completed</td>
                                                     <td>
+                                                        <div class="input-field col s12">
+                                                            <select ng-model="ctrl.treatmentCategory">
+                                                                <option ng-if="ctrl.selectedTooth.treatments.length == 0" value="RCT" selected>RCT</option>
+                                                                <option ng-if="ctrl.selectedTooth.treatments.length > 0" value="Re-RCT" selected>Re-RCT</option>
+                                                            </select>
+                                                            <label>Materialize Select</label>
+                                                        </div>
                                                         <input type="text" class="validate" ng-model="ctrl.treatmentCategory" placeholder="Treatment information">
                                                         <a class="btn-floating btn-small blue" ng-click="ctrl.newTreatment()">
                                                             <i class="large material-icons">add</i>
