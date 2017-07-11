@@ -206,6 +206,11 @@ app.controller('MainController', function($q, $http) {
            size: "",
            length: ""
         }];
+
+    };
+
+    ctrl.init_treatments_ui = function() {
+        $('select').material_select();
     };
 
     ctrl.selectTooth = function(tooth) {
