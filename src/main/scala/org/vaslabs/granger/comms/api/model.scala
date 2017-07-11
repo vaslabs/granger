@@ -20,8 +20,8 @@ object model {
                                        toothNote: Option[TreatmentNote]
                                        )
   object AddToothInformationRequest {
+    import org.vaslabs.granger.v2json._
     import io.circe.generic.auto._
-    import org.vaslabs.granger.json._
     implicit val encoder: Encoder[AddToothInformationRequest] = deriveEncoder[AddToothInformationRequest]
     implicit val decoder: Decoder[AddToothInformationRequest] = deriveDecoder[AddToothInformationRequest]
   }

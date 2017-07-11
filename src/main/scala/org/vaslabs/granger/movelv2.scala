@@ -57,11 +57,10 @@ object v2json {
       Right(a)
   }
 
-  implicit val medicamentDecoder: Decoder[Option[Medicament]] =
-    deriveDecoder[Option[Medicament]].map(
-      o =>
-        o.flatMap(medicament =>
-          verifyNonEmptyString(medicament.name, medicament).toOption)
+  implicit val medicamentDecoder: Decoder[Medicament] =
+    deriveDecoder[Medicament].emap(
+      medicament =>
+          verifyNonEmptyString(medicament.name, medicament)
     )
 
   implicit val patientIdEncoder: Encoder[PatientId] =
@@ -73,18 +72,15 @@ object v2json {
     KeyDecoder[Long].map(PatientId(_))
   implicit val patientIdKeyEncoder: KeyEncoder[PatientId] =
     KeyEncoder[Long].contramap[PatientId](_.id)
-  implicit val treatmentNoteDecoder: Decoder[Option[TreatmentNote]] =
-    deriveDecoder[Option[TreatmentNote]].map(
-      o =>
-        o.flatMap(tn =>
-          verifyNonEmptyString[TreatmentNote](tn.note, tn).toOption)
+  implicit val treatmentNoteDecoder: Decoder[TreatmentNote] =
+    deriveDecoder[TreatmentNote].emap(
+      tn =>
+          verifyNonEmptyString[TreatmentNote](tn.note, tn)
     )
 
-  implicit val nextVisitDecoder: Decoder[Option[NextVisit]] =
-    deriveDecoder[Option[NextVisit]].map(
-      o =>
-        o.flatMap(nv =>
-          model.verifyNonEmptyString[NextVisit](nv.notes, nv).toOption)
+  implicit val nextVisitDecoder: Decoder[NextVisit] =
+    deriveDecoder[NextVisit].emap(
+      nv => model.verifyNonEmptyString[NextVisit](nv.notes, nv)
     )
 
   implicit val patientEncoder: Encoder[Patient] = deriveEncoder[Patient]

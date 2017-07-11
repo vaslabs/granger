@@ -12,8 +12,8 @@ import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.spa.StaticResources
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
-import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
+import org.vaslabs.granger.v2json._
 
 import scala.concurrent.Future
 /**

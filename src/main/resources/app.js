@@ -86,11 +86,17 @@ app.controller('MainController', function($q, $http) {
         });
     };
 
+    function completedTreatmentsCount(treatments) {
+        return treatments.filter(function (t) { return t.dateCompleted != null}).length;
+    }
+
     ctrl.treatmentsCompletedClass = function(tooth) {
         if (tooth.treatments == null || tooth.treatments.length == 0)
             return "";
         if (tooth.treatments[0].dateCompleted == null)
             return "orange";
+        else if (completedTreatmentsCount(tooth.treatments) > 1)
+            return "red";
         else
             return "green";
     };
