@@ -23,3 +23,31 @@ dockerComposeUp
 # Information for contributors
 
 - When you make a front-end change, please consult http://materializecss.com/
+- Do
+```bash
+docker build -t git-server git-server/ to build a new git server docker
+```
+- To build a granger docker do
+```
+sbt docker
+```
+- To bring the dockers up do
+```
+docker-compose up
+```
+Then go to granger with
+```
+docker exec -it <granger_docker_container_hash> bash
+```
+and run
+
+```
+ssh -oHostKeyAlgorithms='ssh-rsa' git@git-server
+```
+
+Now browse localhost:8080 . It should show a git uri placeholder. Put
+```
+ssh://git@git-server/git-server/repos/granger_repo
+```
+Press submit and put the ssh key in the git server docker (/home/git/.ssh/authorized_keys) and copy the id_rsa.pub key from granger docker to
+/git-server/keys/

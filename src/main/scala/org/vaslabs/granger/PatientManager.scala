@@ -83,8 +83,10 @@ class PatientManager private (
     case LatestActivity(patientId) =>
       grangerRepo.getLatestActivity(patientId) pipeTo sender()
     case StartTreatment(patientId, toothId, category) =>
+      schedulePushJob()
       grangerRepo.startTreatment(patientId, toothId, category) pipeTo sender()
     case FinishTreatment(patientId, toothId) =>
+      schedulePushJob()
       grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
   }
 

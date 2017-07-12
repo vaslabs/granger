@@ -30,6 +30,7 @@ object Main {
 
         val dbDirectory = new File(config.repoLocation)
 
+
         if (!dbDirectory.exists()) {
           Git.init().setDirectory(dbDirectory)
             .setBare(false)

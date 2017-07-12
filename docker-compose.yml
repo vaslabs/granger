@@ -1,6 +1,15 @@
 version: '2'
 services:
+  git-server:
+    image: alpine/git-server
+    build: git-server/
+    ports:
+      - "2222:22"
+
+
   granger:
     image: org.vaslabs/granger
+    depends_on:
+      - git-server
     command: /app/bin/granger
     ports: ["8080:8080"]

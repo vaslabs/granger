@@ -38,15 +38,16 @@ class GitRepoPusher private (grangerRepo: GrangerRepo[Map[PatientId, Patient], F
   private def scheduledJob: Receive = {
     case PushChanges =>
       grangerRepo.pushChanges().onComplete({
-        job =>
-          if (job.isSuccess) {
+        job => job.fold(
+          t => {
+            log.warning(s"Push to remote repository failed. Backups may become out of sync: ${t}")
+            schedulePushJob()
+          },
+          _ => {
             log.info(s"Push to remote repository. Last push: ${ZonedDateTime.now()}")
             context.become(receive)
           }
-          else {
-            log.warning("Push to remote repository failed. Backups may become out of sync")
-            schedulePushJob()
-          }
+        )
       })
   }
 }

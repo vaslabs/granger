@@ -24,18 +24,16 @@ class GitRepo(dbLocation: File, snapshotFile: String)(implicit gitApi: Git)
   implicit val payloadEncoder: PayloadEncoder[Map[PatientId, Patient]] =
     (a: Map[PatientId, Patient]) => a.asJson.noSpaces
 
-  private def setUpRemote(remoteRepo: RemoteRepo): StatusCode = {
-    Try {
-      val remoteAddCommand = gitApi.remoteAdd()
-      remoteAddCommand.setName("origin")
-      remoteAddCommand.setUri(new URIish(remoteRepo.uri))
-      val file = new File(s"${dbLocation.getAbsolutePath}/$snapshotFile")
-      file.createNewFile()
-      remoteAddCommand.call()
-      save("Empty db file", Map.empty)
-    }.map(_ => StatusCodes.Created)
-      .getOrElse(StatusCodes.InternalServerError)
-  }
+  private def setUpRemote(remoteRepo: RemoteRepo): StatusCode = Try {
+    val remoteAddCommand = gitApi.remoteAdd()
+    remoteAddCommand.setName("origin")
+    remoteAddCommand.setUri(new URIish(remoteRepo.uri))
+    val file = new File(s"${dbLocation.getAbsolutePath}/$snapshotFile")
+    file.createNewFile()
+    remoteAddCommand.call()
+    save("Empty db file", Map.empty)
+  }.map(_ => StatusCodes.Created)
+    .getOrElse(StatusCodes.InternalServerError)
 
   override def push(): Unit = gitApi.push().call()
 
