@@ -117,7 +117,7 @@ object PatientManager {
   case class FinishTreatment(patientId: PatientId, toothId: Int)
 
   case object LoadData
-  trait LoadDataOutcome
+  sealed trait LoadDataOutcome
   case object LoadDataSuccess extends LoadDataOutcome
   case class LoadDataFailure(repoState: RepoErrorState) extends LoadDataOutcome
   case object MigrationFailure extends LoadDataOutcome
