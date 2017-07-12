@@ -19,7 +19,7 @@ object GitRepoPusher {
     Props(new GitRepoPusher(grangerRepo))
 
   case object PushChanges
-
+  private case object DoPush
 }
 class GitRepoPusher private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Future])(implicit repo: GitRepo) extends Actor with ActorLogging{
 
@@ -27,7 +27,7 @@ class GitRepoPusher private (grangerRepo: GrangerRepo[Map[PatientId, Patient], F
   import org.vaslabs.granger.GitRepoPusher._
 
   private[this] def schedulePushJob(): Unit = {
-    context.system.scheduler.scheduleOnce(15 seconds, self, PushChanges)
+    context.system.scheduler.scheduleOnce(15 seconds, self, DoPush)
   }
   override def receive: Receive = {
     case PushChanges =>
@@ -36,7 +36,7 @@ class GitRepoPusher private (grangerRepo: GrangerRepo[Map[PatientId, Patient], F
   }
 
   private def scheduledJob: Receive = {
-    case PushChanges =>
+    case DoPush =>
       grangerRepo.pushChanges().onComplete({
         job => job.fold(
           t => {
