@@ -9,7 +9,6 @@ organization := "org.vaslabs"
 val akkaVersion = "2.5.2"
 val circeVersion = "0.8.0"
 
-
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % "10.0.9",
@@ -33,7 +32,6 @@ enablePlugins(DockerComposePlugin)
 enablePlugins(UniversalPlugin)
 parallelExecution in ThisBuild := false
 
-
 dockerfile in docker := {
   val appDir: File = stage.value
   val targetDir = "/app"
@@ -42,12 +40,14 @@ dockerfile in docker := {
     from("java")
     entryPoint(s"$targetDir/bin/${executableScriptName.value}")
     copy(appDir, targetDir)
-    runRaw("apt-get update && apt-get install -y zip unzip openssh-client git && git config --global user.name \"granger\" && git config --global user.email \"granger@vaslabs.org\"")
+    runRaw(
+      "apt-get update && apt-get install -y zip unzip python-fontforge openssh-client git && git config --global user.name \"granger\" && git config --global user.email \"granger@vaslabs.org\"")
     runRaw("useradd -ms /bin/bash granger")
     runRaw("echo StrictHostKeyChecking no >>/etc/ssh/ssh_config")
     user("granger")
     workDir("/home/granger")
-    runRaw("mkdir -p $HOME/.ssh && cd /home/granger/.ssh && ssh-keygen -q -t rsa -N '' -f id_rsa")
+    runRaw(
+      "mkdir -p $HOME/.ssh && cd /home/granger/.ssh && ssh-keygen -q -t rsa -N '' -f id_rsa")
   }
 }
 buildOptions in docker := BuildOptions(cache = false)
