@@ -32,6 +32,9 @@ enablePlugins(DockerComposePlugin)
 enablePlugins(UniversalPlugin)
 parallelExecution in ThisBuild := false
 
+import NativePackagerHelper._
+mappings in Universal ++= directory(s"${baseDirectory.value}/static")
+
 dockerfile in docker := {
   val appDir: File = stage.value
   val targetDir = "/app"
@@ -45,7 +48,7 @@ dockerfile in docker := {
     runRaw("useradd -ms /bin/bash granger")
     runRaw("echo StrictHostKeyChecking no >>/etc/ssh/ssh_config")
     user("granger")
-    workDir("/home/granger")
+    workDir("/app/")
     runRaw(
       "mkdir -p $HOME/.ssh && cd /home/granger/.ssh && ssh-keygen -q -t rsa -N '' -f id_rsa")
   }
