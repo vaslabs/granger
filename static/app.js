@@ -221,6 +221,7 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.selectTooth = function(tooth) {
         ctrl.selectedTooth = tooth;
+        ctrl.selectedTreatment = null;
     };
 
     ctrl.firstTeethRow = function(criteria) {
