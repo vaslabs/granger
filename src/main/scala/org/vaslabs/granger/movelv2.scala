@@ -80,7 +80,7 @@ object v2json {
 
   implicit val nextVisitDecoder: Decoder[NextVisit] =
     deriveDecoder[NextVisit].emap(
-      nv => model.verifyNonEmptyString[NextVisit](nv.notes, nv)
+      nv => verifyNonEmptyString[NextVisit](nv.notes, nv)
     )
 
   implicit val patientEncoder: Encoder[Patient] = deriveEncoder[Patient]
@@ -135,19 +135,12 @@ object modelv2 {
     def update(roots: Option[List[Root]],
                medicament: Option[Medicament],
                nextVisit: Option[NextVisit],
-               treatmentNote: Option[TreatmentNote]): Tooth = {
-      treatments.headOption
-        .map(
-          t =>
-            t.dateCompleted
-              .toLeft(t)
-              .map(
-                t => t.update(roots, treatmentNote, medicament, nextVisit)
-              )
-              .getOrElse(t)
-        )
-        .map(t => t :: treatments.drop(1))
-        .map(ts => Tooth(number, ts))
+               treatmentNote: Option[TreatmentNote], startedTreatmentTimestamp: ZonedDateTime): Tooth = {
+      treatments
+        .filter(t => t.dateStarted.equals(startedTreatmentTimestamp))
+        .map(_.update(roots, treatmentNote, medicament, nextVisit))
+        .headOption
+        .map(t => Tooth(number, t :: treatments.filterNot(_.dateStarted == startedTreatmentTimestamp)))
         .getOrElse(this)
     }
 
@@ -263,43 +256,4 @@ object modelv2 {
           .sorted)
   }
 
-  private[this] def migrate(oldRoot: model.Root): modelv2.Root =
-    Root(oldRoot.name, oldRoot.size, oldRoot.thickness)
-  private[this] def migrate(oldNote: model.ToothNote): TreatmentNote =
-    TreatmentNote(oldNote.note, oldNote.dateOfNote)
-  private[this] def migrate(
-      oldMedicament: model.Medicament): modelv2.Medicament =
-    Medicament(oldMedicament.name, oldMedicament.date)
-  private[this] def migrate(oldNextVisit: model.NextVisit): modelv2.NextVisit =
-    NextVisit(oldNextVisit.notes,
-              oldNextVisit.dateOfNextVisit,
-              oldNextVisit.dateOfNote)
-
-  def migrate(oldPatient: model.Patient): modelv2.Patient = {
-    val newTeeth = oldPatient.dentalChart.teeth.map(oldTooth => {
-      val newTreatments = oldTooth.treatments.map(oldTreatment => {
-        Treatment(
-          oldTreatment.dateStarted,
-          oldTreatment.dateCompleted,
-          RepeatRootCanalTreatment(),
-          oldTooth.roots.map(migrate(_)),
-          oldTooth.notes.map(migrate(_)),
-          oldTooth.medicaments.map(migrate(_)),
-          oldTooth.nextVisits.map(migrate(_))
-        )
-      })
-      val refined = newTreatments.headOption
-        .map(_.copy(category = RootCanalTreatment()))
-        .map(
-          _ :: newTreatments.drop(0)
-        )
-        .getOrElse(newTreatments)
-      Tooth(oldTooth.number, refined)
-    })
-    modelv2.Patient(PatientId(oldPatient.patientId.id),
-                    oldPatient.firstName,
-                    oldPatient.lastName,
-                    oldPatient.dateOfBirth,
-                    DentalChart(newTeeth.sorted))
-  }
 }

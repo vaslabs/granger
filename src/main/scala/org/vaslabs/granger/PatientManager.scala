@@ -46,18 +46,12 @@ class PatientManager private (
       context.become(receivePostLoad)
     case LoadDataFailure(repoState) =>
       repoState match {
-        case UnparseableSchema(msg) =>
-          Migrations.attemptSchemaMigrationToV2(grangerConfig) pipeTo self
         case EmptyRepo =>
           context.become(settingUp)
         case _ =>
-          self ! MigrationFailure
+          log.error("Failed to load repo: " + repoState)
+          self ! PoisonPill
       }
-    case MigrationFailure =>
-      log.error(s"Fatal error: Schema migration failed")
-      self ! PoisonPill
-    case MigrationSuccess =>
-      self ! LoadData
   }
 
   def settingUp: Receive = {
@@ -120,7 +114,5 @@ object PatientManager {
   sealed trait LoadDataOutcome
   case object LoadDataSuccess extends LoadDataOutcome
   case class LoadDataFailure(repoState: RepoErrorState) extends LoadDataOutcome
-  case object MigrationFailure extends LoadDataOutcome
-  case object MigrationSuccess extends LoadDataOutcome
 
 }

@@ -65,7 +65,7 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
           .find(_.number == rq.toothNumber)
           .map(
             tooth =>
-              tooth.update(rq.roots, rq.medicament, rq.nextVisit, rq.toothNote)
+              tooth.update(rq.roots, rq.medicament, rq.nextVisit, rq.toothNote, rq.treatmentStarted)
           )
           .map(tooth => patient.update(tooth))
           .map(p => state + (patient.patientId -> p))

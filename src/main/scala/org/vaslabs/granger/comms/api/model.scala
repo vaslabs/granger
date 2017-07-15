@@ -17,7 +17,8 @@ object model {
                                        medicament: Option[Medicament],
                                        nextVisit: Option[NextVisit],
                                        roots: Option[List[Root]],
-                                       toothNote: Option[TreatmentNote]
+                                       toothNote: Option[TreatmentNote],
+                                       treatmentStarted: ZonedDateTime
                                        )
   object AddToothInformationRequest {
     import org.vaslabs.granger.v2json._
