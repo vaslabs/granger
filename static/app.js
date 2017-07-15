@@ -294,7 +294,8 @@ app.controller('MainController', function($q, $http) {
             "toothNumber": ctrl.selectedTooth.number,
             "medicament": medicament(),
             "nextVisit": nextVisit(),
-            "toothNote": toothNote()
+            "toothNote": toothNote(),
+            "treatmentStarted": ctrl.selectedTreatment.dateStarted
         };
         data.roots = ctrl.rootDetails.filter(function(item) {return item.name != "" && item.size != "" && item.length != "";});
 
