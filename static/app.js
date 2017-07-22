@@ -172,6 +172,12 @@ app.controller('MainController', function($q, $http) {
         length: ""
     }];
 
+    ctrl.obturationDetails = [{
+        name: "",
+        size: "",
+        length: ""
+    }];
+
     function clearEditData() {
         ctrl.toothEditing = {
             medicament: "",
@@ -219,23 +225,33 @@ app.controller('MainController', function($q, $http) {
     };
 
     ctrl.deselectTooth = function() {
-        ctrl.selectedTooth = null;
-        ctrl.selectedTreatment = null;
-        ctrl.rootDetails = [{
-           name: "",
-           size: "",
-           length: ""
-        }];
-
+        resetEditData();
     };
+
+    function resetEditData() {
+       ctrl.selectedTooth = null;
+       ctrl.selectedTreatment = null;
+       ctrl.allowRootFocus = false;
+       ctrl.allowObturationFocus = false;
+       ctrl.rootDetails = [{
+          name: "",
+          size: "",
+          length: ""
+       }];
+       ctrl.obturationDetails = [{
+         name: "",
+         size: "",
+         length: ""
+      }];
+    }
 
     ctrl.init_treatments_ui = function() {
         $('select').material_select();
     };
 
     ctrl.selectTooth = function(tooth) {
+        resetEditData();
         ctrl.selectedTooth = tooth;
-        ctrl.selectedTreatment = null;
     };
 
     ctrl.firstTeethRow = function(criteria) {
@@ -300,8 +316,12 @@ app.controller('MainController', function($q, $http) {
     ctrl.selectedTreatment = null;
 
     ctrl.selectTreatment = function(treatment) {
+        ctrl.allowObturationFocus = false;
+        ctrl.allowRootFocus = false;
         ctrl.selectedTreatment = treatment;
     };
+
+    var filterOutEmptyRoots = function(item) {return item.name != "" && item.size != "" && item.length != "";};
 
     ctrl.pushChanges = function() {
         var data = {
@@ -312,8 +332,10 @@ app.controller('MainController', function($q, $http) {
             "toothNote": toothNote(),
             "treatmentStarted": ctrl.selectedTreatment.dateStarted
         };
-        data.roots = ctrl.rootDetails.filter(function(item) {return item.name != "" && item.size != "" && item.length != "";});
 
+        data.roots = ctrl.rootDetails.filter(filterOutEmptyRoots);
+
+        data.obturation = ctrl.obturationDetails.filter(filterOutEmptyRoots);
 
         $http({
             method: "post",
@@ -345,8 +367,13 @@ app.controller('MainController', function($q, $http) {
        }
     });
 
+    ctrl.allowRootFocus = false;
+    ctrl.allowObturationFocus = false;
+
     ctrl.addRootRow = function() {
-        var emptyRows = ctrl.rootDetails.filter(function(item) {return item.name == "" || item.size == "" || item.length == "";});
+        var emptyRows = ctrl.rootDetails.filter(filterOutEmptyRoots);
+        ctrl.allowRootFocus = true;
+        ctrl.allowObturationFocus = false;
         if (emptyRows.length == 0) {
             ctrl.rootDetails.push({
               name: "",
@@ -355,4 +382,17 @@ app.controller('MainController', function($q, $http) {
             });
         }
     };
+
+    ctrl.addObturationRow = function() {
+            var emptyRows = ctrl.obturationDetails.filter(filterOutEmptyRoots);
+            ctrl.allowObturationFocus = true;
+            ctrl.allowRootFocus = false;
+            if (emptyRows.length == 0) {
+                ctrl.obturationDetails.push({
+                  name: "",
+                  size: "",
+                  length: ""
+                });
+            }
+        };
 });

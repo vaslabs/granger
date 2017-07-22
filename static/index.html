@@ -144,13 +144,42 @@
                                                 </tr>
                                                 <tr ng-if="ctrl.toothEditMode" ng-repeat="root in ctrl.rootDetails">
                                                     <td>
-                                                        <input type="text" class="validate" ng-model="root.name" ng-enter="ctrl.addRootRow()" focus-me="root.name==null || root.name == ''">
+                                                        <input type="text" class="validate" ng-model="root.name" ng-enter="ctrl.addRootRow()" focus-me="(root.name==null || root.name == '') && ctrl.allowRootFocus">
                                                     </td>
                                                     <td>
                                                         <input type="text" class="validate" ng-model="root.length" ng-enter="ctrl.addRootRow()">
                                                     </td>
                                                     <td>
                                                         <input type="text" class="validate" ng-model="root.size" ng-enter="ctrl.addRootRow()">
+                                                    </td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                            <hr />
+                                            <h4>Obturation</h4>
+                                            <table class="striped">
+                                                <thead>
+                                                <tr>
+                                                    <td>Name</td>
+                                                    <td>Length</td>
+                                                    <td>Size</td>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                <tr ng-if="!ctrl.toothEditMode" ng-repeat="root in ctrl.selectedTreatment.obturation">
+                                                    <td>{{root.name}}</td>
+                                                    <td>{{root.length}}</td>
+                                                    <td>{{root.size}}</td>
+                                                </tr>
+                                                <tr ng-if="ctrl.toothEditMode" ng-repeat="root in ctrl.obturationDetails">
+                                                    <td>
+                                                        <input type="text" class="validate" ng-model="root.name" ng-enter="ctrl.addObturationRow()" focus-me="(root.name==null || root.name == '') && ctrl.allowObturationFocus">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" class="validate" ng-model="root.length" ng-enter="ctrl.addObturationRow()">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" class="validate" ng-model="root.size" ng-enter="ctrl.addObturationRow()">
                                                     </td>
                                                 </tr>
                                                 </tbody>

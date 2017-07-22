@@ -25,7 +25,7 @@ class HttpRouterAddingTreatmentInfoSpec extends BaseSpec with FailFastCirceSuppo
         Post("/treatment/start", StartTreatment(PatientId(1), 11, RootCanalTreatment())) ~> httpRouter.routes ~> check {
           responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe List(Treatment(ZonedDateTime.now(clock), None, RootCanalTreatment()))
         }
-        val request = AddToothInformationRequest(PatientId(1), 11, None, None, Some(List(Root("MB2", 19, "F2"))), None, ZonedDateTime.now(clock)).asJson
+        val request = AddToothInformationRequest(PatientId(1), 11, None, None, Some(List(Root("MB2", 19, "F2"))), None, None, ZonedDateTime.now(clock)).asJson
         println(request.noSpaces)
         Post("/update", request) ~> httpRouter.routes ~> check {
           responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments.head.roots shouldBe List(Root("MB2", 19, "F2"))
