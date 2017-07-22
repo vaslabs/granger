@@ -37,7 +37,12 @@ class PatientManager private (
     new GitRepo(new File(grangerConfig.repoLocation), "patients.json")
 
   val gitRepoPusher: ActorRef =
-    context.actorOf(GitRepoPusher.props(grangerRepo))
+    context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
+
+  val rememberInputAgent: ActorRef =
+    context.actorOf(RememberInputAgent.props(5), "rememberInputAgent")
+
+
 
   override def receive: Receive = {
     case LoadData =>
@@ -73,6 +78,7 @@ class PatientManager private (
       grangerRepo.addPatient(patient) pipeTo senderRef
     case rq: AddToothInformationRequest =>
       schedulePushJob()
+      rememberInputAgent ! rq
       grangerRepo.addToothInfo(rq) pipeTo sender()
     case LatestActivity(patientId) =>
       grangerRepo.getLatestActivity(patientId) pipeTo sender()
@@ -82,6 +88,9 @@ class PatientManager private (
     case FinishTreatment(patientId, toothId) =>
       schedulePushJob()
       grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
+    case RememberedData =>
+      rememberInputAgent forward RememberInputAgent.GetData
+
   }
 
   private[this] def schedulePushJob(): Unit = {
@@ -115,4 +124,5 @@ object PatientManager {
   case object LoadDataSuccess extends LoadDataOutcome
   case class LoadDataFailure(repoState: RepoErrorState) extends LoadDataOutcome
 
+  case object RememberedData
 }
