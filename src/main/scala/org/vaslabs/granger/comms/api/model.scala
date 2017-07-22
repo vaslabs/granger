@@ -18,6 +18,7 @@ object model {
                                        nextVisit: Option[NextVisit],
                                        roots: Option[List[Root]],
                                        toothNote: Option[TreatmentNote],
+                                       obturation: Option[List[Root]],
                                        treatmentStarted: ZonedDateTime
                                        )
   object AddToothInformationRequest {

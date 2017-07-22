@@ -113,20 +113,24 @@ object modelv2 {
                        roots: List[Root] = List.empty,
                        notes: List[TreatmentNote] = List.empty,
                        medicaments: List[Medicament] = List.empty,
-                       nextVisits: List[NextVisit] = List.empty) {
+                       nextVisits: List[NextVisit] = List.empty,
+                       obturation: Option[List[Root]] = Some(List.empty)) {
     def update(roots: Option[List[Root]],
                note: Option[TreatmentNote],
                medicament: Option[Medicament],
-               nextVisit: Option[NextVisit]): Treatment = {
+               nextVisit: Option[NextVisit],
+               obturation: Option[List[Root]]): Treatment = {
       val newNotes = note.map(_ :: notes).getOrElse(notes)
       val newMedicaents =
         medicament.map(_ :: medicaments).getOrElse(medicaments)
       val newNextVisits = nextVisit.map(_ :: nextVisits).getOrElse(nextVisits)
       val newRoots = roots.getOrElse(this.roots)
+      val newObturation = obturation.getOrElse(this.obturation.getOrElse(List.empty))
       copy(roots = newRoots,
            notes = newNotes,
            medicaments = newMedicaents,
-           nextVisits = newNextVisits)
+           nextVisits = newNextVisits,
+           obturation = Some(newObturation))
     }
   }
 
@@ -135,10 +139,11 @@ object modelv2 {
     def update(roots: Option[List[Root]],
                medicament: Option[Medicament],
                nextVisit: Option[NextVisit],
-               treatmentNote: Option[TreatmentNote], startedTreatmentTimestamp: ZonedDateTime): Tooth = {
+               treatmentNote: Option[TreatmentNote], startedTreatmentTimestamp: ZonedDateTime,
+               obturation: Option[List[Root]]): Tooth = {
       treatments
         .filter(t => t.dateStarted.equals(startedTreatmentTimestamp))
-        .map(_.update(roots, treatmentNote, medicament, nextVisit))
+        .map(_.update(roots, treatmentNote, medicament, nextVisit, obturation))
         .headOption
         .map(t => Tooth(number, t :: treatments.filterNot(_.dateStarted == startedTreatmentTimestamp)))
         .getOrElse(this)
