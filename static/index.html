@@ -294,6 +294,12 @@
                     </div>
 
                     <div class="row">
+                        <div class="input-field col s12">
+                            <i class="material-icons prefix">search</i>
+                            <input type="text" class="validate" ng-model="ctrl.searchText">
+                        </div>
+                    </div>
+                    <div class="row">
                         <table id="allpatients" class="highlight scale-transition">
                             <thead>
                             <tr>
@@ -304,7 +310,7 @@
                             </thead>
 
                             <tbody>
-                                <tr ng-click="ctrl.selectPatient(patient)" ng-repeat="patient in ctrl.allPatients">
+                                <tr ng-click="ctrl.selectPatient(patient)" ng-repeat="patient in ctrl.allPatients | filter: ctrl.searchText" ng-if="ctrl.searchText != null && ctrl.searchText.length > 2">
                                     <td>{{patient.patientId}}</td>
                                     <td>{{patient.firstName}}</td>
                                     <td>{{patient.lastName}}</td>

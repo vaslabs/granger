@@ -73,6 +73,7 @@ app.controller('MainController', function($q, $http) {
         });
     };
 
+    ctrl.searchText = null;
 
     ctrl.selectPatient = function(patient) {
       ctrl.selectedPatient = patient;
