@@ -48,4 +48,6 @@ object model {
   case class PubKey(value: String)
 
   case class RemoteRepo(uri: String)
+
+  case class AutocompleteSuggestions(medicamentNames: List[String])
 }

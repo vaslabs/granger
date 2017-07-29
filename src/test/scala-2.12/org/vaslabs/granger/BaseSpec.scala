@@ -8,13 +8,15 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import io.circe.{Decoder, Encoder}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.scalatest.{Assertion, AsyncFlatSpecLike, BeforeAndAfterAll, Matchers}
 import org.vaslabs.granger.PatientManager.LoadData
 import org.vaslabs.granger.comms.{HttpRouter, WebServer}
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.SingleStateGrangerRepo
-import org.vaslabs.granger.repo.git.GitRepo
+import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
 import scala.concurrent.Await
 
@@ -26,7 +28,8 @@ trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll wi
 
   val config = GrangerConfig(tmpDir, keysLocation = "/tmp/.ssh")
 
-  val gitRepo: GitRepo = new GitRepo(new File(tmpDir), "patients.json")
+  import v2json._
+  implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
   override def beforeAll() = {
     val dir = new File(tmpDir)
@@ -63,6 +66,8 @@ trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll wi
       .build()
   }
   implicit val git: Git = new Git(repository)
+
+  val gitRepo: GitRepo[Map[PatientId, Patient]] = new GitRepo(new File(tmpDir), "patients.json")
 
   import akka.pattern._
 

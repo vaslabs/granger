@@ -73,6 +73,10 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
           rq => complete(finishTreatment(rq))
         }
       }
+    } ~ path("api" / "remember") {
+      get {
+        complete(rememberedData())
+      }
     }
   }
 

@@ -10,12 +10,7 @@ import akka.pattern._
 import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager._
-import org.vaslabs.granger.comms.api.model.{
-  Activity,
-  AddToothInformationRequest,
-  PubKey,
-  RemoteRepo
-}
+import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.repo.RepoErrorState
 
@@ -78,5 +73,9 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
   override def finishTreatment(
       finishTreatment: FinishTreatment): Future[Patient] =
     (patientManager ? finishTreatment).mapTo[Patient]
+
+  override def rememberedData(): Future[AutocompleteSuggestions] = {
+    (patientManager ? RememberedData).mapTo[AutocompleteSuggestions]
+  }
 
 }

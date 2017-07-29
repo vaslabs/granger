@@ -47,6 +47,15 @@ app.controller('MainController', function($q, $http) {
         });
     }
 
+    function getRememberData() {
+        return $http({
+            method: "get",
+            url: '/api/remember',
+        }).then(function(resp) {
+            return resp.data;
+        });
+    }
+
     ctrl.publicKey = null;
 
     ctrl.requestPublicKey = function() {
@@ -285,8 +294,11 @@ app.controller('MainController', function($q, $http) {
     function medicament() {
         if (ctrl.toothEditing.medicament == null || ctrl.toothEditing.medicament == "")
             return null;
+        var med = ctrl.toothEditing.medicament;
+        if (ctrl.medicamentSuggestions.indexOf(med) < 0)
+            ctrl.medicamentSuggestions.push(med);       
         return {
-            "name":ctrl.toothEditing.medicament,
+            "name":med,
             "date":now()
         };
     }
@@ -368,6 +380,10 @@ app.controller('MainController', function($q, $http) {
        }
     });
 
+    getRememberData().then(function(medicaments) {
+        ctrl.medicamentSuggestions = medicaments.medicamentNames;
+    });
+
     ctrl.allowRootFocus = false;
     ctrl.allowObturationFocus = false;
 
@@ -375,25 +391,24 @@ app.controller('MainController', function($q, $http) {
         var emptyRows = ctrl.rootDetails.filter(filterOutEmptyRoots);
         ctrl.allowRootFocus = true;
         ctrl.allowObturationFocus = false;
-        if (emptyRows.length == 0) {
-            ctrl.rootDetails.push({
-              name: "",
-              size: "",
-              length: ""
-            });
-        }
+        ctrl.rootDetails.push({
+          name: "",
+          size: "",
+          length: ""
+        });
     };
+
+    ctrl.medicamentSuggestions = [
+    ];
 
     ctrl.addObturationRow = function() {
             var emptyRows = ctrl.obturationDetails.filter(filterOutEmptyRoots);
             ctrl.allowObturationFocus = true;
             ctrl.allowRootFocus = false;
-            if (emptyRows.length == 0) {
-                ctrl.obturationDetails.push({
-                  name: "",
-                  size: "",
-                  length: ""
-                });
-            }
+            ctrl.obturationDetails.push({
+              name: "",
+              size: "",
+              length: ""
+            });
         };
 });

@@ -85,6 +85,9 @@ object v2json {
 
   implicit val patientEncoder: Encoder[Patient] = deriveEncoder[Patient]
   implicit val patientDecoder: Decoder[Patient] = deriveDecoder[Patient]
+
+  implicit val repoEncoder: Encoder[Map[PatientId, Patient]] = Encoder.encodeMapLike[Map, PatientId, Patient]
+  implicit val repoDecoder: Decoder[Map[PatientId, Patient]] = Decoder.decodeMapLike[Map, PatientId, Patient]
 }
 
 object modelv2 {
