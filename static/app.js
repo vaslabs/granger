@@ -47,6 +47,15 @@ app.controller('MainController', function($q, $http) {
         });
     }
 
+    function getRememberData() {
+        return $http({
+            method: "get",
+            url: '/api/remember',
+        }).then(function(resp) {
+            return resp.data;
+        });
+    }
+
     ctrl.publicKey = null;
 
     ctrl.requestPublicKey = function() {
@@ -285,9 +294,11 @@ app.controller('MainController', function($q, $http) {
     function medicament() {
         if (ctrl.toothEditing.medicament == null || ctrl.toothEditing.medicament == "")
             return null;
-        ctrl.medicamentSuggestions.push(ctrl.toothEditing.medicament)
+        var med = ctrl.toothEditing.medicament;
+        if (ctrl.medicamentSuggestions.indexOf(med) < 0)
+            ctrl.medicamentSuggestions.push(med);       
         return {
-            "name":ctrl.toothEditing.medicament,
+            "name":med,
             "date":now()
         };
     }
@@ -367,6 +378,10 @@ app.controller('MainController', function($q, $http) {
         ctrl.repoReady = true;
         ctrl.allPatients = patients;
        }
+    });
+
+    getRememberData().then(function(medicaments) {
+        ctrl.medicamentSuggestions = medicaments.medicamentNames;
     });
 
     ctrl.allowRootFocus = false;
