@@ -3,7 +3,7 @@ package org.vaslabs.granger.repo.git
 import java.io.File
 
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
-import io.circe.parser
+import io.circe.{Decoder, Encoder, parser}
 import io.circe.syntax._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.URIish
@@ -18,11 +18,12 @@ import scala.util.Try
 /**
   * Created by vnicolaou on 29/06/17.
   */
-class GitRepo(dbLocation: File, snapshotFile: String)(implicit gitApi: Git)
-    extends Repo[Map[PatientId, Patient]] {
+class GitRepo[A](dbLocation: File, snapshotFile: String)(implicit gitApi: Git, emptyProvider: EmptyProvider[A], encoder: Encoder[A],
+                                                         decoder: Decoder[A])
+    extends Repo[A] {
 
-  implicit val payloadEncoder: PayloadEncoder[Map[PatientId, Patient]] =
-    (a: Map[PatientId, Patient]) => a.asJson.noSpaces
+  implicit val payloadEncoder: PayloadEncoder[A] =
+    (a: A) => a.asJson.noSpaces
 
   private def setUpRemote(remoteRepo: RemoteRepo): StatusCode = Try {
     val remoteAddCommand = gitApi.remoteAdd()
@@ -31,17 +32,17 @@ class GitRepo(dbLocation: File, snapshotFile: String)(implicit gitApi: Git)
     val file = new File(s"${dbLocation.getAbsolutePath}/$snapshotFile")
     file.createNewFile()
     remoteAddCommand.call()
-    save("Empty db file", Map.empty)
+    save("Empty db file", emptyProvider.empty)
   }.map(_ => StatusCodes.Created)
     .getOrElse(StatusCodes.InternalServerError)
 
   override def push(): Unit = gitApi.push().call()
 
   override def save(message: String,
-                    a: Map[PatientId, Patient]): Either[IOError, File] =
+                    a: A): Either[IOError, File] =
     saveTo(snapshotFile, dbLocation, a, message)
 
-  override def getState(): Either[RepoErrorState, Map[PatientId, Patient]] = {
+  override def getState(): Either[RepoErrorState, A] = {
     getFile(snapshotFile, dbLocation)
       .map(file => {
         Source.fromFile(file).mkString
@@ -50,7 +51,7 @@ class GitRepo(dbLocation: File, snapshotFile: String)(implicit gitApi: Git)
         jsonString =>
           parser
             .parse(jsonString)
-            .flatMap(_.as[Map[PatientId, Patient]])
+            .flatMap(_.as[A])
             .left
             .map(error => UnparseableSchema(error.getMessage))
       )

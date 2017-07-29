@@ -49,5 +49,5 @@ object model {
 
   case class RemoteRepo(uri: String)
 
-  case class AutocompleteSuggestions(medicamentNames: List[String], rootNames: List[String])
+  case class AutocompleteSuggestions(medicamentNames: List[String])
 }

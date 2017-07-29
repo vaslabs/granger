@@ -4,23 +4,17 @@ import java.io.File
 import java.time.Clock
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
-import org.vaslabs.granger.repo.{
-  EmptyRepo,
-  GrangerRepo,
-  RepoErrorState,
-  UnparseableSchema
-}
+import org.vaslabs.granger.repo.{EmptyRepo, GrangerRepo, RepoErrorState}
 
 import scala.concurrent.Future
 import akka.pattern.pipe
+import io.circe.{Decoder, Encoder}
 import org.eclipse.jgit.api.Git
-import org.vaslabs.granger.comms.api.model.{
-  AddToothInformationRequest,
-  RemoteRepo
-}
+import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
-import org.vaslabs.granger.modelv2.PatientId
-import org.vaslabs.granger.repo.git.GitRepo
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
 /**
   * Created by vnicolaou on 29/05/17.
@@ -33,8 +27,23 @@ class PatientManager private (
   import context.dispatcher
   import PatientManager._
 
-  implicit val gitRepo: GitRepo =
-    new GitRepo(new File(grangerConfig.repoLocation), "patients.json")
+
+  import v2json._
+  import io.circe.generic.auto._
+
+  implicit val jsonPatientsEncoder: Encoder[Map[PatientId, Patient]] = Encoder[Map[PatientId, Patient]]
+  implicit val jsonPatientsDecoder: Decoder[Map[PatientId, Patient]] = Decoder[Map[PatientId, Patient]]
+  implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
+
+  implicit val jsonSuggestionsEncoder: Encoder[MedicamentSuggestions] = Encoder[MedicamentSuggestions]
+  implicit val jsonSuggestionsDecoder: Decoder[MedicamentSuggestions] = Decoder[MedicamentSuggestions]
+  implicit val emptyRememberProvider: EmptyProvider[MedicamentSuggestions] = () => MedicamentSuggestions(List.empty)
+
+  implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
+    new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
+
+  implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
+    new GitRepo[MedicamentSuggestions](new File(grangerConfig.repoLocation), "remember.json")
 
   val gitRepoPusher: ActorRef =
     context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
