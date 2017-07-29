@@ -52,9 +52,20 @@ class PatientManager private (
     context.actorOf(RememberInputAgent.props(5), "rememberInputAgent")
 
 
+  def initialiseRememberAgent() =
+    rememberRepo.getState().map(sm => rememberInputAgent ! RememberInputAgent.LoadData(sm))
+      .left.foreach(error => {
+      error match {
+        case EmptyRepo =>
+          rememberRepo.saveNew()
+          rememberInputAgent ! RememberInputAgent.
+            LoadData(MedicamentSuggestions(List.empty))
+      }
+    })
 
   override def receive: Receive = {
     case LoadData =>
+      initialiseRememberAgent()
       log.info("Loading patient data...")
       grangerRepo.loadData() pipeTo self
     case LoadDataSuccess =>
@@ -79,6 +90,7 @@ class PatientManager private (
       schedulePushJob()
   }
 
+
   def receivePostLoad: Receive = {
     case FetchAllPatients =>
       val senderRef = sender()
@@ -101,6 +113,8 @@ class PatientManager private (
       grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
     case RememberedData =>
       rememberInputAgent forward RememberInputAgent.Suggest
+    case m: MedicamentSuggestions =>
+      rememberRepo.save(s"persisting suggestions with new medicament ${m.medicamentsUsed.apply(0).medicamentName}", m)
 
   }
 

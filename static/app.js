@@ -285,6 +285,7 @@ app.controller('MainController', function($q, $http) {
     function medicament() {
         if (ctrl.toothEditing.medicament == null || ctrl.toothEditing.medicament == "")
             return null;
+        ctrl.medicamentSuggestions.push(ctrl.toothEditing.medicament)
         return {
             "name":ctrl.toothEditing.medicament,
             "date":now()
@@ -381,6 +382,9 @@ app.controller('MainController', function($q, $http) {
           length: ""
         });
     };
+
+    ctrl.medicamentSuggestions = [
+    ];
 
     ctrl.addObturationRow = function() {
             var emptyRows = ctrl.obturationDetails.filter(filterOutEmptyRoots);

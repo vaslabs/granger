@@ -17,9 +17,11 @@ import scala.util.Try
 /**
   * Created by vnicolaou on 29/06/17.
   */
-class GitRepo[A](dbLocation: File, snapshotFile: String)(implicit gitApi: Git, emptyProvider: EmptyProvider[A], encoder: Encoder[A],
-                                                         decoder: Decoder[A])
-    extends Repo[A] {
+class GitRepo[A](dbLocation: File, snapshotFile: String)(
+    implicit gitApi: Git, emptyProvider: EmptyProvider[A],
+    encoder: Encoder[A], decoder: Decoder[A])
+      extends Repo[A]
+{
 
   implicit val payloadEncoder: PayloadEncoder[A] =
     (a: A) => a.asJson.noSpaces
@@ -60,5 +62,11 @@ class GitRepo[A](dbLocation: File, snapshotFile: String)(implicit gitApi: Git, e
     a match {
       case rr: RemoteRepo =>
         setUpRemote(rr)
+  }
+
+  override def saveNew(): Unit = {
+    val file = new File(s"${dbLocation.getAbsolutePath}/$snapshotFile")
+    file.createNewFile()
+    save(s"Empty db file ${snapshotFile}", emptyProvider.empty)
   }
 }
