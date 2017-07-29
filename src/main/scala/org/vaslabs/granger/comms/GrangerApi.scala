@@ -29,6 +29,6 @@ trait GrangerApi[F[_]] {
 
   def finishTreatment(finishTreatment: FinishTreatment): Future[Patient]
 
-  def rememberData(): Future[RememberData]
+  def rememberedData(): Future[AutocompleteSuggestions]
 
 }

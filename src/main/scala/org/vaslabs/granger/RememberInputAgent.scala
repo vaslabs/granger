@@ -3,9 +3,10 @@ package org.vaslabs.granger
 
 import akka.actor.{Actor, Props, Stash}
 import akka.pattern._
+import akka.util.Timeout
 import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 import org.vaslabs.granger.modelv2.Medicament
-
+import scala.concurrent.duration._
 /**
   * Created by vnicolaou on 22/07/17.
   */
@@ -15,13 +16,15 @@ object RememberInputAgent {
 
   case class Suggestion(suggestions: Set[String])
 
-  case object GetData
+  case object Suggest
 }
 
 class RememberInputAgent private(maxRememberSize: Int) extends Actor{
 
-  import RememberInputAgent.{GetData, Suggestion}
+  import RememberInputAgent.{Suggest, Suggestion}
   import context.dispatcher
+
+  implicit val timeout = Timeout(1 second)
 
   val medicamentAgent = context.actorOf(MedicamentAgent.props(maxRememberSize), "MedicamentAgent")
 
@@ -35,9 +38,9 @@ class RememberInputAgent private(maxRememberSize: Int) extends Actor{
       input.roots.foreach(
         roots => roots.foreach(rootAgent ! _)
       )
-    case GetData =>
-      (medicamentAgent ? MedicamentAgent.Suggest).mapTo[Set[Medicament]]
-          .map(suggestions => Suggestion(suggestions.map(_.name))) pipeTo sender()
+    case Suggest =>
+      (medicamentAgent ? MedicamentAgent.Suggest).mapTo[MedicamentAgent.Suggestion]
+            .map(ms => Suggestion(ms.medicamentNames)) pipeTo sender()
   }
 }
 
@@ -48,7 +51,7 @@ object MedicamentAgent {
 
   case object Init
   case object Suggest
-  case class Suggestion(medicaments: Set[Medicament])
+  case class Suggestion(medicamentNames: Set[String])
 }
 
 class MedicamentAgent private (maxRememberSize: Int) extends Actor with Stash {
@@ -64,7 +67,7 @@ class MedicamentAgent private (maxRememberSize: Int) extends Actor with Stash {
     case m: Medicament =>
       context.become(receivePostLoad((medicaments + m)))
     case Suggest =>
-      sender() ! Suggestion(medicaments)
+      sender() ! Suggestion(medicaments.map(_.name))
   }
 
   override def receive: Receive = {
@@ -72,6 +75,8 @@ class MedicamentAgent private (maxRememberSize: Int) extends Actor with Stash {
       loadData()
     case Medicament =>
       stash()
+    case Suggest =>
+      sender() ! Suggestion(Set.empty)
   }
 }
 

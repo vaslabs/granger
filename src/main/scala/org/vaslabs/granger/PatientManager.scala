@@ -89,7 +89,7 @@ class PatientManager private (
       schedulePushJob()
       grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
     case RememberedData =>
-      rememberInputAgent forward RememberInputAgent.GetData
+      rememberInputAgent forward RememberInputAgent.Suggest
 
   }
 

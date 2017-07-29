@@ -10,8 +10,7 @@ import akka.pattern._
 import akka.util.Timeout
 import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager._
-import org.vaslabs.granger.comms.api.model
-import org.vaslabs.granger.comms.api.model.{RememberData, RememberData => _, _}
+import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.repo.RepoErrorState
 
@@ -75,8 +74,8 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
       finishTreatment: FinishTreatment): Future[Patient] =
     (patientManager ? finishTreatment).mapTo[Patient]
 
-  override def rememberData(): Future[RememberData] = {
-    (patientManager ? RememberedData).mapTo[RememberData]
+  override def rememberedData(): Future[AutocompleteSuggestions] = {
+    (patientManager ? RememberedData).mapTo[AutocompleteSuggestions]
   }
 
 }
