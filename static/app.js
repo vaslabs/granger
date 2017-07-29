@@ -375,25 +375,21 @@ app.controller('MainController', function($q, $http) {
         var emptyRows = ctrl.rootDetails.filter(filterOutEmptyRoots);
         ctrl.allowRootFocus = true;
         ctrl.allowObturationFocus = false;
-        if (emptyRows.length == 0) {
-            ctrl.rootDetails.push({
-              name: "",
-              size: "",
-              length: ""
-            });
-        }
+        ctrl.rootDetails.push({
+          name: "",
+          size: "",
+          length: ""
+        });
     };
 
     ctrl.addObturationRow = function() {
             var emptyRows = ctrl.obturationDetails.filter(filterOutEmptyRoots);
             ctrl.allowObturationFocus = true;
             ctrl.allowRootFocus = false;
-            if (emptyRows.length == 0) {
-                ctrl.obturationDetails.push({
-                  name: "",
-                  size: "",
-                  length: ""
-                });
-            }
+            ctrl.obturationDetails.push({
+              name: "",
+              size: "",
+              length: ""
+            });
         };
 });
