@@ -8,7 +8,6 @@ import io.circe.syntax._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.URIish
 import org.vaslabs.granger.comms.api.model.RemoteRepo
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo._
 import org.vaslabs.granger.v2json._
 

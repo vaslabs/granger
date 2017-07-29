@@ -28,11 +28,8 @@ trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll wi
 
   val config = GrangerConfig(tmpDir, keysLocation = "/tmp/.ssh")
 
-  implicit val jsonPatientsEncoder: Encoder[Map[PatientId, Patient]] = Encoder[Map[PatientId, Patient]]
-  implicit val jsonPatientsDecoder: Decoder[Map[PatientId, Patient]] = Decoder[Map[PatientId, Patient]]
+  import v2json._
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
-
-  val gitRepo: GitRepo[Map[PatientId, Patient]] = new GitRepo(new File(tmpDir), "patients.json")
 
   override def beforeAll() = {
     val dir = new File(tmpDir)
@@ -69,6 +66,8 @@ trait BaseSpec extends AsyncFlatSpecLike with Matchers with BeforeAndAfterAll wi
       .build()
   }
   implicit val git: Git = new Git(repository)
+
+  val gitRepo: GitRepo[Map[PatientId, Patient]] = new GitRepo(new File(tmpDir), "patients.json")
 
   import akka.pattern._
 

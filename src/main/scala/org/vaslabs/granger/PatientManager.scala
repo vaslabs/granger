@@ -30,23 +30,23 @@ class PatientManager private (
 
   import v2json._
   import io.circe.generic.auto._
+  import io.circe.generic.semiauto._
 
-  implicit val jsonPatientsEncoder: Encoder[Map[PatientId, Patient]] = Encoder[Map[PatientId, Patient]]
-  implicit val jsonPatientsDecoder: Decoder[Map[PatientId, Patient]] = Decoder[Map[PatientId, Patient]]
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
-  implicit val jsonSuggestionsEncoder: Encoder[MedicamentSuggestions] = Encoder[MedicamentSuggestions]
-  implicit val jsonSuggestionsDecoder: Decoder[MedicamentSuggestions] = Decoder[MedicamentSuggestions]
+  implicit val jsonSuggestionsEncoder: Encoder[MedicamentSuggestions] = deriveEncoder[MedicamentSuggestions]
+  implicit val jsonSuggestionsDecoder: Decoder[MedicamentSuggestions] = deriveDecoder[MedicamentSuggestions]
   implicit val emptyRememberProvider: EmptyProvider[MedicamentSuggestions] = () => MedicamentSuggestions(List.empty)
 
   implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
     new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
 
-  implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
-    new GitRepo[MedicamentSuggestions](new File(grangerConfig.repoLocation), "remember.json")
-
   val gitRepoPusher: ActorRef =
     context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
+
+
+  implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
+    new GitRepo[MedicamentSuggestions](new File(grangerConfig.repoLocation), "remember.json")
 
   val rememberInputAgent: ActorRef =
     context.actorOf(RememberInputAgent.props(5), "rememberInputAgent")
@@ -55,8 +55,10 @@ class PatientManager private (
 
   override def receive: Receive = {
     case LoadData =>
+      log.info("Loading patient data...")
       grangerRepo.loadData() pipeTo self
     case LoadDataSuccess =>
+      log.info("Done")
       context.become(receivePostLoad)
     case LoadDataFailure(repoState) =>
       repoState match {

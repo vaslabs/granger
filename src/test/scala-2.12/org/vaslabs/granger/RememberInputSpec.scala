@@ -39,8 +39,11 @@ class RememberInputSpec extends TestKit(ActorSystem("rememberInputTest")) with F
   }
   implicit val git: Git = new Git(repository)
 
-  implicit val jsonSuggestionsEncoder: Encoder[MedicamentSuggestions] = Encoder[MedicamentSuggestions]
-  implicit val jsonSuggestionsDecoder: Decoder[MedicamentSuggestions] = Decoder[MedicamentSuggestions]
+  import io.circe.generic.auto._
+  import io.circe.generic.semiauto._
+
+  implicit val jsonSuggestionsEncoder: Encoder[MedicamentSuggestions] = deriveEncoder[MedicamentSuggestions]
+  implicit val jsonSuggestionsDecoder: Decoder[MedicamentSuggestions] = deriveDecoder[MedicamentSuggestions]
   implicit val emptyRememberProvider: EmptyProvider[MedicamentSuggestions] = () => MedicamentSuggestions(List.empty)
   implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
     new GitRepo[MedicamentSuggestions](new File(tmpDir), "remember.json")
