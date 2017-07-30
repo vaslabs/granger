@@ -1,12 +1,8 @@
 package org.vaslabs.granger
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike}
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 /**
   * Created by vnicolaou on 30/07/17.
@@ -20,7 +16,7 @@ abstract class AkkaBaseSpec(name: String) extends
 
   override def afterAll() = {
     super.afterAll()
-    //system.terminate().foreach(_ => println("Shutdown system"))
+    system.terminate().foreach(_ => println("Shutdown system"))
   }
 
   override def beforeAll() = {

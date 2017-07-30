@@ -12,8 +12,6 @@ import org.scalatest.Matchers
   */
 class HttpRouterAddingPatientsSpec extends HttpBaseSpec with ScalatestRouteTest with Matchers{
 
-  import v2json._
-
   "adding a new patient" should "persist across restarts" in {
     withHttpRouter[Id](system, config) {
       httpRouter => {

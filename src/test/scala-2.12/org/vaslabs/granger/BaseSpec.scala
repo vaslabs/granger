@@ -2,10 +2,7 @@ package org.vaslabs.granger
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
-
-import akka.http.scaladsl.Http
 import akka.util.Timeout
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -15,8 +12,6 @@ import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
 import org.vaslabs.granger.modeltreatments.{RootCanalTreatment, TreatmentCategory}
 import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId, Treatment}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
-
-import scala.concurrent.Await
 
 /**
   * Created by vnicolaou on 28/06/17.

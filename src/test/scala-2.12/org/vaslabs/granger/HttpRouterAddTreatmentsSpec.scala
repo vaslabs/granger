@@ -3,7 +3,7 @@ package org.vaslabs.granger
 import java.time.ZonedDateTime
 
 import cats.Id
-import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
+import org.vaslabs.granger.PatientManager.FinishTreatment
 import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.v2json._

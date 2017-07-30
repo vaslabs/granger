@@ -5,7 +5,7 @@ import java.time._
 import akka.testkit.TestActorRef
 import org.scalatest.Matchers
 import org.vaslabs.granger.RememberInputAgent.{LoadData, MedicamentStat, MedicamentSuggestions}
-import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, AutocompleteSuggestions}
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest}
 import org.vaslabs.granger.modelv2.{Medicament, PatientId}
 
 /**
