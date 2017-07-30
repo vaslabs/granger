@@ -12,7 +12,7 @@ import io.circe.generic.auto._
   * Created by vnicolaou on 28/06/17.
   */
 class HttpRouterAddTreatmentsSpec extends BaseSpec with FailFastCirceSupport{
-
+git
 
   import scala.collection.JavaConverters._
   "only one open treatment" should "exist per tooth" in {
