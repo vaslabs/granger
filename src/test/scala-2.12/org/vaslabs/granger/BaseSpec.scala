@@ -1,7 +1,7 @@
 package org.vaslabs.granger
 
 import java.io.{File, FileWriter, PrintWriter}
-import java.time.{Clock, Instant, ZoneOffset}
+import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
 
 import akka.http.scaladsl.Http
 import akka.util.Timeout
@@ -10,8 +10,10 @@ import io.circe.{Decoder, Encoder}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.scalatest.BeforeAndAfterAll
+import org.vaslabs.granger.PatientManager.StartTreatment
 import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.modeltreatments.{RootCanalTreatment, TreatmentCategory}
+import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId, Treatment}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
 import scala.concurrent.Await
@@ -94,4 +96,39 @@ trait BaseSpec { this: BeforeAndAfterAll =>
       new File(tmpDir),
       "patients.json"
     )
+
+  def withNewPatient(
+                      firstName: String = "FirstName",
+                      lastName: String = "LastName",
+                      dentalChart: DentalChart = DentalChart(List.empty)): Patient =
+    Patient(
+      PatientId(0), firstName, lastName,
+      ZonedDateTime.now(clock).toLocalDate, dentalChart
+    )
+
+  def withPatient(patientId: PatientId,
+                  firstName: String = "FirstName",
+                  lastName: String = "LastName",
+                  dentalChart: DentalChart = DentalChart.emptyChart()
+                 ): Patient =
+    Patient(
+      patientId, firstName, lastName,
+      ZonedDateTime.now(clock).toLocalDate, dentalChart
+    )
+
+  def withStartTreatment(
+                          patientId: PatientId,
+                          toothNumber: Int,
+                          treatment: TreatmentCategory = RootCanalTreatment()) =
+    StartTreatment(patientId, toothNumber, treatment)
+
+  def withCompletedTreatment(treatmentCategory: TreatmentCategory = RootCanalTreatment()): Treatment =
+    Treatment(ZonedDateTime.now(clock),
+      Some(ZonedDateTime.now(clock)),
+      treatmentCategory)
+
+  def withOpenTreatment(treatmentCategory: TreatmentCategory = RootCanalTreatment()): Treatment =
+    Treatment(ZonedDateTime.now(clock),
+      None,
+      treatmentCategory)
 }
