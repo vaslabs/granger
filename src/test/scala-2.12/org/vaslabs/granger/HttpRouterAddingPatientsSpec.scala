@@ -2,19 +2,21 @@ package org.vaslabs.granger
 
 import java.time.ZonedDateTime
 
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import cats.Id
 import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId}
-
-import scala.concurrent.Future
 import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
+import org.scalatest.Matchers
 /**
   * Created by vnicolaou on 28/06/17.
   */
-class HttpRouterAddingPatientsSpec extends BaseSpec with FailFastCirceSupport {
+class HttpRouterAddingPatientsSpec extends HttpBaseSpec with ScalatestRouteTest with Matchers{
+
+  import v2json._
 
   "adding a new patient" should "persist across restarts" in {
-    withHttpRouter[Future](system, config) {
+    withHttpRouter[Id](system, config) {
       httpRouter => {
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]].size shouldBe 0
@@ -23,12 +25,11 @@ class HttpRouterAddingPatientsSpec extends BaseSpec with FailFastCirceSupport {
           responseAs[Patient] shouldBe Patient(PatientId(1), "FirstName", "LastName", ZonedDateTime.now(clock).toLocalDate, DentalChart.emptyChart())
         }
         import scala.collection.JavaConverters._
-        git.log().call().asScala.size shouldBe 1
+        git.log().call().asScala.size shouldBe 2
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]] shouldBe List(Patient(PatientId(1), "FirstName", "LastName", ZonedDateTime.now(clock).toLocalDate, DentalChart.emptyChart()))
         }
         gitRepo.getState().toOption.get.get(PatientId(1)).get shouldBe Patient(PatientId(1), "FirstName", "LastName", ZonedDateTime.now(clock).toLocalDate, DentalChart.emptyChart())
-
       }
     }
   }
