@@ -296,7 +296,7 @@ app.controller('MainController', function($q, $http) {
             return null;
         var med = ctrl.toothEditing.medicament;
         if (ctrl.medicamentSuggestions.indexOf(med) < 0)
-            ctrl.medicamentSuggestions.push(med);       
+            ctrl.medicamentSuggestions.push(med);
         return {
             "name":med,
             "date":now()
