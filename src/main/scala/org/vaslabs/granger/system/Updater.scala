@@ -10,7 +10,6 @@ class Updater private (currentRelease: ReleaseTag) extends Actor with ActorLoggi
     case ValidReleases(releases) =>
       val releasesAhead = releases.filter(_.tag_name.greaterThan(currentRelease)).sorted
       log.info("Would have updated a chain of {} releases: {}", releasesAhead.size, releasesAhead)
-      sender() ! Done
   }
 }
 
