@@ -8,11 +8,11 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.scaladsl.Sink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import de.knutwalker.akka.stream.support.CirceStreamSupport.decode
-import org.vaslabs.granger.github.releases.{Release, ReleaseTag}
+import org.vaslabs.granger.github.releases.{Release}
 /**
   * Created by vnicolaou on 01/08/17.
   */
-class UpdateChecker private(conf: UpdateConfig, updater: ActorRef) extends Actor with ActorLogging{
+class UpdateChecker private(conf: UpdateConfig, downloader: ActorRef) extends Actor with ActorLogging{
   import org.vaslabs.granger.system.UpdateChecker._
 
   import akka.pattern.pipe
@@ -29,7 +29,7 @@ class UpdateChecker private(conf: UpdateConfig, updater: ActorRef) extends Actor
     case HttpResponse(StatusCodes.OK, headers, entity, _) =>
       entity.dataBytes.via(decode[List[Release]]).map(
         releases => releases.filter(_.tag_name.validity.isRight).filterNot(_.prerelease)
-      ).map(Updater.ValidReleases(_)).runWith(Sink.actorRef(updater, Done))
+      ).map(UpdateDownloader.ValidReleases(_)).runWith(Sink.actorRef(downloader, Done))
   }
 }
 
