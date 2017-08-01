@@ -5,22 +5,28 @@ import java.time.ZonedDateTime
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import cats.syntax.either._
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.TagName
 /**
   * Created by vnicolaou on 01/08/17.
   */
 object releases {
   final class ReleaseTag(val value: String) extends AnyVal {
+    def greaterThan(other: ReleaseTag): Boolean = {
+      (major*10 + minor) > (other.major*10 + other.minor)
+    }
+
     private def release_parts = value.split('.')
     def major = release_parts.apply(0).toInt
     def minor = release_parts.apply(1).toInt
-    def isValid: Either[String, Double] = Either.catchNonFatal(value.toDouble).leftMap(_ => value)
+    def -(other: ReleaseTag) =  (major*10 + minor) - (other.major*10 + other.minor)
+    def validity: Either[String, Double] = Either.catchNonFatal(value.toDouble).leftMap(_ => value)
   }
 
   object ReleaseTag {
     @inline def apply(value: String) = new ReleaseTag(value)
 
     implicit val ordering: Ordering[ReleaseTag] = (r1, r2) => {
-      (r1.major*10 + r1.minor) - (r2.major*10 + r2.minor)
+      r1 - r2
     }
 
     implicit val encoder: Encoder[ReleaseTag] = Encoder[String].contramap(_.value)
@@ -38,5 +44,9 @@ object releases {
 
     implicit val encoder: Encoder[Release] = deriveEncoder[Release]
     implicit val decoder: Decoder[Release] = deriveDecoder[Release]
+
+    implicit val ordering: Ordering[Release] = (r1, r2) => {
+      r1.tag_name - r2.tag_name
+    }
   }
 }
