@@ -162,19 +162,12 @@ object modelv2 {
     }
 
     def finishTreatment()(implicit clock: Clock): Option[Tooth] = {
-      treatments.headOption
-        .flatMap(
-          treatment =>
-            treatment.dateCompleted.fold[Option[Treatment]](Some(
-              treatment.copy(dateCompleted = Some(ZonedDateTime.now(clock)))))(
-              _ => None)
-        )
+      val treatmentsJustCompleted = treatments.filter(_.dateCompleted.isEmpty)
         .map(
-          t => {
-            t :: treatments.drop(1)
-          }
+          _.copy(dateCompleted = Some(ZonedDateTime.now(clock)))
         )
-        .map(ts => copy(treatments = ts))
+        val completedTreatments = treatments.filterNot(_.dateCompleted.isEmpty)
+        Some(copy(treatments = treatmentsJustCompleted ++ completedTreatments))
     }
 
     implicit val t_transformer: Transformer[Treatment] = (t: Treatment) => {

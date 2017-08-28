@@ -48,7 +48,7 @@ object Main {
 
         val grangerRepo = new SingleStateGrangerRepo()
 
-        val patientManager = system.actorOf(PatientManager.props(grangerRepo, config))
+        val patientManager = system.actorOf(PatientManager.props(grangerRepo, config), "patientManager")
 
         patientManager ! LoadData
 
