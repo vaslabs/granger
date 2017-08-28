@@ -3,7 +3,7 @@ package org.vaslabs.granger.system
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import org.vaslabs.granger.github.releases.{Asset, Release, ReleaseTag}
 
-class UpdateDownloader private(currentRelease: ReleaseTag, updater: ActorRef)(implicit downloader: Downloader) extends Actor with ActorLogging {
+class UpdateDownloader private(currentRelease: ReleaseTag, supervisor: ActorRef)(implicit downloader: Downloader) extends Actor with ActorLogging {
   import UpdateDownloader.ValidReleases
   override def receive: Receive = {
     case ValidReleases(releases) =>
@@ -13,7 +13,7 @@ class UpdateDownloader private(currentRelease: ReleaseTag, updater: ActorRef)(im
       )
     case Asset(artifactUrl) =>
       log.info("Update to {}", artifactUrl)
-      downloader.download(artifactUrl).map(updater ! _)
+      downloader.download(artifactUrl).map(supervisor ! _)
   }
 }
 

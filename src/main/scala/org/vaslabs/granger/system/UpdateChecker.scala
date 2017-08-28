@@ -12,7 +12,7 @@ import org.vaslabs.granger.github.releases.{Release}
 /**
   * Created by vnicolaou on 01/08/17.
   */
-class UpdateChecker private(conf: UpdateConfig, downloader: ActorRef) extends Actor with ActorLogging{
+class UpdateChecker private(conf: UpdateConfig, supervisor: ActorRef) extends Actor with ActorLogging{
   import org.vaslabs.granger.system.UpdateChecker._
 
   import akka.pattern.pipe
@@ -29,15 +29,15 @@ class UpdateChecker private(conf: UpdateConfig, downloader: ActorRef) extends Ac
     case HttpResponse(StatusCodes.OK, headers, entity, _) =>
       entity.dataBytes.via(decode[List[Release]]).map(
         releases => releases.filter(_.tag_name.validity.isRight).filterNot(_.prerelease)
-      ).map(UpdateDownloader.ValidReleases(_)).runWith(Sink.actorRef(downloader, Done))
+      ).map(UpdateDownloader.ValidReleases(_)).runWith(Sink.actorRef(supervisor, Done))
   }
 }
 
 object UpdateChecker {
   case object CheckForUpdates
 
-  def props(updater: ActorRef): Props = {
-    Props(new UpdateChecker(UpdateConfig(), updater))
+  def props(supervisor: ActorRef): Props = {
+    Props(new UpdateChecker(UpdateConfig(), supervisor))
   }
 }
 

@@ -23,6 +23,9 @@ object releases {
   }
 
   object ReleaseTag {
+
+    val CURRENT = apply("1.6")
+
     @inline def apply(value: String) = new ReleaseTag(value)
 
     implicit val ordering: Ordering[ReleaseTag] = (r1, r2) => {
