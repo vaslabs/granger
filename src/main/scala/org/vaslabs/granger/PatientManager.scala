@@ -92,9 +92,20 @@ class PatientManager private (
 
 
   def receivePostLoad: Receive = {
+    getInformation orElse submitInformation
+  }
+
+  private [this] def getInformation: Receive = {
     case FetchAllPatients =>
       val senderRef = sender()
       grangerRepo.retrieveAllPatients() pipeTo senderRef
+    case LatestActivity(patientId) =>
+      grangerRepo.getLatestActivity(patientId) pipeTo sender()
+    case m: MedicamentSuggestions =>
+      rememberRepo.save(s"persisting suggestions with new medicament ${m.medicamentsUsed.apply(0).medicamentName}", m)
+  }
+
+  private [this] def submitInformation: Receive = {
     case AddPatient(patient) =>
       val senderRef = sender()
       schedulePushJob()
@@ -103,8 +114,6 @@ class PatientManager private (
       schedulePushJob()
       rememberInputAgent ! rq
       grangerRepo.addToothInfo(rq) pipeTo sender()
-    case LatestActivity(patientId) =>
-      grangerRepo.getLatestActivity(patientId) pipeTo sender()
     case StartTreatment(patientId, toothId, category) =>
       schedulePushJob()
       grangerRepo.startTreatment(patientId, toothId, category) pipeTo sender()
@@ -113,9 +122,6 @@ class PatientManager private (
       grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
     case RememberedData =>
       rememberInputAgent forward RememberInputAgent.Suggest
-    case m: MedicamentSuggestions =>
-      rememberRepo.save(s"persisting suggestions with new medicament ${m.medicamentsUsed.apply(0).medicamentName}", m)
-
   }
 
   private[this] def schedulePushJob(): Unit = {
