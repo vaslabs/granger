@@ -21,15 +21,10 @@ class UpdateCheckerSpec extends TestKit(ActorSystem("updaterTest")) with FlatSpe
 
     {
       var downloading = false
-      implicit val downloader: Downloader = (url) => {
-        downloading = true
-        val parts = url.split("/")
-        Right(new File(s"${parts.apply(parts.size-2)}/${parts.apply(parts.size-1)}"))
-      }
       val updaterProbe = TestProbe()
       val updateDownloader = TestActorRef(UpdateDownloader.props(ReleaseTag("1.3"), updaterProbe.ref))
       updateDownloader ! validReleases
-      updaterProbe.expectMsg(new File("1.4/granger.zip"))
+      updaterProbe.expectMsg(new File(s"${sys.env.get("HOME").get}/granger.zip"))
     }
   }
 

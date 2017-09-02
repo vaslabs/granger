@@ -4,12 +4,10 @@ import java.io.File
 import java.time.Clock
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.vaslabs.granger.PatientManager.LoadData
-import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.repo.SingleStateGrangerRepo
+import org.vaslabs.granger.system.GrangerDownloader
 import pureconfig._
 /**
   * Created by vnicolaou on 04/06/17.
@@ -20,7 +18,6 @@ object Main {
 
 
     implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
     implicit val clock: Clock = Clock.systemUTC()
 
     implicit val executionContext = system.dispatcher
@@ -48,18 +45,16 @@ object Main {
 
         val grangerRepo = new SingleStateGrangerRepo()
 
-        val patientManager = system.actorOf(PatientManager.props(grangerRepo, config), "patientManager")
-
-        patientManager ! LoadData
+        val orchestrator = system.actorOf(Orchestrator.props(grangerRepo, config))
 
 
-        val webServer = new WebServer(patientManager, config)
-        webServer.start()
+
+        orchestrator ! Orchestrator.Orchestrate
 
         sys.addShutdownHook(
           {
             println("Shutting down")
-            webServer.shutDown().foreach(_ => println("Http service is shut down"))
+            orchestrator ! Orchestrator.Shutdown
           }
         )
       }).left.foreach(
