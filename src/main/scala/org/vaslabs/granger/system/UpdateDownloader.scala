@@ -13,32 +13,30 @@ import org.vaslabs.granger.github.releases.{Asset, Release, ReleaseTag}
 import scala.concurrent.{ExecutionContext, Future}
 
 class UpdateDownloader private(currentRelease: ReleaseTag, supervisor: ActorRef, baseDir: File) extends Actor with ActorLogging {
-  import UpdateDownloader.ValidReleases
+  import UpdateDownloader.{ValidReleases, UpdateCompleted}
   import context.dispatcher
 
   override def receive: Receive = {
     case ValidReleases(releases) =>
-      val releasesAhead = releases.filter(_.tag_name.greaterThan(currentRelease)).sorted
+      val releasesAhead = releases.filter(_.tag_name > currentRelease).sorted
       releasesAhead.headOption.map(
        _.assets.headOption.map(self ! _)
       )
     case Asset(artifactUrl) =>
       log.info("Update to {}", artifactUrl)
-      GrangerDownloader(new URL(artifactUrl), baseDir.getAbsolutePath) pipeTo supervisor
+      GrangerDownloader(new URL(artifactUrl), baseDir.getAbsolutePath).map(_ => UpdateCompleted) pipeTo supervisor
   }
 }
 
 object UpdateDownloader {
   case class ValidReleases(validReleases: List[Release])
+  case object UpdateCompleted
 
-  def baseDir(): File = {
-    val workingDirectory = System.getProperty("user.dir")
-
-    new File(workingDirectory).getParentFile.getParentFile
-
+  def baseDir()(implicit baseDirProvider: BaseDirProvider): File = {
+    baseDirProvider.baseDir()
   }
 
-  def props(currentRelease: ReleaseTag, updater: ActorRef): Props = {
+  def props(currentRelease: ReleaseTag, updater: ActorRef)(implicit baseDirProvider: BaseDirProvider): Props = {
     Props(new UpdateDownloader(currentRelease, updater, baseDir()))
   }
 }

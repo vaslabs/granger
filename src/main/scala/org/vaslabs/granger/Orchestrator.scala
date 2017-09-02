@@ -3,25 +3,27 @@ package org.vaslabs.granger
 import java.io.File
 import java.time.Clock
 
-import akka.actor.{Actor, ActorLogging, Props, Stash}
+import akka.Done
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Stash}
 import akka.stream.ActorMaterializer
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.github.releases
-import org.vaslabs.granger.github.releases.ReleaseTag
+import org.vaslabs.granger.github.releases.{Asset, Release, ReleaseTag}
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.{GrangerRepo, SingleStateGrangerRepo}
-import org.vaslabs.granger.system.UpdateDownloader.ValidReleases
-import org.vaslabs.granger.system.{UpdateChecker, UpdateDownloader}
+import org.vaslabs.granger.system.UpdateDownloader.{UpdateCompleted, ValidReleases}
+import org.vaslabs.granger.system.{BaseDirProvider, UpdateChecker, UpdateDownloader}
 
 import scala.concurrent.Future
+import cats.syntax.either._
 
 /**
   * Created by vnicolaou on 28/08/17.
   */
 class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Future], config: GrangerConfig)
-                           (implicit git: Git, clock: Clock)
+                           (implicit git: Git, clock: Clock, baseDirProvider: BaseDirProvider)
   extends Actor with ActorLogging with Stash
 {
 
@@ -49,11 +51,8 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
     context.become(serverStarted(webServer))
   }
 
-  def deflateRelease(zipFile: File): Unit = ???
-
-  def updateTo(release: releases.Release): Unit = ???
-
-  def warning() = log.warning("Too many releases ahead, please contact support!")
+  def warning(releases: List[Release]) = log.warning(
+    "Too many releases ahead, please contact support! \n{}", releases)
 
 
   override def receive: Receive = {
@@ -64,7 +63,7 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
   private[this] def serverStarted(webServer: WebServer): Receive = {
     case Orchestrator.Shutdown =>
       webServer.shutDown()
-    case _ => log.info("Orchestrator is not accepting commands")
+    case other => log.info("Orchestrator is not accepting commands, lost {}", other)
   }
 
   private[this] def checkingForUpdates: Receive = {
@@ -72,10 +71,19 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
       log.info("Granger is up to date")
       setupSystem()
     case ValidReleases(releases) if releases.size == 1 =>
-      updateTo(releases.head)
+      updateDownloader ! releases(0).assets(0)
+      log.warning("System will update and exit. Please wait and start again...")
+      context.become(waitingForNewRelease)
     case ValidReleases(releases) =>
-      warning()
+      warning(releases)
       setupSystem()
+  }
+
+  private[this] def waitingForNewRelease: Receive = {
+    case UpdateCompleted =>
+      log.warning("Please restart to use the new version of granger")
+      self ! PoisonPill
+    case _ => log.warning("System is being updated, please wait...")
   }
 }
 
@@ -83,7 +91,7 @@ object Orchestrator {
   case object Orchestrate
 
   def props(grangerRepo: SingleStateGrangerRepo, config: GrangerConfig)
-           (implicit git: Git, clock: Clock): Props = {
+           (implicit git: Git, clock: Clock, baseDirProvider: BaseDirProvider): Props = {
     Props(new Orchestrator(grangerRepo, config))
   }
 
