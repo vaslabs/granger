@@ -22,7 +22,14 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-java8" % circeVersion,
   "de.heikoseeberger" %% "akka-http-circe" % "1.16.0",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
-  "com.github.pureconfig" %% "pureconfig" % "0.7.2"
+  "com.github.pureconfig" %% "pureconfig" % "0.7.2",
+  "de.knutwalker" %% "akka-stream-circe" % "3.4.0",
+  "de.knutwalker" %% "akka-http-circe" % "3.4.0",
+  "de.knutwalker" %% "akka-stream-json" % "3.3.0",
+  "de.knutwalker" %% "akka-http-json" % "3.3.0",
+  "org.dbpedia.extraction" % "dump" % "4.1",
+  "net.lingala.zip4j" % "zip4j" % "1.3.2"
+
 )
 
 enablePlugins(sbtdocker.DockerPlugin)
