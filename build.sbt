@@ -27,7 +27,9 @@ libraryDependencies ++= Seq(
   "de.knutwalker" %% "akka-http-circe" % "3.4.0",
   "de.knutwalker" %% "akka-stream-json" % "3.3.0",
   "de.knutwalker" %% "akka-http-json" % "3.3.0",
-  "org.dbpedia.extraction" % "dump" % "4.1"
+  "org.dbpedia.extraction" % "dump" % "4.1",
+  "net.lingala.zip4j" % "zip4j" % "1.3.2"
+
 )
 
 enablePlugins(sbtdocker.DockerPlugin)

@@ -10,13 +10,12 @@ import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.github.releases
 import org.vaslabs.granger.github.releases.ReleaseTag
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.{GrangerRepo, SingleStateGrangerRepo}
 import org.vaslabs.granger.system.UpdateDownloader.ValidReleases
-import org.vaslabs.granger.system.{GrangerDownloader, UpdateChecker, UpdateDownloader}
-import cats.syntax.either._
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.system.{UpdateChecker, UpdateDownloader}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Created by vnicolaou on 28/08/17.

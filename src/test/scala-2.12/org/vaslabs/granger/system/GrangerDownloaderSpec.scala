@@ -9,8 +9,11 @@ import org.scalatest.{AsyncFlatSpec, FlatSpec}
 class GrangerDownloaderSpec extends AsyncFlatSpec{
 
   "given granger zip location it" should "download the zip file" in {
-    val zipFile = GrangerDownloader(new URL("https://github.com/vaslabs/granger/releases/download/1.4/granger.zip"))
-    zipFile.map(f => assert(f.exists()))
+    val newRelease = GrangerDownloader(
+      new URL("https://github.com/vaslabs/granger/releases/download/1.4/granger.zip"),
+      s"${sys.env.get("HOME").get}/Desktop")
+    newRelease.map(f => assert(f.exists() && f.isDirectory))
+
   }
 
 }
