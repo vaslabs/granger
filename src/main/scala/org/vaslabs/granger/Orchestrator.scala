@@ -1,16 +1,13 @@
 package org.vaslabs.granger
 
-import java.io.File
 import java.time.Clock
 
-import akka.Done
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Stash}
 import akka.stream.ActorMaterializer
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.comms.WebServer
-import org.vaslabs.granger.github.releases
-import org.vaslabs.granger.github.releases.{Asset, Release, ReleaseTag}
+import org.vaslabs.granger.github.releases.{Release, ReleaseTag}
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.{GrangerRepo, SingleStateGrangerRepo}
 import org.vaslabs.granger.system.UpdateDownloader.{UpdateCompleted, ValidReleases}
@@ -18,6 +15,7 @@ import org.vaslabs.granger.system.{BaseDirProvider, UpdateChecker, UpdateDownloa
 
 import scala.concurrent.Future
 import cats.syntax.either._
+import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode
 
 /**
   * Created by vnicolaou on 28/08/17.
@@ -27,6 +25,8 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
   extends Actor with ActorLogging with Stash
 {
 
+  import Orchestrator._
+
   val updateDownloader = context.actorOf(UpdateDownloader.props(ReleaseTag.CURRENT, self), "updateDownloader")
   val updateChecker = context.actorOf(UpdateChecker.props(self), "updateChecker")
   val patientManager = context.actorOf(PatientManager.props(grangerRepo, config), "patientManager")
@@ -34,6 +34,7 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
   import context.dispatcher
 
   def checkForUpdates(): Unit = {
+    log.info("Checking for updates")
     updateChecker ! UpdateChecker.CheckForUpdates
   }
 
@@ -41,13 +42,28 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
     checkForUpdates()
   }
 
+  def syncRepo() = {
+    Either.catchNonFatal {
+      val pullComand = git.pull()
+      pullComand.setRemote("origin")
+      pullComand.setRemoteBranchName("master")
+      pullComand.call()
+    }.left.foreach(t => {
+        log.info("Git data: {}", git.getRepository)
+        log.error("Couldn't sync the database: {}", t)
+      }
+    )
+  }
+
   def setupSystem(): Unit = {
     implicit val system = context.system
     implicit val materializer = ActorMaterializer()(context)
+    syncRepo()
     patientManager ! LoadPatientData
     val webServer = new WebServer(patientManager, config)
     webServer.start()
     log.info("Granger started patient manager")
+    unstashAll()
     context.become(serverStarted(webServer))
   }
 
@@ -56,13 +72,15 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
 
 
   override def receive: Receive = {
-    case Orchestrator.Orchestrate =>
+    case Orchestrate =>
       context.become(checkingForUpdates)
+    case Ping => stash()
   }
 
   private[this] def serverStarted(webServer: WebServer): Receive = {
     case Orchestrator.Shutdown =>
       webServer.shutDown()
+    case Ping => sender() ! Pong
     case other => log.info("Orchestrator is not accepting commands, lost {}", other)
   }
 
@@ -77,6 +95,7 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
     case ValidReleases(releases) =>
       warning(releases)
       setupSystem()
+    case Ping => stash()
   }
 
   private[this] def waitingForNewRelease: Receive = {
@@ -84,11 +103,14 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
       log.warning("Please restart to use the new version of granger")
       self ! PoisonPill
     case _ => log.warning("System is being updated, please wait...")
+    case Ping => stash()
   }
 }
 
 object Orchestrator {
   case object Orchestrate
+  case object Ping
+  case object Pong
 
   def props(grangerRepo: SingleStateGrangerRepo, config: GrangerConfig)
            (implicit git: Git, clock: Clock, baseDirProvider: BaseDirProvider): Props = {
