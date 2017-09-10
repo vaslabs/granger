@@ -18,6 +18,24 @@ app.directive('scrollOnClick', function() {
   }
 });
 
+app.directive('ngConfirmClick', [
+  function(){
+    return {
+      priority: -1,
+      restrict: 'A',
+      link: function(scope, element, attrs){
+        element.bind('click', function(e){
+          var message = attrs.ngConfirmClick;
+          if(message && !confirm(message)){
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+        });
+      }
+    }
+  }
+]);
+
 app.directive('ngEnter', function() {
         return function(scope, element, attrs) {
             element.bind("keydown keypress", function(event) {
@@ -173,6 +191,24 @@ app.controller('MainController', function($q, $http) {
     ctrl.deselectPatient = function() {
         ctrl.selectedPatient = null;
         ctrl.deselectTooth();
+    };
+
+    ctrl.deleteTreatment = function(treatment) {
+        var deleteTreatmentCommand = {
+            toothId: ctrl.selectedTooth.number,
+            patientId: ctrl.selectedPatient.patientId,
+            createdOn: treatment.dateStarted
+        };
+
+        return $http({
+            method: "post",
+            url: '/treatment/delete',
+            data: deleteTreatmentCommand
+        }).then(function(resp) {
+            updatePatient(resp);
+            ctrl.treatmentCategory = null;
+        });
+
     };
 
     ctrl.birthday = {
