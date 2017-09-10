@@ -1,14 +1,11 @@
 package org.vaslabs.granger.repo
 
-import java.io._
+import java.time.format.DateTimeFormatter
 import java.time.{Clock, ZonedDateTime}
 
 import org.vaslabs.granger.PatientManager
 import org.vaslabs.granger.PatientManager.{LoadDataFailure, LoadDataSuccess}
-import org.vaslabs.granger.comms.api.model.{
-  Activity,
-  AddToothInformationRequest
-}
+import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
 
@@ -139,6 +136,22 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
     retrieveAllPatients().map(
       _.fold(res => LoadDataFailure(res), _ => LoadDataSuccess)
     )
+  }
+
+  override def deleteTreatment(
+      patientId: PatientId,
+      toothId: Int,
+      timestamp: ZonedDateTime)(implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] = {
+    Future {
+      val updatedPatient = state.get(patientId).map(_.deleteTreatment(toothId, timestamp))
+      updatedPatient.foreach(p => {
+        state = state + (patientId -> p)
+        repo.save(
+          s"Deleting treatment for patient $patientId, on tooth ${toothId}, created on ${timestamp.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)}",
+          state)
+      })
+      state.get(patientId).get
+    }
   }
 }
 

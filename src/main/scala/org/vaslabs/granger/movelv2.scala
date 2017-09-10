@@ -139,6 +139,11 @@ object modelv2 {
 
   case class Tooth(number: Int, treatments: List[Treatment] = List.empty) {
 
+    def deleteTreatment(timestamp: ZonedDateTime): Tooth = {
+      copy(treatments = treatments.filterNot(_.dateStarted == timestamp))
+    }
+
+
     def update(roots: Option[List[Root]],
                medicament: Option[Medicament],
                nextVisit: Option[NextVisit],
@@ -223,6 +228,9 @@ object modelv2 {
                      lastName: String,
                      dateOfBirth: LocalDate,
                      dentalChart: DentalChart) {
+    def deleteTreatment(toothId: Int, timestamp: ZonedDateTime): Patient =
+      copy(dentalChart = dentalChart.deleteTreatment(toothId, timestamp))
+
     def extractLatestActivity: Map[Int, List[Activity]] = {
       dentalChart.teeth
         .flatMap(_.allActivity())
@@ -239,6 +247,14 @@ object modelv2 {
   }
 
   case class DentalChart(teeth: List[Tooth]) {
+    def deleteTreatment(toothId: Int, timestamp: ZonedDateTime): DentalChart =
+      copy(teeth.map( t => {
+        if (t.number == toothId)
+          t.deleteTreatment(timestamp)
+        else
+          t
+      }))
+
 
     def update(tooth: Tooth): DentalChart = {
       DentalChart((tooth :: teeth.filterNot(_.number == tooth.number)).sorted)

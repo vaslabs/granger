@@ -118,6 +118,11 @@
                                                                 </button>
                                                                 <span ng-if="treatment.dateCompleted != null" class="badge green" data-badge-caption="Completed"></span>
                                                             </td>
+                                                            <td>
+                                                                <button ng-click="ctrl.deleteTreatment(treatment)" ng-confirm-click="Are you sure you want to delete the treatment?" class="btn-floating red">
+                                                                    <i class="material-icons">delete</i>
+                                                                </button>
+                                                            </td>
                                                         </tr>
                                                     </tbody>
                                                 </table>

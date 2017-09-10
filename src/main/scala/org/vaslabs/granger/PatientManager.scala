@@ -1,7 +1,7 @@
 package org.vaslabs.granger
 
 import java.io.File
-import java.time.Clock
+import java.time.{Clock, ZonedDateTime}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import org.vaslabs.granger.repo.{EmptyRepo, GrangerRepo, RepoErrorState}
@@ -16,6 +16,7 @@ import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
+import cats.syntax.either._
 /**
   * Created by vnicolaou on 29/05/17.
   */
@@ -122,6 +123,11 @@ class PatientManager private (
       grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
     case RememberedData =>
       rememberInputAgent forward RememberInputAgent.Suggest
+    case DeleteTreatment(patientId, toothId, timestamp) =>
+      log.error("Deleting treatment {},{},{}", patientId, toothId, timestamp)
+      schedulePushJob()
+      grangerRepo.deleteTreatment(patientId, toothId, timestamp) pipeTo sender()
+
   }
 
   private[this] def schedulePushJob(): Unit = {
@@ -148,6 +154,7 @@ object PatientManager {
   case class StartTreatment(patientId: PatientId,
                             toothId: Int,
                             category: TreatmentCategory)
+  case class DeleteTreatment(patientId:PatientId, toothId: Int, createdOn: ZonedDateTime)
   case class FinishTreatment(patientId: PatientId, toothId: Int)
 
   case object LoadData
@@ -156,4 +163,8 @@ object PatientManager {
   case class LoadDataFailure(repoState: RepoErrorState) extends LoadDataOutcome
 
   case object RememberedData
+
+  sealed trait CommandOutcome
+  case object Success extends CommandOutcome
+  case class Failure(reason: String) extends CommandOutcome
 }
