@@ -21,7 +21,7 @@ object releases {
 
   object ReleaseTag {
 
-    val CURRENT = apply("1.6")
+    val CURRENT = apply("1.7")
 
     @inline def apply(value: String) = new ReleaseTag(value)
 
