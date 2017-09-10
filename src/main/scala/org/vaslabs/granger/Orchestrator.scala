@@ -102,8 +102,8 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], Fu
     case UpdateCompleted =>
       log.warning("Please restart to use the new version of granger")
       self ! PoisonPill
-    case _ => log.warning("System is being updated, please wait...")
     case Ping => stash()
+    case _ => log.warning("System is being updated, please wait...")
   }
 }
 

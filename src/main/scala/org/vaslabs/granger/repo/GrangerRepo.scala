@@ -1,11 +1,10 @@
 package org.vaslabs.granger.repo
 
+import java.time.ZonedDateTime
+
 import akka.http.scaladsl.model.StatusCode
-import org.vaslabs.granger.PatientManager.LoadDataOutcome
-import org.vaslabs.granger.comms.api.model.{
-  Activity,
-  AddToothInformationRequest
-}
+import org.vaslabs.granger.PatientManager.{CommandOutcome, LoadDataOutcome}
+import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2._
 
@@ -24,6 +23,7 @@ case class UnkownState(error: String) extends RepoErrorState
 case class UnparseableSchema(error: String) extends RepoErrorState
 
 trait GrangerRepo[State, F[_]] {
+
 
   implicit val executionContext: ExecutionContext
 
@@ -57,5 +57,8 @@ trait GrangerRepo[State, F[_]] {
 
   def finishTreatment(patientId: PatientId, toothId: Int)(
       implicit repo: Repo[State]): Future[Patient]
+
+  def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime): Future[Unit]
+
 
 }

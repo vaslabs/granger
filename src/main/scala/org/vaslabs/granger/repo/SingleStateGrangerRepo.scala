@@ -140,6 +140,18 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
       _.fold(res => LoadDataFailure(res), _ => LoadDataSuccess)
     )
   }
+
+  override def deleteTreatment(
+      patientId: PatientId,
+      toothId: Int,
+      timestamp: ZonedDateTime): Future[Unit] = {
+    Future {
+      val updatedPatient = state.get(patientId).map(_.deleteTreatment(toothId, timestamp))
+      updatedPatient.foreach(p => {
+        state = state + (patientId -> p)
+      })
+    }
+  }
 }
 
 sealed trait IOError

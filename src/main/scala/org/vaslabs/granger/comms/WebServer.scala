@@ -78,4 +78,6 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
     (patientManager ? RememberedData).mapTo[AutocompleteSuggestions]
   }
 
+  override def deleteTreatment(deleteTreatment: DeleteTreatment): Future[CommandOutcome] =
+    (patientManager ? deleteTreatment).map(_ => Success)
 }
