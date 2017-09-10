@@ -96,7 +96,7 @@ app.controller('MainController', function($q, $http) {
             url: '/init',
             data: data
         }).then(function(resp) {
-            ctrl.repoReady = true;
+            grangerInit();
         });
     };
 
@@ -390,14 +390,16 @@ app.controller('MainController', function($q, $http) {
     ctrl.repoReady = true;
 
 
-    getAllPatients().then(function(patients) {
-       if ("EmptyRepo" in patients) {
-        ctrl.repoReady = false;
-       } else {
-        ctrl.repoReady = true;
-        ctrl.allPatients = patients;
-       }
-    });
+    function grangerInit() {
+        getAllPatients().then(function(patients) {
+           if ("EmptyRepo" in patients) {
+            ctrl.repoReady = false;
+           } else {
+            ctrl.repoReady = true;
+            ctrl.allPatients = patients;
+           }
+        });
+    }
 
     getRememberData().then(function(medicaments) {
         ctrl.medicamentSuggestions = medicaments.medicamentNames;
@@ -429,5 +431,8 @@ app.controller('MainController', function($q, $http) {
               size: "",
               length: ""
             });
-        };
+    };
+
+    grangerInit();
+
 });
