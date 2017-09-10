@@ -58,7 +58,8 @@ trait GrangerRepo[State, F[_]] {
   def finishTreatment(patientId: PatientId, toothId: Int)(
       implicit repo: Repo[State]): Future[Patient]
 
-  def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime): Future[Unit]
+  def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime)
+                     (implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient]
 
 
 }
