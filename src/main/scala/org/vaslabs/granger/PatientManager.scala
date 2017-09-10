@@ -65,11 +65,11 @@ class PatientManager private (
 
   override def receive: Receive = {
     case LoadData =>
-      initialiseRememberAgent()
       log.info("Loading patient data...")
       grangerRepo.loadData() pipeTo self
     case LoadDataSuccess =>
       log.info("Done")
+      initialiseRememberAgent()
       context.become(receivePostLoad)
     case LoadDataFailure(repoState) =>
       repoState match {
@@ -86,8 +86,8 @@ class PatientManager private (
       grangerRepo.retrieveAllPatients() pipeTo sender()
     case InitRepo(remoteRepo) =>
       context.become(receivePostLoad)
+      initialiseRememberAgent()
       grangerRepo.setUpRepo(remoteRepo) pipeTo sender()
-      schedulePushJob()
   }
 
 

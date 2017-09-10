@@ -15,8 +15,8 @@ abstract class AkkaBaseSpec(name: String) extends
   import system.dispatcher
 
   override def afterAll() = {
-    super.afterAll()
     system.terminate().foreach(_ => println("Shutdown system"))
+    super.afterAll()
   }
 
   override def beforeAll() = {

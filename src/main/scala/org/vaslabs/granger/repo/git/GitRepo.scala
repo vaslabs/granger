@@ -13,7 +13,7 @@ import org.vaslabs.granger.v2json._
 
 import scala.io.Source
 import scala.util.Try
-
+import cats.syntax.either._
 /**
   * Created by vnicolaou on 29/06/17.
   */
@@ -26,14 +26,20 @@ class GitRepo[A](dbLocation: File, snapshotFile: String)(
   implicit val payloadEncoder: PayloadEncoder[A] =
     (a: A) => a.asJson.noSpaces
 
+  private[this] def saveEmptyFile() = {
+    val file = new File(s"${dbLocation.getAbsolutePath}/$snapshotFile")
+    file.createNewFile()
+    save("Empty db file", emptyProvider.empty)
+  }
+
   private def setUpRemote(remoteRepo: RemoteRepo): StatusCode = Try {
     val remoteAddCommand = gitApi.remoteAdd()
     remoteAddCommand.setName("origin")
     remoteAddCommand.setUri(new URIish(remoteRepo.uri))
-    val file = new File(s"${dbLocation.getAbsolutePath}/$snapshotFile")
-    file.createNewFile()
     remoteAddCommand.call()
-    save("Empty db file", emptyProvider.empty)
+    Either.catchNonFatal {
+      gitApi.pull().setRemote("origin").setRemoteBranchName("master").call()
+    }.leftMap(_ => saveEmptyFile)
   }.map(_ => StatusCodes.Created)
     .getOrElse(StatusCodes.InternalServerError)
 
