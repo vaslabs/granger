@@ -31,7 +31,7 @@ class HttpRouterDeletingTreatmentsSpec extends HttpBaseSpec with Matchers{
 
         Post("/treatment/delete", DeleteTreatment(PatientId(1), 11, ZonedDateTime.now(clock))) ~>
           httpRouter.routes ~> check {
-          responseAs[CommandOutcome] shouldBe Success
+          responseAs[Patient] shouldBe withPatient(PatientId(1))
         }
 
       }
