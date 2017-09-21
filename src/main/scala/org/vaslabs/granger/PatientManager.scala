@@ -108,25 +108,24 @@ class PatientManager private (
 
   private [this] def submitInformation: Receive = {
     case AddPatient(patient) =>
-      val senderRef = sender()
       schedulePushJob()
-      grangerRepo.addPatient(patient) pipeTo senderRef
+      sender() ! grangerRepo.addPatient(patient)
     case rq: AddToothInformationRequest =>
       schedulePushJob()
       rememberInputAgent ! rq
-      grangerRepo.addToothInfo(rq) pipeTo sender()
+      sender() ! grangerRepo.addToothInfo(rq)
     case StartTreatment(patientId, toothId, category) =>
       schedulePushJob()
-      grangerRepo.startTreatment(patientId, toothId, category) pipeTo sender()
+      sender() ! grangerRepo.startTreatment(patientId, toothId, category)
     case FinishTreatment(patientId, toothId) =>
       schedulePushJob()
-      grangerRepo.finishTreatment(patientId, toothId) pipeTo sender()
+      sender() ! grangerRepo.finishTreatment(patientId, toothId)
     case RememberedData =>
       rememberInputAgent forward RememberInputAgent.Suggest
     case DeleteTreatment(patientId, toothId, timestamp) =>
       log.error("Deleting treatment {},{},{}", patientId, toothId, timestamp)
       schedulePushJob()
-      grangerRepo.deleteTreatment(patientId, toothId, timestamp) pipeTo sender()
+      sender() ! grangerRepo.deleteTreatment(patientId, toothId, timestamp)
 
   }
 

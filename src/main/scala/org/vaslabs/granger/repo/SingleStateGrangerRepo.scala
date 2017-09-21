@@ -21,8 +21,8 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   private var state: Map[PatientId, Patient] = Map.empty
 
   override def addPatient(patient: Patient)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] = {
-    Future {
+      implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
+    {
       val patientId = PatientId(nextPatientId())
       val newState: Map[PatientId, Patient] = state + (patientId -> patient
         .update(patientId))
@@ -54,8 +54,8 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
     }
 
   override def addToothInfo(rq: AddToothInformationRequest)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] =
-    Future {
+      implicit repo: Repo[Map[PatientId, Patient]]): Patient =
+    {
       val patient = state.get(rq.patientId)
       patient.foreach(patient => {
         patient.dentalChart.teeth
@@ -90,7 +90,7 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   override def startTreatment(patientId: PatientId,
                               toothId: Int,
                               category: TreatmentCategory)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] = Future {
+      implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
     val treatment = Treatment(ZonedDateTime.now(clock), category = category)
     val patient = state.get(patientId).get
     val toothWithTreatment =
@@ -110,7 +110,7 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   }
 
   override def finishTreatment(patientId: PatientId, toothId: Int)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] = Future {
+      implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
     val newRepo = state
       .get(patientId)
       .flatMap(p => {
@@ -141,8 +141,8 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   override def deleteTreatment(
       patientId: PatientId,
       toothId: Int,
-      timestamp: ZonedDateTime)(implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient] = {
-    Future {
+      timestamp: ZonedDateTime)(implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
+    {
       val updatedPatient = state.get(patientId).map(_.deleteTreatment(toothId, timestamp))
       updatedPatient.foreach(p => {
         state = state + (patientId -> p)

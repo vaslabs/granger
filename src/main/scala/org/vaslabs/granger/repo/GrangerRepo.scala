@@ -38,9 +38,9 @@ trait GrangerRepo[State, F[_]] {
   def getLatestActivity(patientId: PatientId): F[Map[Int, List[Activity]]]
 
   def addToothInfo(rq: AddToothInformationRequest)(
-      implicit repo: Repo[State]): F[Patient]
+      implicit repo: Repo[State]): Patient
 
-  def addPatient(patient: Patient)(implicit repo: Repo[State]): F[Patient]
+  def addPatient(patient: Patient)(implicit repo: Repo[State]): Patient
 
   def retrieveAllPatients()(implicit repo: Repo[State])
     : Future[Either[RepoErrorState, List[Patient]]]
@@ -53,13 +53,13 @@ trait GrangerRepo[State, F[_]] {
   def startTreatment(patientId: PatientId,
                      toothId: Int,
                      treatmentCategory: TreatmentCategory)(
-      implicit repo: Repo[State]): Future[Patient]
+      implicit repo: Repo[State]): Patient
 
   def finishTreatment(patientId: PatientId, toothId: Int)(
-      implicit repo: Repo[State]): Future[Patient]
+      implicit repo: Repo[State]): Patient
 
   def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime)
-                     (implicit repo: Repo[Map[PatientId, Patient]]): Future[Patient]
+                     (implicit repo: Repo[Map[PatientId, Patient]]): Patient
 
 
 }
