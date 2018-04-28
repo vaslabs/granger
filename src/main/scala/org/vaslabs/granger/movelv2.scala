@@ -86,16 +86,12 @@ object v2json {
   implicit val patientEncoder: Encoder[Patient] = deriveEncoder[Patient]
   implicit val patientDecoder: Decoder[Patient] = deriveDecoder[Patient]
 
-  implicit val repoEncoder: Encoder[Map[PatientId, Patient]] = Encoder.encodeMapLike[Map, PatientId, Patient]
-  implicit val repoDecoder: Decoder[Map[PatientId, Patient]] = Decoder.decodeMapLike[Map, PatientId, Patient]
+  implicit val repoEncoder: Encoder[Map[PatientId, Patient]] = Encoder.encodeMap[PatientId, Patient]
+  implicit val repoDecoder: Decoder[Map[PatientId, Patient]] = Decoder.decodeMap[PatientId, Patient]
 }
 
 object modelv2 {
-  import org.vaslabs.granger.modeltreatments.{
-    RepeatRootCanalTreatment,
-    RootCanalTreatment,
-    TreatmentCategory
-  }
+  import org.vaslabs.granger.modeltreatments.TreatmentCategory
 
   import org.vaslabs.granger.comms.api.model.Activity._
   import v2json._

@@ -2,31 +2,31 @@ name := "granger"
 
 version := "1.0"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.6"
 
 organization := "org.vaslabs"
 
-val akkaVersion = "2.5.2"
-val circeVersion = "0.8.0"
+val akkaVersion = "2.5.12"
+val circeVersion = "0.9.3"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-  "com.typesafe.akka" %% "akka-http" % "10.0.9",
-  "com.typesafe.akka" %% "akka-http-testkit" % "10.0.9" % Test,
+  "com.typesafe.akka" %% "akka-http" % "10.1.1",
+  "com.typesafe.akka" %% "akka-http-testkit" % "10.1.1" % Test,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-  "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
   "commons-io" % "commons-io" % "2.4" % "test",
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
   "io.circe" %% "circe-java8" % circeVersion,
-  "de.heikoseeberger" %% "akka-http-circe" % "1.16.0",
+  "de.heikoseeberger" %% "akka-http-circe" % "1.20.1",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
-  "com.github.pureconfig" %% "pureconfig" % "0.7.2",
-  "de.knutwalker" %% "akka-stream-circe" % "3.4.0",
-  "de.knutwalker" %% "akka-http-circe" % "3.4.0",
-  "de.knutwalker" %% "akka-stream-json" % "3.3.0",
-  "de.knutwalker" %% "akka-http-json" % "3.3.0",
+  "com.github.pureconfig" %% "pureconfig" % "0.9.1",
+  "de.knutwalker" %% "akka-stream-circe" % "3.5.0",
+  "de.knutwalker" %% "akka-http-circe" % "3.5.0",
+  "de.knutwalker" %% "akka-stream-json" % "3.5.0",
+  "de.knutwalker" %% "akka-http-json" % "3.5.0",
   "org.dbpedia.extraction" % "dump" % "4.1",
   "net.lingala.zip4j" % "zip4j" % "1.3.2"
 
