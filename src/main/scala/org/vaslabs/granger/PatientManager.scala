@@ -123,7 +123,6 @@ class PatientManager private (
     case RememberedData =>
       rememberInputAgent forward RememberInputAgent.Suggest
     case DeleteTreatment(patientId, toothId, timestamp) =>
-      log.error("Deleting treatment {},{},{}", patientId, toothId, timestamp)
       schedulePushJob()
       sender() ! grangerRepo.deleteTreatment(patientId, toothId, timestamp)
 
