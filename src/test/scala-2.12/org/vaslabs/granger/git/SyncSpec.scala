@@ -8,10 +8,9 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.URIish
 import org.scalatest.{Assertion, Matchers}
 import org.vaslabs.granger.{AkkaBaseSpec, Orchestrator}
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.modelv2.{PatientId}
 import org.vaslabs.granger.repo.SingleStateGrangerRepo
 import org.vaslabs.granger.system.BaseDirProvider
-import org.vaslabs.granger.system.UpdateDownloader.ValidReleases
 
 /**
   * Created by vnicolaou on 09/09/17.
@@ -65,7 +64,6 @@ class SyncSpec extends AkkaBaseSpec("SyncTest") with Matchers{
       uri => {
         val orchestrator = TestActorRef(Orchestrator.props(new SingleStateGrangerRepo(), config))
         orchestrator ! Orchestrator.Orchestrate
-        orchestrator ! ValidReleases(List.empty)
         orchestrator ! Orchestrator.Ping
         expectMsg(Orchestrator.Pong)
         assert(gitRepo.getState().toOption.get.size == 1)

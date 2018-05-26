@@ -15,7 +15,7 @@ trait GrangerApi[F[_]] {
 
   def addPatient(patient: Patient): F[Patient]
 
-  def retrieveAllPatients(): F[Either[RepoErrorState, List[Patient]]]
+  def retrieveAllPatients(): F[List[Patient]]
 
   def addToothInfo(rq: AddToothInformationRequest): F[Patient]
 

@@ -3,7 +3,8 @@ package org.vaslabs.granger.repo
 import java.time.ZonedDateTime
 
 import akka.http.scaladsl.model.StatusCode
-import org.vaslabs.granger.PatientManager.{CommandOutcome, LoadDataOutcome}
+import cats.effect.IO
+import org.vaslabs.granger.PatientManager.LoadDataOutcome
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2._
@@ -30,36 +31,30 @@ trait GrangerRepo[State, F[_]] {
   def loadData()(
       implicit repo: Repo[Map[PatientId, Patient]]): F[LoadDataOutcome]
 
-  def setUpRepo(repoRq: Any)(implicit repo: Repo[State]): Future[StatusCode] =
-    Future {
-      repo.setUp(repoRq)
-    }
+  def setUpRepo(repoRq: Any)(implicit repo: Repo[State]): F[StatusCode]
 
   def getLatestActivity(patientId: PatientId): F[Map[Int, List[Activity]]]
 
   def addToothInfo(rq: AddToothInformationRequest)(
-      implicit repo: Repo[State]): Patient
+      implicit repo: Repo[State]): F[Patient]
 
-  def addPatient(patient: Patient)(implicit repo: Repo[State]): Patient
+  def addPatient(patient: Patient)(implicit repo: Repo[State]): F[Patient]
 
   def retrieveAllPatients()(implicit repo: Repo[State])
-    : Future[Either[RepoErrorState, List[Patient]]]
+    : IO[Either[RepoErrorState, List[Patient]]]
 
-  def pushChanges()(implicit repo: Repo[State]): Future[Unit] =
-    Future {
-      repo.push()
-    }
+  def pushChanges()(implicit repo: Repo[State]): F[Unit]
 
   def startTreatment(patientId: PatientId,
                      toothId: Int,
                      treatmentCategory: TreatmentCategory)(
-      implicit repo: Repo[State]): Patient
+      implicit repo: Repo[State]): F[Patient]
 
   def finishTreatment(patientId: PatientId, toothId: Int)(
-      implicit repo: Repo[State]): Patient
+      implicit repo: Repo[State]): F[Patient]
 
   def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime)
-                     (implicit repo: Repo[Map[PatientId, Patient]]): Patient
+                     (implicit repo: Repo[Map[PatientId, Patient]]): F[Patient]
 
 
 }

@@ -3,25 +3,26 @@ package org.vaslabs.granger.repo
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, ZonedDateTime}
 
+import akka.http.scaladsl.model.StatusCode
 import org.vaslabs.granger.PatientManager
 import org.vaslabs.granger.PatientManager.{LoadDataFailure, LoadDataSuccess}
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
 
-import scala.concurrent.{ExecutionContext, Future}
-
+import scala.concurrent.ExecutionContext
+import cats.effect._
 /**
   * Created by vnicolaou on 03/06/17.
   */
 class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
                                clock: Clock)
-    extends GrangerRepo[Map[PatientId, Patient], Future] {
+    extends GrangerRepo[Map[PatientId, Patient], IO] {
 
   private var state: Map[PatientId, Patient] = Map.empty
 
   override def addPatient(patient: Patient)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
+      implicit repo: Repo[Map[PatientId, Patient]]): IO[Patient] = IO
     {
       val patientId = PatientId(nextPatientId())
       val newState: Map[PatientId, Patient] = state + (patientId -> patient
@@ -30,7 +31,7 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
       state = newState
       state.get(patientId).get
     }
-  }
+
 
   private[this] def nextPatientId(): Long = {
     if (state.size == 0)
@@ -41,8 +42,8 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
 
   override def retrieveAllPatients()(
       implicit repo: Repo[Map[PatientId, Patient]])
-    : Future[Either[RepoErrorState, List[Patient]]] =
-    Future {
+    : IO[Either[RepoErrorState, List[Patient]]] =
+    IO {
       repo
         .getState()
         .map(
@@ -54,7 +55,7 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
     }
 
   override def addToothInfo(rq: AddToothInformationRequest)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Patient =
+      implicit repo: Repo[Map[PatientId, Patient]]): IO[Patient] = IO
     {
       val patient = state.get(rq.patientId)
       patient.foreach(patient => {
@@ -81,8 +82,8 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
     }
 
   override def getLatestActivity(
-      patientId: PatientId): Future[Map[Int, List[Activity]]] =
-    Future {
+      patientId: PatientId): IO[Map[Int, List[Activity]]] =
+    IO {
       val patient = state.get(patientId)
       patient.map(_.extractLatestActivity).getOrElse(Map.empty)
     }
@@ -90,7 +91,7 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   override def startTreatment(patientId: PatientId,
                               toothId: Int,
                               category: TreatmentCategory)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
+      implicit repo: Repo[Map[PatientId, Patient]]): IO[Patient] = IO {
     val treatment = Treatment(ZonedDateTime.now(clock), category = category)
     val patient = state.get(patientId).get
     val toothWithTreatment =
@@ -110,7 +111,7 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   }
 
   override def finishTreatment(patientId: PatientId, toothId: Int)(
-      implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
+      implicit repo: Repo[Map[PatientId, Patient]]): IO[Patient] = IO{
     val newRepo = state
       .get(patientId)
       .flatMap(p => {
@@ -132,16 +133,16 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   }
 
   override def loadData()(implicit repo: Repo[Map[PatientId, Patient]])
-    : Future[PatientManager.LoadDataOutcome] = {
+    : IO[PatientManager.LoadDataOutcome] =
     retrieveAllPatients().map(
       _.fold(res => LoadDataFailure(res), _ => LoadDataSuccess)
     )
-  }
+
 
   override def deleteTreatment(
       patientId: PatientId,
       toothId: Int,
-      timestamp: ZonedDateTime)(implicit repo: Repo[Map[PatientId, Patient]]): Patient = {
+      timestamp: ZonedDateTime)(implicit repo: Repo[Map[PatientId, Patient]]): IO[Patient] = IO
     {
       val updatedPatient = state.get(patientId).map(_.deleteTreatment(toothId, timestamp))
       updatedPatient.foreach(p => {
@@ -152,7 +153,10 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
       })
       state.get(patientId).get
     }
-  }
+
+  override def setUpRepo(repoRq: Any)(implicit repo: Repo[Map[PatientId, Patient]]): IO[StatusCode] = IO {repo.setUp()}
+
+  override def pushChanges()(implicit repo: Repo[Map[PatientId, Patient]]): IO[Unit] = IO {repo.push()}
 }
 
 sealed trait IOError

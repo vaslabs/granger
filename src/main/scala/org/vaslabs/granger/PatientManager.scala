@@ -4,10 +4,7 @@ import java.io.File
 import java.time.{Clock, ZonedDateTime}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
-import org.vaslabs.granger.repo.{EmptyRepo, GrangerRepo, RepoErrorState}
-
-import scala.concurrent.Future
-import akka.pattern.pipe
+import cats.effect.IO
 import io.circe.{Decoder, Encoder}
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
@@ -15,23 +12,19 @@ import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRe
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
-
-import cats.syntax.either._
+import org.vaslabs.granger.repo.{EmptyRepo, GrangerRepo, RepoErrorState}
 /**
   * Created by vnicolaou on 29/05/17.
   */
 class PatientManager private (
-    grangerRepo: GrangerRepo[Map[modelv2.PatientId, modelv2.Patient], Future],
+    grangerRepo: GrangerRepo[Map[modelv2.PatientId, modelv2.Patient], IO],
     grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock)
     extends Actor
     with ActorLogging {
-  import context.dispatcher
   import PatientManager._
-
-
-  import v2json._
   import io.circe.generic.auto._
   import io.circe.generic.semiauto._
+  import v2json._
 
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
@@ -67,7 +60,7 @@ class PatientManager private (
   override def receive: Receive = {
     case LoadData =>
       log.info("Loading patient data...")
-      grangerRepo.loadData() pipeTo self
+      self ! grangerRepo.loadData().unsafeRunSync()
     case LoadDataSuccess =>
       log.info("Done")
       initialiseRememberAgent()
@@ -82,13 +75,22 @@ class PatientManager private (
       }
   }
 
+  private[this] def handleRetrievingPatientData(): Unit = {
+    val senderRef = sender()
+    grangerRepo.retrieveAllPatients().unsafeRunSync() match {
+      case Left(errorState) => senderRef ! errorState
+      case Right(patientData) => senderRef ! patientData
+    }
+  }
+
   def settingUp: Receive = {
     case FetchAllPatients =>
-      grangerRepo.retrieveAllPatients() pipeTo sender()
+      handleRetrievingPatientData()
+
     case InitRepo(remoteRepo) =>
       context.become(receivePostLoad)
       initialiseRememberAgent()
-      grangerRepo.setUpRepo(remoteRepo) pipeTo sender()
+      sender() ! grangerRepo.setUpRepo(remoteRepo)
   }
 
 
@@ -98,10 +100,9 @@ class PatientManager private (
 
   private [this] def getInformation: Receive = {
     case FetchAllPatients =>
-      val senderRef = sender()
-      grangerRepo.retrieveAllPatients() pipeTo senderRef
+      handleRetrievingPatientData()
     case LatestActivity(patientId) =>
-      grangerRepo.getLatestActivity(patientId) pipeTo sender()
+      sender() ! grangerRepo.getLatestActivity(patientId).unsafeRunSync()
     case m: MedicamentSuggestions =>
       rememberRepo.save(s"persisting suggestions with new medicament ${m.medicamentsUsed.apply(0).medicamentName}", m)
   }
@@ -109,22 +110,22 @@ class PatientManager private (
   private [this] def submitInformation: Receive = {
     case AddPatient(patient) =>
       schedulePushJob()
-      sender() ! grangerRepo.addPatient(patient)
+      sender() ! grangerRepo.addPatient(patient).unsafeRunSync()
     case rq: AddToothInformationRequest =>
       schedulePushJob()
       rememberInputAgent ! rq
-      sender() ! grangerRepo.addToothInfo(rq)
+      sender() ! grangerRepo.addToothInfo(rq).unsafeRunSync()
     case StartTreatment(patientId, toothId, category) =>
       schedulePushJob()
-      sender() ! grangerRepo.startTreatment(patientId, toothId, category)
+      sender() ! grangerRepo.startTreatment(patientId, toothId, category).unsafeRunSync()
     case FinishTreatment(patientId, toothId) =>
       schedulePushJob()
-      sender() ! grangerRepo.finishTreatment(patientId, toothId)
+      sender() ! grangerRepo.finishTreatment(patientId, toothId).unsafeRunSync()
     case RememberedData =>
       rememberInputAgent forward RememberInputAgent.Suggest
     case DeleteTreatment(patientId, toothId, timestamp) =>
       schedulePushJob()
-      sender() ! grangerRepo.deleteTreatment(patientId, toothId, timestamp)
+      sender() ! grangerRepo.deleteTreatment(patientId, toothId, timestamp).unsafeRunSync()
 
   }
 
@@ -136,7 +137,7 @@ class PatientManager private (
 
 object PatientManager {
   def props(grangerRepo: GrangerRepo[Map[modelv2.PatientId, modelv2.Patient],
-                                     Future],
+                                     IO],
             grangerConfig: GrangerConfig)(implicit gitApi: Git,
                                           clock: Clock): Props =
     Props(new PatientManager(grangerRepo, grangerConfig))
