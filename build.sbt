@@ -6,9 +6,12 @@ scalaVersion := "2.12.6"
 
 organization := "org.vaslabs"
 
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+
+
 val akkaVersion = "2.5.12"
 val circeVersion = "0.9.3"
-
+val monocleVersion = "1.5.1-cats"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % "10.1.1",
@@ -23,13 +26,12 @@ libraryDependencies ++= Seq(
   "de.heikoseeberger" %% "akka-http-circe" % "1.20.1",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
   "com.github.pureconfig" %% "pureconfig" % "0.9.1",
-  "de.knutwalker" %% "akka-stream-circe" % "3.5.0",
   "de.knutwalker" %% "akka-http-circe" % "3.5.0",
-  "de.knutwalker" %% "akka-stream-json" % "3.5.0",
   "de.knutwalker" %% "akka-http-json" % "3.5.0",
-  "org.dbpedia.extraction" % "dump" % "4.1",
-  "net.lingala.zip4j" % "zip4j" % "1.3.2",
-  "org.typelevel" %% "cats-effect" % "1.0.0-RC"
+  "org.typelevel" %% "cats-effect" % "1.0.0-RC",
+  "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
+  "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
+  "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % "test"
 
 )
 
@@ -72,3 +74,4 @@ name in UniversalDocs <<= name in Universal
 name in UniversalSrc <<= name in Universal
 
 packageName in Universal := packageName.value
+

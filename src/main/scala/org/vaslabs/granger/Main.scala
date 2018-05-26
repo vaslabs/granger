@@ -46,9 +46,7 @@ object Main extends App{
         new File(workingDirectory).getParentFile.getParentFile
       }
 
-      val grangerRepo = new SingleStateGrangerRepo()
-
-      val orchestrator = system.actorOf(Orchestrator.props(grangerRepo, config), "orchestrator")
+      val orchestrator = system.actorOf(Orchestrator.props(config), "orchestrator")
 
 
 

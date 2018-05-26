@@ -62,7 +62,7 @@ class SyncSpec extends AkkaBaseSpec("SyncTest") with Matchers{
   "given granger starts up it" should "sync with remote repo" in {
     givenRemoteRepoWithData() {
       uri => {
-        val orchestrator = TestActorRef(Orchestrator.props(new SingleStateGrangerRepo(), config))
+        val orchestrator = TestActorRef(Orchestrator.props(config))
         orchestrator ! Orchestrator.Orchestrate
         orchestrator ! Orchestrator.Ping
         expectMsg(Orchestrator.Pong)

@@ -12,12 +12,11 @@ import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRe
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
-import org.vaslabs.granger.repo.{EmptyRepo, GrangerRepo, RepoErrorState}
+import org.vaslabs.granger.repo._
 /**
   * Created by vnicolaou on 29/05/17.
   */
 class PatientManager private (
-    grangerRepo: GrangerRepo[Map[modelv2.PatientId, modelv2.Patient], IO],
     grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock)
     extends Actor
     with ActorLogging {
@@ -35,7 +34,9 @@ class PatientManager private (
   implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
     new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
 
-  val gitRepoPusher: ActorRef =
+  final val grangerRepo: GrangerRepo[Map[PatientId, Patient], IO] = new SingleStateGrangerRepo()
+
+  final val gitRepoPusher: ActorRef =
     context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
 
 
@@ -102,7 +103,7 @@ class PatientManager private (
     case FetchAllPatients =>
       handleRetrievingPatientData()
     case LatestActivity(patientId) =>
-      sender() ! grangerRepo.getLatestActivity(patientId).unsafeRunSync()
+      sender() ! grangerRepo.getLatestActivity(patientId)
     case m: MedicamentSuggestions =>
       rememberRepo.save(s"persisting suggestions with new medicament ${m.medicamentsUsed.apply(0).medicamentName}", m)
   }
@@ -113,19 +114,21 @@ class PatientManager private (
       sender() ! grangerRepo.addPatient(patient).unsafeRunSync()
     case rq: AddToothInformationRequest =>
       schedulePushJob()
+      val senderRef = sender()
       rememberInputAgent ! rq
-      sender() ! grangerRepo.addToothInfo(rq).unsafeRunSync()
+      grangerRepo.addToothInfo(rq).map(_.unsafeRunSync()).map(senderRef ! _).merge
     case StartTreatment(patientId, toothId, category) =>
       schedulePushJob()
-      sender() ! grangerRepo.startTreatment(patientId, toothId, category).unsafeRunSync()
+      sender() ! grangerRepo.startTreatment(patientId, toothId, category).map(_.unsafeRunSync()).merge
     case FinishTreatment(patientId, toothId) =>
       schedulePushJob()
-      sender() ! grangerRepo.finishTreatment(patientId, toothId).unsafeRunSync()
+      sender() ! grangerRepo.finishTreatment(patientId, toothId).map(_.unsafeRunSync()).merge
     case RememberedData =>
       rememberInputAgent forward RememberInputAgent.Suggest
     case DeleteTreatment(patientId, toothId, timestamp) =>
       schedulePushJob()
-      sender() ! grangerRepo.deleteTreatment(patientId, toothId, timestamp).unsafeRunSync()
+      sender() !
+        grangerRepo.deleteTreatment(patientId, toothId, timestamp).map(_.unsafeRunSync()).merge
     case DeletePatient(patientId) =>
       schedulePushJob()
       val outcome = grangerRepo.deletePatient(patientId)
@@ -141,11 +144,9 @@ class PatientManager private (
 }
 
 object PatientManager {
-  def props(grangerRepo: GrangerRepo[Map[modelv2.PatientId, modelv2.Patient],
-                                     IO],
-            grangerConfig: GrangerConfig)(implicit gitApi: Git,
+  def props(grangerConfig: GrangerConfig)(implicit gitApi: Git,
                                           clock: Clock): Props =
-    Props(new PatientManager(grangerRepo, grangerConfig))
+    Props(new PatientManager(grangerConfig))
 
   case object FetchAllPatients
 

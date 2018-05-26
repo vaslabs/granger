@@ -3,12 +3,13 @@ package org.vaslabs.granger
 import java.time.ZonedDateTime
 
 import cats.Id
-import org.vaslabs.granger.PatientManager.FinishTreatment
+import org.vaslabs.granger.PatientManager.{Failure, FinishTreatment}
 import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
 import org.scalatest.Matchers
+import org.vaslabs.granger.repo.ToothHasActiveTreatment
 /**
   * Created by vnicolaou on 28/06/17.
   */
@@ -33,8 +34,8 @@ class HttpRouterAddTreatmentsSpec extends HttpBaseSpec with Matchers{
             "Started treatment for tooth 11 on patient 1"
 
           Post("/treatment/start", withStartTreatment(PatientId(1), 11)) ~> httpRouter.routes ~> check {
-            responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe
-              List(withOpenTreatment())
+            responseAs[Failure] shouldBe
+              Failure(ToothHasActiveTreatment(PatientId(1), 11).error)
           }
 
           git.log().call().asScala.head.getFullMessage shouldBe

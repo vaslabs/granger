@@ -25,39 +25,29 @@ case class UnparseableSchema(error: String) extends RepoErrorState
 
 trait GrangerRepo[State, F[_]] {
 
+  def loadData(): F[LoadDataOutcome]
 
+  def setUpRepo(repoRq: Any): F[StatusCode]
 
-  implicit val executionContext: ExecutionContext
+  def getLatestActivity(patientId: PatientId): Map[Int, List[Activity]]
 
-  def loadData()(
-      implicit repo: Repo[Map[PatientId, Patient]]): F[LoadDataOutcome]
+  def addToothInfo(rq: AddToothInformationRequest): Either[InvalidData, F[Patient]]
 
-  def setUpRepo(repoRq: Any)(implicit repo: Repo[State]): F[StatusCode]
+  def addPatient(patient: Patient): F[Patient]
 
-  def getLatestActivity(patientId: PatientId): F[Map[Int, List[Activity]]]
+  def retrieveAllPatients(): IO[Either[RepoErrorState, List[Patient]]]
 
-  def addToothInfo(rq: AddToothInformationRequest)(
-      implicit repo: Repo[State]): F[Patient]
+  def pushChanges(): F[Unit]
 
-  def addPatient(patient: Patient)(implicit repo: Repo[State]): F[Patient]
+  def startTreatment(patientId: PatientId, toothId: Int, treatmentCategory: TreatmentCategory):
+    Either[InvalidData, F[Patient]]
 
-  def retrieveAllPatients()(implicit repo: Repo[State])
-    : IO[Either[RepoErrorState, List[Patient]]]
+  def finishTreatment(patientId: PatientId, toothId: Int): Either[InvalidData, F[Patient]]
 
-  def pushChanges()(implicit repo: Repo[State]): F[Unit]
+  def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime):
+    Either[InvalidData, F[Patient]]
 
-  def startTreatment(patientId: PatientId,
-                     toothId: Int,
-                     treatmentCategory: TreatmentCategory)(
-      implicit repo: Repo[State]): F[Patient]
-
-  def finishTreatment(patientId: PatientId, toothId: Int)(
-      implicit repo: Repo[State]): F[Patient]
-
-  def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime)
-                     (implicit repo: Repo[Map[PatientId, Patient]]): F[Patient]
-
-  def deletePatient(patientId: PatientId)(implicit repo: Repo[Map[PatientId, Patient]]): F[Either[IOError, Unit]]
+  def deletePatient(patientId: PatientId): F[Either[IOError, Unit]]
 
 
 
