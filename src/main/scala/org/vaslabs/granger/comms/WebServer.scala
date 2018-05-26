@@ -12,7 +12,7 @@ import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
-import org.vaslabs.granger.repo.{IOError, RepoErrorState}
+import org.vaslabs.granger.repo.IOError
 
 import scala.concurrent.duration._
 import scala.io.Source
