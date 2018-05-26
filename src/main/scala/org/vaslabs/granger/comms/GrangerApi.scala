@@ -15,7 +15,7 @@ trait GrangerApi[F[_]] {
 
   def addPatient(patient: Patient): F[Patient]
 
-  def retrieveAllPatients(): F[Either[RepoErrorState, List[Patient]]]
+  def retrieveAllPatients(): F[List[Patient]]
 
   def addToothInfo(rq: AddToothInformationRequest): F[Patient]
 
@@ -30,6 +30,8 @@ trait GrangerApi[F[_]] {
   def finishTreatment(finishTreatment: FinishTreatment): Future[Patient]
 
   def deleteTreatment(deleteTreatment: DeleteTreatment): F[Patient]
+
+  def deletePatient(patientId: PatientId): F[CommandOutcome]
 
   def rememberedData(): Future[AutocompleteSuggestions]
 

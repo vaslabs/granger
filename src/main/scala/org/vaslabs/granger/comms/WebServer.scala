@@ -43,9 +43,9 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
     (patientManager ? AddPatient(patient)).mapTo[Patient]
 
   override def retrieveAllPatients()
-    : Future[Either[RepoErrorState, List[Patient]]] =
+    : Future[List[Patient]] =
     (patientManager ? FetchAllPatients)
-      .mapTo[Either[RepoErrorState, List[Patient]]]
+      .mapTo[List[Patient]]
 
   override def addToothInfo(rq: AddToothInformationRequest): Future[Patient] = {
     (patientManager ? rq).mapTo[Patient]
@@ -80,4 +80,7 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
 
   override def deleteTreatment(deleteTreatment: DeleteTreatment): Future[Patient] =
     (patientManager ? deleteTreatment).mapTo[Patient]
+
+  override def deletePatient(patientId: PatientId): Future[CommandOutcome] =
+    (patientManager ? DeletePatient(patientId)).mapTo[CommandOutcome]
 }

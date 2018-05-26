@@ -84,6 +84,10 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
           rq => complete(deleteTreatment(rq))
         }
       }
+    } ~ path ("patient" / LongNumber) {
+      patientId => delete {
+        complete(deletePatient(PatientId(patientId)))
+      }
     }
   }
 
