@@ -9,8 +9,6 @@ import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2._
 
-import scala.concurrent.ExecutionContext
-
 /**
   * Created by vnicolaou on 28/05/17.
   */

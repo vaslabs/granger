@@ -2,14 +2,11 @@ package org.vaslabs.granger
 
 import java.time.Clock
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Stash}
+import akka.actor.{Actor, ActorLogging, Props, Stash}
 import akka.stream.ActorMaterializer
-import cats.effect.IO
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.comms.WebServer
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
-import org.vaslabs.granger.repo.{GrangerRepo, SingleStateGrangerRepo}
 import org.vaslabs.granger.system.BaseDirProvider
 
 import cats.syntax.either._

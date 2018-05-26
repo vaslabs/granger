@@ -6,7 +6,6 @@ import java.time.Clock
 import akka.actor.ActorSystem
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.vaslabs.granger.repo.SingleStateGrangerRepo
 import org.vaslabs.granger.system.BaseDirProvider
 import pureconfig._
 /**
