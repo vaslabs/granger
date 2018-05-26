@@ -8,7 +8,6 @@ import cats.effect.IO
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.comms.WebServer
-import org.vaslabs.granger.github.releases.{Release, ReleaseTag}
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.repo.{GrangerRepo, SingleStateGrangerRepo}
 import org.vaslabs.granger.system.BaseDirProvider
@@ -53,9 +52,6 @@ class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], IO
     unstashAll()
     context.become(serverStarted(webServer))
   }
-
-  def warning(releases: List[Release]) = log.warning(
-    "Too many releases ahead, please contact support! \n{}", releases)
 
 
   override def receive: Receive = {
