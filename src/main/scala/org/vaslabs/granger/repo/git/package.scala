@@ -4,7 +4,6 @@ import java.io.{File, PrintWriter}
 
 import cats.syntax.either._
 import org.eclipse.jgit.api.Git
-import collection.JavaConverters._
 
 /**
   * Created by vnicolaou on 04/06/17.

@@ -1,8 +1,7 @@
 package org.vaslabs.granger
 
 
-import akka.actor.{Actor, ActorLogging, Props, Stash}
-import akka.pattern._
+import akka.actor.{Actor, ActorLogging, Props}
 import akka.util.Timeout
 import org.vaslabs.granger.RememberInputAgent.{MedicamentStat, MedicamentSuggestions}
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, AutocompleteSuggestions}

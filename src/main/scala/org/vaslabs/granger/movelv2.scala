@@ -5,12 +5,9 @@ import java.time.{Clock, LocalDate, ZonedDateTime}
 
 import io.circe.java8.time
 import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+import monocle.macros.Lenses
 import org.vaslabs.granger.comms.api.model.Activity
-import org.vaslabs.granger.modeltreatments.{
-  RepeatRootCanalTreatment,
-  RootCanalTreatment,
-  TreatmentCategory
-}
+import org.vaslabs.granger.modeltreatments.{RepeatRootCanalTreatment, RootCanalTreatment, TreatmentCategory}
 import org.vaslabs.granger.modelv2._
 
 /**
@@ -96,16 +93,14 @@ object modelv2 {
   import org.vaslabs.granger.comms.api.model.Activity._
   import v2json._
 
-  final class PatientId(val id: Long) extends AnyVal {
+  final case class PatientId(val id: Long) extends AnyVal {
     override def toString: String = id.toString
   }
 
-  object PatientId {
-    @inline def apply(id: Long): PatientId = new PatientId(id)
-  }
-
+  @Lenses
   case class TreatmentNote(note: String, dateOfNote: ZonedDateTime)
 
+  @Lenses
   case class Treatment(dateStarted: ZonedDateTime,
                        dateCompleted: Option[ZonedDateTime] = None,
                        category: TreatmentCategory,
@@ -125,6 +120,7 @@ object modelv2 {
       val newNextVisits = nextVisit.map(_ :: nextVisits).getOrElse(nextVisits)
       val newRoots = roots.getOrElse(this.roots)
       val newObturation = obturation.getOrElse(this.obturation.getOrElse(List.empty))
+
       copy(roots = newRoots,
            notes = newNotes,
            medicaments = newMedicaents,
@@ -133,6 +129,7 @@ object modelv2 {
     }
   }
 
+  @Lenses
   case class Tooth(number: Int, treatments: List[Treatment] = List.empty) {
 
     def deleteTreatment(timestamp: ZonedDateTime): Tooth = {
@@ -211,14 +208,18 @@ object modelv2 {
     }
   }
 
+  @Lenses
   case class NextVisit(notes: String,
                        dateOfNextVisit: ZonedDateTime,
                        dateOfNote: ZonedDateTime)
 
+  @Lenses
   case class Root(name: String, length: Int, size: String)
 
+  @Lenses
   case class Medicament(name: String, date: ZonedDateTime)
 
+  @Lenses
   case class Patient(patientId: PatientId,
                      firstName: String,
                      lastName: String,
@@ -242,6 +243,7 @@ object modelv2 {
     }
   }
 
+  @Lenses
   case class DentalChart(teeth: List[Tooth]) {
     def deleteTreatment(toothId: Int, timestamp: ZonedDateTime): DentalChart =
       copy(teeth.map( t => {

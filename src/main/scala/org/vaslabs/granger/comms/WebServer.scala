@@ -12,7 +12,7 @@ import org.vaslabs.granger.GrangerConfig
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
-import org.vaslabs.granger.repo.RepoErrorState
+import org.vaslabs.granger.repo.IOError
 
 import scala.concurrent.duration._
 import scala.io.Source
@@ -67,8 +67,13 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
     (patientManager ? InitRepo(remoteRepo)).mapTo[StatusCode]
 
   override def startNewTreatment(
-      startTreatment: StartTreatment): Future[Patient] =
-    (patientManager ? startTreatment).mapTo[Patient]
+      startTreatment: StartTreatment): Future[Either[Failure, Patient]] =
+    (patientManager ? startTreatment).map {
+      case p: Patient =>
+        Right(p)
+      case io: IOError => Left(Failure(io.error))
+      case _ => Left(Failure("Unknown error"))
+    }
 
   override def finishTreatment(
       finishTreatment: FinishTreatment): Future[Patient] =

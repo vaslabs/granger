@@ -36,7 +36,7 @@ class HttpRouterAddingTreatmentInfoSpec extends HttpBaseSpec with ScalatestRoute
         val request = AddToothInformationRequest(
           PatientId(1), 11, None, None, Some(List(Root("MB2", 19, "F2"))),
           None, None, ZonedDateTime.now(clock)
-        ).asJson
+        )
 
         Post("/update", request) ~> httpRouter.routes ~> check {
           responseAs[Patient].dentalChart.teeth.find(_.number == 11).get

@@ -6,7 +6,6 @@ import java.time.Clock
 import akka.actor.ActorSystem
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.vaslabs.granger.repo.SingleStateGrangerRepo
 import org.vaslabs.granger.system.BaseDirProvider
 import pureconfig._
 /**
@@ -46,9 +45,7 @@ object Main extends App{
         new File(workingDirectory).getParentFile.getParentFile
       }
 
-      val grangerRepo = new SingleStateGrangerRepo()
-
-      val orchestrator = system.actorOf(Orchestrator.props(grangerRepo, config), "orchestrator")
+      val orchestrator = system.actorOf(Orchestrator.props(config), "orchestrator")
 
 
 

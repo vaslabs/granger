@@ -1,10 +1,9 @@
 package org.vaslabs.granger.comms
 
 import akka.http.scaladsl.model.StatusCode
-import org.vaslabs.granger.PatientManager.{CommandOutcome, DeleteTreatment, FinishTreatment, StartTreatment}
+import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
-import org.vaslabs.granger.repo.RepoErrorState
 
 import scala.concurrent.Future
 
@@ -25,7 +24,7 @@ trait GrangerApi[F[_]] {
 
   def initGitRepo(remoteRepo: RemoteRepo): Future[StatusCode]
 
-  def startNewTreatment(startTreatment: StartTreatment): Future[Patient]
+  def startNewTreatment(startTreatment: StartTreatment): Future[Either[Failure, Patient]]
 
   def finishTreatment(finishTreatment: FinishTreatment): Future[Patient]
 

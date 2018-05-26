@@ -2,14 +2,11 @@ package org.vaslabs.granger
 
 import java.time.Clock
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props, Stash}
+import akka.actor.{Actor, ActorLogging, Props, Stash}
 import akka.stream.ActorMaterializer
-import cats.effect.IO
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.comms.WebServer
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
-import org.vaslabs.granger.repo.{GrangerRepo, SingleStateGrangerRepo}
 import org.vaslabs.granger.system.BaseDirProvider
 
 import cats.syntax.either._
@@ -17,14 +14,14 @@ import cats.syntax.either._
 /**
   * Created by vnicolaou on 28/08/17.
   */
-class Orchestrator private (grangerRepo: GrangerRepo[Map[PatientId, Patient], IO], config: GrangerConfig)
+class Orchestrator private (config: GrangerConfig)
                            (implicit git: Git, clock: Clock, baseDirProvider: BaseDirProvider)
   extends Actor with ActorLogging with Stash
 {
 
   import Orchestrator._
 
-  val patientManager = context.actorOf(PatientManager.props(grangerRepo, config), "patientManager")
+  val patientManager = context.actorOf(PatientManager.props(config), "patientManager")
 
   import context.dispatcher
 
@@ -74,9 +71,9 @@ object Orchestrator {
   case object Ping
   case object Pong
 
-  def props(grangerRepo: SingleStateGrangerRepo, config: GrangerConfig)
+  def props(config: GrangerConfig)
            (implicit git: Git, clock: Clock, baseDirProvider: BaseDirProvider): Props = {
-    Props(new Orchestrator(grangerRepo, config))
+    Props(new Orchestrator(config))
   }
 
   case object Shutdown
