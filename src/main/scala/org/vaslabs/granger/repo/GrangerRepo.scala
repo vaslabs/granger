@@ -9,7 +9,7 @@ import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 /**
   * Created by vnicolaou on 28/05/17.
@@ -24,6 +24,7 @@ case class UnkownState(error: String) extends RepoErrorState
 case class UnparseableSchema(error: String) extends RepoErrorState
 
 trait GrangerRepo[State, F[_]] {
+
 
 
   implicit val executionContext: ExecutionContext
@@ -55,6 +56,9 @@ trait GrangerRepo[State, F[_]] {
 
   def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime)
                      (implicit repo: Repo[Map[PatientId, Patient]]): F[Patient]
+
+  def deletePatient(patientId: PatientId)(implicit repo: Repo[Map[PatientId, Patient]]): F[Either[IOError, Unit]]
+
 
 
 }

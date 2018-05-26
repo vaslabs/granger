@@ -157,9 +157,27 @@ class SingleStateGrangerRepo()(implicit val executionContext: ExecutionContext,
   override def setUpRepo(repoRq: Any)(implicit repo: Repo[Map[PatientId, Patient]]): IO[StatusCode] = IO {repo.setUp()}
 
   override def pushChanges()(implicit repo: Repo[Map[PatientId, Patient]]): IO[Unit] = IO {repo.push()}
+
+  import cats.syntax.either._
+
+  override def deletePatient(patientId: PatientId)(implicit repo: Repo[Map[PatientId, Patient]]): IO[Either[IOError, Unit]] = IO {
+    val newState = state.get(patientId).map(_ => state.filterKeys(_ != patientId))
+    Either.fromOption(newState, PatientNotFound(patientId))
+      .flatMap(state =>
+        {
+          repo.save(s"Deleted patient $patientId", state).map(_ => state)
+        })
+        .map(newState => state = newState)
+  }
 }
 
-sealed trait IOError
+sealed trait IOError {
+  def error: String
+}
 case class WriteError(error: String) extends IOError
 
 case class CommitError(error: String) extends IOError
+
+case class PatientNotFound(patientId: PatientId) extends IOError {
+  val error: String = s"Patient $patientId does not exist"
+}

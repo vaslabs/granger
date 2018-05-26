@@ -31,6 +31,8 @@ trait GrangerApi[F[_]] {
 
   def deleteTreatment(deleteTreatment: DeleteTreatment): F[Patient]
 
+  def deletePatient(patientId: PatientId): F[CommandOutcome]
+
   def rememberedData(): Future[AutocompleteSuggestions]
 
 }

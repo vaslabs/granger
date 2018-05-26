@@ -126,6 +126,11 @@ class PatientManager private (
     case DeleteTreatment(patientId, toothId, timestamp) =>
       schedulePushJob()
       sender() ! grangerRepo.deleteTreatment(patientId, toothId, timestamp).unsafeRunSync()
+    case DeletePatient(patientId) =>
+      schedulePushJob()
+      val outcome = grangerRepo.deletePatient(patientId)
+        .map(_.map(_ => Success).left.map(_ => Failure(s"Failed to delete patient ${patientId}"))).unsafeRunSync()
+      sender() ! outcome.merge
 
   }
 
@@ -162,6 +167,8 @@ object PatientManager {
   case class LoadDataFailure(repoState: RepoErrorState) extends LoadDataOutcome
 
   case object RememberedData
+
+  case class DeletePatient(patientId: PatientId)
 
   sealed trait CommandOutcome
   case object Success extends CommandOutcome

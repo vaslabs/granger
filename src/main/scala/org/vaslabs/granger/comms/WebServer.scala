@@ -80,4 +80,7 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
 
   override def deleteTreatment(deleteTreatment: DeleteTreatment): Future[Patient] =
     (patientManager ? deleteTreatment).mapTo[Patient]
+
+  override def deletePatient(patientId: PatientId): Future[CommandOutcome] =
+    (patientManager ? DeletePatient(patientId)).mapTo[CommandOutcome]
 }
