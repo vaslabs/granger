@@ -21,9 +21,10 @@ abstract class HttpBaseSpec extends BaseSpec with AsyncFlatSpecLike with FailFas
     implicit val materializer: ActorMaterializer = ActorMaterializer()
 
     val patientManager = actorSystem.actorOf(PatientManager.props(config))
+    val rememberInputAgent = actorSystem.actorOf(RememberInputAgent.props(10))
     patientManager ! LoadData
 
-    val httpRouter = new WebServer(patientManager, grangerConfig) with HttpRouter
+    val httpRouter = new WebServer(patientManager, rememberInputAgent, grangerConfig) with HttpRouter
     httpRouter.start()
     f(httpRouter)
   }

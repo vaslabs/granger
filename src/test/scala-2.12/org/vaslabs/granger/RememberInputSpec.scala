@@ -4,26 +4,31 @@ import java.time._
 
 import akka.testkit.TestActorRef
 import org.scalatest.Matchers
-import org.vaslabs.granger.RememberInputAgent.{LoadData, MedicamentStat, MedicamentSuggestions}
-import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest}
+import org.vaslabs.granger.RememberInputAgent.{LoadData, MedicamentStat, MedicamentSuggestionAdded, MedicamentSuggestions}
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, AutocompleteSuggestions}
 import org.vaslabs.granger.modelv2.{Medicament, PatientId}
 
 /**
   * Created by vnicolaou on 29/07/17.
   */
-class RememberInputSpec extends AkkaBaseSpec("rememberInputTest") with Matchers {
+class RememberInputSpec extends AkkaBaseSpec("rememberInputTest") with Matchers with BaseSpec {
 
   "remembered medicaments" should "be in the remember list" in {
     val rememberInputAgent = TestActorRef(RememberInputAgent.props(5), "TestRemember")
     rememberInputAgent ! LoadData(MedicamentSuggestions(List.empty))
-    rememberInputAgent ! AddToothInformationRequest(
+    system.eventStream.subscribe(self, classOf[RememberInputAgent.RememberInputEvent])
+
+    val addToothInformationRequest = AddToothInformationRequest(
       PatientId(2), 2,
       Some(Medicament("someMed", ZonedDateTime.now(clock))),
       None, None,
       None, None,
       ZonedDateTime.now(clock))
+    system.eventStream.publish(addToothInformationRequest)
+
+    expectMsg(MedicamentSuggestionAdded("someMed"))
 
     rememberInputAgent ! RememberInputAgent.Suggest
-    expectMsg(MedicamentSuggestions(List(MedicamentStat("someMed", 1))))
+    expectMsg(AutocompleteSuggestions(List("someMed")))
   }
 }

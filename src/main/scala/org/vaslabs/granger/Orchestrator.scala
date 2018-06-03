@@ -1,15 +1,20 @@
 package org.vaslabs.granger
 
+import java.io.File
 import java.time.Clock
 
-import akka.actor.{Actor, ActorLogging, Props, Stash}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Stash}
 import akka.stream.ActorMaterializer
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.system.BaseDirProvider
-
 import cats.syntax.either._
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
+import org.vaslabs.granger.repo.EmptyRepo
+import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
 /**
   * Created by vnicolaou on 28/08/17.
@@ -22,6 +27,27 @@ class Orchestrator private (config: GrangerConfig)
   import Orchestrator._
 
   val patientManager = context.actorOf(PatientManager.props(config), "patientManager")
+
+  implicit val emptyRememberProvider: EmptyProvider[MedicamentSuggestions] = () => MedicamentSuggestions(List.empty)
+
+  import RememberInputAgent.json._
+  implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
+    new GitRepo[MedicamentSuggestions](new File(config.repoLocation), "remember.json")
+
+  val rememberInputAgent: ActorRef =
+    context.actorOf(RememberInputAgent.props(5), "rememberInputAgent")
+
+
+  def initialiseRememberAgent() =
+    rememberRepo.getState().map(sm => rememberInputAgent ! RememberInputAgent.LoadData(sm))
+      .left.foreach(error => {
+      error match {
+        case EmptyRepo =>
+          rememberRepo.saveNew()
+          rememberInputAgent ! RememberInputAgent.
+            LoadData(MedicamentSuggestions(List.empty))
+      }
+    })
 
   import context.dispatcher
 
@@ -43,11 +69,12 @@ class Orchestrator private (config: GrangerConfig)
     implicit val materializer = ActorMaterializer()(context)
     syncRepo()
     patientManager ! LoadPatientData
-    val webServer = new WebServer(patientManager, config)
+    val webServer = new WebServer(patientManager, rememberInputAgent, config)
     webServer.start()
     log.info("Granger started patient manager")
     unstashAll()
     context.become(serverStarted(webServer))
+    initialiseRememberAgent()
   }
 
 
