@@ -8,7 +8,7 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
-import org.vaslabs.granger.GrangerConfig
+import org.vaslabs.granger.{GrangerConfig, RememberInputAgent}
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
@@ -20,7 +20,7 @@ import scala.io.Source
 /**
   * Created by vnicolaou on 28/05/17.
   */
-class WebServer(patientManager: ActorRef, config: GrangerConfig)(
+class WebServer(patientManager: ActorRef, rememberInputAgent: ActorRef, config: GrangerConfig)(
     implicit executionContext: ExecutionContext,
     actorSystem: ActorSystem,
     materializer: ActorMaterializer)
@@ -80,7 +80,7 @@ class WebServer(patientManager: ActorRef, config: GrangerConfig)(
     (patientManager ? finishTreatment).mapTo[Patient]
 
   override def rememberedData(): Future[AutocompleteSuggestions] = {
-    (patientManager ? RememberedData).mapTo[AutocompleteSuggestions]
+    (rememberInputAgent ? RememberInputAgent.Suggest).mapTo[AutocompleteSuggestions]
   }
 
   override def deleteTreatment(deleteTreatment: DeleteTreatment): Future[Patient] =

@@ -22,7 +22,7 @@ class HttpRouterAddingPatientsSpec extends HttpBaseSpec with ScalatestRouteTest 
           responseAs[Patient] shouldBe withPatient(PatientId(1))
         }
         import scala.collection.JavaConverters._
-        git.log().call().asScala.size shouldBe 2
+        git.log().call().asScala.size shouldBe 1
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]] shouldBe List(withPatient(PatientId(1)))
         }

@@ -23,7 +23,7 @@ class HttpRouterDeletingPatientsSpec extends HttpBaseSpec with ScalatestRouteTes
           responseAs[Patient] shouldBe withPatient(PatientId(1))
         }
         import scala.collection.JavaConverters._
-        git.log().call().asScala.size shouldBe 2
+        git.log().call().asScala.size shouldBe 1
 
         Delete("/patient/2") ~> httpRouter.routes ~> check {
           responseAs[CommandOutcome] should matchPattern {
