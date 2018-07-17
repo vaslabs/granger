@@ -32,6 +32,10 @@ class RCTReminderActor extends Actor{
             context.become(behaviourWithReminders((reminders - modifiedReminder) + (modifiedReminder)))
             sender() ! SnoozeAck(modifiedReminder.externalReference, modifiedReminder.remindOn)
         }
+    case DeleteReminder(externalReference) =>
+      val remainingReminders = reminders.filterNot(_.externalReference == externalReference)
+      context.become(behaviourWithReminders(remainingReminders))
+      sender() ! DeletedAck(externalReference)
   }
 }
 

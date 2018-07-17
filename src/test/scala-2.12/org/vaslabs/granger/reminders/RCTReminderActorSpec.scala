@@ -51,11 +51,15 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
       )
     }
 
-//    "stop notifications" in {
-//      rctReminderActor ! DeleteReminder(externalId)
-//      expectMsg(DeletedAck(externalId))
-//
-//    }
+    "stop notifications" in {
+      rctReminderActor ! DeleteReminder(externalId)
+      expectMsg(DeletedAck(externalId))
+      rctReminderActor ! CheckReminders(ZonedDateTime.now(TestClock).plusMonths(7))
+      expectMsg(
+        Notify(NonEmptyList.of(
+          Notification(expectedNotificationTime, secondExternalId)))
+      )
+    }
   }
 
 
