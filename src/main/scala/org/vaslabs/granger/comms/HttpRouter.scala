@@ -16,6 +16,7 @@ import org.vaslabs.granger.spa.StaticResources
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.PatientManager.{DeleteTreatment, FinishTreatment, StartTreatment}
 import io.circe.generic.auto._
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.ModifyReminder
 import org.vaslabs.granger.v2json._
 
 import scala.concurrent.Future
@@ -91,11 +92,18 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
       patientId => delete {
         complete(deletePatient(PatientId(patientId)))
       }
+    }~ path("treatment" / "notifications") {
+      post {
+        entity(as[ModifyReminder]) {
+          rq => complete(modifyReminder(rq))
+        }
+      }
     } ~ path ("treatment" / "notifications" / ZonedDateTimeMatcher) {
       time => get {
         complete(treatmentNotifications(time))
       }
     }
+
   }
 
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {

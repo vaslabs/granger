@@ -11,7 +11,7 @@ import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRe
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.reminders.RCTReminderActor
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.SetReminder
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.{ModifyReminder, SetReminder}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
 /**
@@ -123,6 +123,8 @@ class PatientManager private (
 
     case GetTreatmentNotifications(time) =>
       notificationActor forward RCTReminderActor.Protocol.External.CheckReminders(time)
+
+    case mr: ModifyReminder => notificationActor forward mr
 
   }
 

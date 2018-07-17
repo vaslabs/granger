@@ -15,7 +15,7 @@ import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.Notify
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.SnoozeAck
 import org.vaslabs.granger.repo.IOError
 
 import scala.concurrent.duration._
@@ -95,4 +95,8 @@ class WebServer(patientManager: ActorRef, rememberInputAgent: ActorRef, config: 
 
   override def treatmentNotifications(timestamp: ZonedDateTime): Future[External.Notify] =
     (patientManager ? GetTreatmentNotifications(timestamp)).mapTo[External.Notify]
+
+  override def modifyReminder(rq: External.ModifyReminder): Future[External.SnoozeAck] = {
+    (patientManager ? rq).mapTo[SnoozeAck]
+  }
 }
