@@ -25,7 +25,7 @@ class RCTReminderActor extends Actor{
     case SetReminder(submitted, remindOn, externalReference) =>
       val newReminder = Reminder(submitted, remindOn, externalReference)
       if (!reminders.contains(newReminder)) {
-        val allReminders = reminders + Reminder(submitted, remindOn, externalReference)
+        val allReminders = reminders + newReminder
         context.become(behaviourWithReminders(allReminders))
         sender() ! ReminderSetAck(externalReference, submitted, remindOn)
       }
