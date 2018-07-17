@@ -10,7 +10,7 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
-import org.vaslabs.granger.{GrangerConfig, RememberInputAgent}
+import org.vaslabs.granger.{GrangerConfig, PatientManager, RememberInputAgent}
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
@@ -99,4 +99,7 @@ class WebServer(patientManager: ActorRef, rememberInputAgent: ActorRef, config: 
   override def modifyReminder(rq: External.ModifyReminder): Future[External.SnoozeAck] = {
     (patientManager ? rq).mapTo[SnoozeAck]
   }
+
+  override def deleteReminder(patientId: PatientId, timestamp: ZonedDateTime): Future[External.DeletedAck] =
+    (patientManager ? PatientManager.StopReminder(timestamp, patientId)).mapTo[External.DeletedAck]
 }

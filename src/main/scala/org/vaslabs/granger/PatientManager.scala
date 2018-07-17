@@ -125,6 +125,8 @@ class PatientManager private (
       notificationActor forward RCTReminderActor.Protocol.External.CheckReminders(time)
 
     case mr: ModifyReminder => notificationActor forward mr
+    case StopReminder(timestamp, patientId) =>
+      notificationActor forward RCTReminderActor.Protocol.External.DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock))
 
   }
 
@@ -167,4 +169,7 @@ object PatientManager {
   sealed trait CommandOutcome
   case object Success extends CommandOutcome
   case class Failure(reason: String) extends CommandOutcome
+
+  case class StopReminder(timestamp: ZonedDateTime, patientId: PatientId)
+
 }
