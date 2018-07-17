@@ -1,7 +1,6 @@
 package org.vaslabs.granger.reminders
 
 import java.time._
-import java.util.UUID
 
 import akka.testkit.TestActorRef
 import cats.data.NonEmptyList
@@ -10,6 +9,7 @@ import org.vaslabs.granger.AkkaBaseSpec
 import org.vaslabs.granger.modelv2.PatientId
 import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External._
 import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.Internal._
+import scala.concurrent.duration._
 
 class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpecLike
 {
@@ -54,13 +54,18 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
     }
 
     "stop notifications" in {
-      rctReminderActor ! DeleteReminder(dateStarted, externalId)
+      rctReminderActor ! DeleteReminder(dateStarted, externalId, ZonedDateTime.now(clock).plusMonths(8))
       expectMsg(DeletedAck(dateStarted, externalId))
       rctReminderActor ! CheckReminders(ZonedDateTime.now(TestClock).plusMonths(7))
       expectMsg(
         Notify(NonEmptyList.of(
           Notification(dateStarted, expectedNotificationTime, secondExternalId)))
       )
+    }
+
+    "deleting reminders persists" in {
+      rctReminderActor ! SetReminder(dateStarted, ZonedDateTime.now(clock).plusMonths(1), externalId)
+      expectNoMessage(1 second)
     }
   }
 
