@@ -1,6 +1,7 @@
 package org.vaslabs.granger.repo
 
 import java.time.ZonedDateTime
+import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCode
 import cats.effect.IO

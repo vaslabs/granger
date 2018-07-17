@@ -2,6 +2,7 @@ package org.vaslabs.granger
 
 import java.io.File
 import java.time.{Clock, ZonedDateTime}
+import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import cats.effect.IO
@@ -9,6 +10,7 @@ import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.reminders.RCTReminderActor
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
 /**
@@ -95,7 +97,9 @@ class PatientManager private (
       sender() ! grangerRepo.startTreatment(patientId, toothId, category).map(_.unsafeRunSync()).merge
     case FinishTreatment(patientId, toothId) =>
       schedulePushJob()
-      sender() ! grangerRepo.finishTreatment(patientId, toothId).map(_.unsafeRunSync()).merge
+      val outcome = grangerRepo.finishTreatment(patientId, toothId).map(_.unsafeRunSync())
+
+      sender() ! outcome.merge
     case DeleteTreatment(patientId, toothId, timestamp) =>
       schedulePushJob()
       sender() !

@@ -2,6 +2,7 @@ package org.vaslabs.granger
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDate, ZonedDateTime}
+import java.util.UUID
 
 import io.circe.java8.time
 import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
@@ -259,6 +260,13 @@ object modelv2 {
     }
 
   }
+
+  sealed trait Reminder {
+    val reference: UUID
+    val patientId: PatientId
+  }
+  case class RCTFollowupReminder(reference: UUID, patientId: PatientId)
+  case class ReRCTFollowupReminder(reference: UUID, patientId: PatientId)
 
   object DentalChart {
     def emptyChart(): DentalChart =

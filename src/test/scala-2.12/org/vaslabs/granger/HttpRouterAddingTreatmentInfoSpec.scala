@@ -48,6 +48,7 @@ class HttpRouterAddingTreatmentInfoSpec extends HttpBaseSpec with ScalatestRoute
           responseAs[Patient].dentalChart.teeth.find(_.number == 11)
             .get.treatments.head.dateCompleted shouldBe
           Some(ZonedDateTime.now(clock))
+
         }
       }
     }

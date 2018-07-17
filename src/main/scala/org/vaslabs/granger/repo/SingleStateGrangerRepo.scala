@@ -2,6 +2,7 @@ package org.vaslabs.granger.repo
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, ZonedDateTime}
+import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCode
 import cats.data.Kleisli
@@ -10,7 +11,6 @@ import org.vaslabs.granger.PatientManager.{LoadDataFailure, LoadDataSuccess}
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
-
 import cats.effect._
 
 /**
@@ -175,6 +175,7 @@ class SingleStateGrangerRepo()(
       })
       .map(newState => state = newState)
   }
+
 }
 
 sealed trait IOError {
