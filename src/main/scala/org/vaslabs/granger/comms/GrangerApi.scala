@@ -1,9 +1,12 @@
 package org.vaslabs.granger.comms
 
+import java.time.ZonedDateTime
+
 import akka.http.scaladsl.model.StatusCode
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.Notify
 
 import scala.concurrent.Future
 
@@ -31,6 +34,8 @@ trait GrangerApi[F[_]] {
   def deleteTreatment(deleteTreatment: DeleteTreatment): F[Patient]
 
   def deletePatient(patientId: PatientId): F[CommandOutcome]
+
+  def treatmentNotifications(timestamp: ZonedDateTime): F[Notify]
 
   def rememberedData(): Future[AutocompleteSuggestions]
 

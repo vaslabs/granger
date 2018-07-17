@@ -11,6 +11,7 @@ import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRe
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.reminders.RCTReminderActor
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.SetReminder
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
 /**
@@ -36,6 +37,7 @@ class PatientManager private (
   final val gitRepoPusher: ActorRef =
     context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
 
+  val notificationActor = context.actorOf(RCTReminderActor.props, "notifications")
 
   override def receive: Receive = {
     case LoadData =>
@@ -60,6 +62,11 @@ class PatientManager private (
       case Left(errorState) => senderRef ! errorState
       case Right(patientData) => senderRef ! patientData
     }
+  }
+
+  override def aroundPreStart(): Unit = {
+    context.system.eventStream.subscribe(notificationActor, classOf[SetReminder])
+    super.aroundPreStart()
   }
 
   def settingUp: Receive = {
@@ -97,7 +104,11 @@ class PatientManager private (
       sender() ! grangerRepo.startTreatment(patientId, toothId, category).map(_.unsafeRunSync()).merge
     case FinishTreatment(patientId, toothId) =>
       schedulePushJob()
-      val outcome = grangerRepo.finishTreatment(patientId, toothId).map(_.unsafeRunSync())
+      val finishTime = ZonedDateTime.now(clock)
+      val outcome = grangerRepo.finishTreatment(patientId, toothId, finishTime).map(_.unsafeRunSync())
+      outcome.foreach(_ => {
+        context.system.eventStream.publish(SetReminder(finishTime, finishTime.plusMonths(6), patientId))
+      })
 
       sender() ! outcome.merge
     case DeleteTreatment(patientId, toothId, timestamp) =>
@@ -109,6 +120,9 @@ class PatientManager private (
       val outcome = grangerRepo.deletePatient(patientId)
         .map(_.map(_ => Success).left.map(_ => Failure(s"Failed to delete patient ${patientId}"))).unsafeRunSync()
       sender() ! outcome.merge
+
+    case GetTreatmentNotifications(time) =>
+      notificationActor forward RCTReminderActor.Protocol.External.CheckReminders(time)
 
   }
 
@@ -145,6 +159,8 @@ object PatientManager {
   case object RememberedData
 
   case class DeletePatient(patientId: PatientId)
+
+  case class GetTreatmentNotifications(time: ZonedDateTime)
 
   sealed trait CommandOutcome
   case object Success extends CommandOutcome

@@ -1,5 +1,7 @@
 package org.vaslabs.granger.comms
 
+import java.time.ZonedDateTime
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCode
@@ -12,6 +14,8 @@ import org.vaslabs.granger.{GrangerConfig, RememberInputAgent}
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.Notify
 import org.vaslabs.granger.repo.IOError
 
 import scala.concurrent.duration._
@@ -88,4 +92,7 @@ class WebServer(patientManager: ActorRef, rememberInputAgent: ActorRef, config: 
 
   override def deletePatient(patientId: PatientId): Future[CommandOutcome] =
     (patientManager ? DeletePatient(patientId)).mapTo[CommandOutcome]
+
+  override def treatmentNotifications(timestamp: ZonedDateTime): Future[External.Notify] =
+    (patientManager ? GetTreatmentNotifications(timestamp)).mapTo[External.Notify]
 }

@@ -1,6 +1,7 @@
 package org.vaslabs.granger
 
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import cats.Id
@@ -11,7 +12,9 @@ import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.scalatest.Matchers
-import org.vaslabs.granger.modeltreatments.{RootCanalTreatment}
+import org.vaslabs.granger.modeltreatments.RootCanalTreatment
+import org.vaslabs.granger.reminders.RCTReminderActor
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.Notify
 
 /**
   * Created by vnicolaou on 02/07/17.
@@ -48,7 +51,12 @@ class HttpRouterAddingTreatmentInfoSpec extends HttpBaseSpec with ScalatestRoute
           responseAs[Patient].dentalChart.teeth.find(_.number == 11)
             .get.treatments.head.dateCompleted shouldBe
           Some(ZonedDateTime.now(clock))
-
+        }
+        Get(s"/treatment/notifications/${ZonedDateTime.now(clock).plusMonths(6)
+          .format(DateTimeFormatter.ISO_ZONED_DATE_TIME)}") ~> httpRouter.routes ~> check {
+          responseAs[RCTReminderActor.Protocol.External.Notify] shouldBe
+            Notify(List(RCTReminderActor.Protocol.External.Notification(
+              ZonedDateTime.now(clock), ZonedDateTime.now(clock).plusMonths(6), PatientId(1))))
         }
       }
     }

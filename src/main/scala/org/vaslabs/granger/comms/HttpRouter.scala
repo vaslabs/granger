@@ -1,5 +1,8 @@
 package org.vaslabs.granger.comms
 
+import java.time.ZonedDateTime
+import java.time.format.{DateTimeFormatter, DateTimeParseException}
+
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
@@ -88,13 +91,21 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources { this: Grang
       patientId => delete {
         complete(deletePatient(PatientId(patientId)))
       }
+    } ~ path ("treatment" / "notifications" / ZonedDateTimeMatcher) {
+      time => get {
+        complete(treatmentNotifications(time))
+      }
     }
   }
 
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
     case exception: Exception => complete(HttpResponse(InternalServerError, entity = exception.getMessage))
-
   }
+
+  private[this] def ZonedDateTimeMatcher: PathMatcher1[ZonedDateTime] =
+    Segment.flatMap{ value: String =>
+      Some(ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME))
+    }
 
   private[this] def rejectionHandler(log: LoggingAdapter) =
     RejectionHandler.newBuilder().handle {

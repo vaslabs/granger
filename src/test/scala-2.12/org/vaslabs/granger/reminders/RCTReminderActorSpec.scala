@@ -3,12 +3,10 @@ package org.vaslabs.granger.reminders
 import java.time._
 
 import akka.testkit.TestActorRef
-import cats.data.NonEmptyList
 import org.scalatest.WordSpecLike
 import org.vaslabs.granger.AkkaBaseSpec
 import org.vaslabs.granger.modelv2.PatientId
 import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External._
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.Internal._
 import scala.concurrent.duration._
 
 class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpecLike
@@ -29,7 +27,7 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
 
     "publish a notification when time comes" in {
       rctReminderActor ! CheckReminders(ZonedDateTime.now(TestClock).plusMonths(6))
-      expectMsg(Notify(NonEmptyList.of(Notification(dateStarted, expectedNotificationTime, externalId))))
+      expectMsg(Notify(List(Notification(dateStarted, expectedNotificationTime, externalId))))
     }
 
     "publish multiple notifications" in {
@@ -37,7 +35,7 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
       rctReminderActor ! SetReminder(dateStarted, ZonedDateTime.now(TestClock).plusMonths(6), secondExternalId)
       expectMsg(ReminderSetAck(secondExternalId, dateStarted, expectedNotificationTime))
       rctReminderActor ! CheckReminders(ZonedDateTime.now(TestClock).plusMonths(6))
-      expectMsg(Notify(NonEmptyList.of(
+      expectMsg(Notify(List(
         Notification(dateStarted, expectedNotificationTime, externalId),
         Notification(dateStarted, expectedNotificationTime, secondExternalId)))
       )
@@ -48,7 +46,7 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
       rctReminderActor ! ModifyReminder(dateStarted, ZonedDateTime.now(TestClock).plusMonths(7), externalId)
       expectMsg(SnoozeAck(externalId, dateStarted, newTime))
       rctReminderActor ! CheckReminders(ZonedDateTime.now(TestClock).plusMonths(6))
-      expectMsg(Notify(NonEmptyList.of(
+      expectMsg(Notify(List(
         Notification(dateStarted, expectedNotificationTime, secondExternalId)))
       )
     }
@@ -58,7 +56,7 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
       expectMsg(DeletedAck(dateStarted, externalId))
       rctReminderActor ! CheckReminders(ZonedDateTime.now(TestClock).plusMonths(7))
       expectMsg(
-        Notify(NonEmptyList.of(
+        Notify(List(
           Notification(dateStarted, expectedNotificationTime, secondExternalId)))
       )
     }

@@ -160,10 +160,10 @@ object modelv2 {
           .getOrElse(Left(treatments.head))
     }
 
-    def finishTreatment()(implicit clock: Clock): Option[Tooth] = {
+    def finishTreatment(finishTime: ZonedDateTime): Option[Tooth] = {
       val treatmentsJustCompleted = treatments.filter(_.dateCompleted.isEmpty)
         .map(
-          _.copy(dateCompleted = Some(ZonedDateTime.now(clock)))
+          _.copy(dateCompleted = Some(finishTime))
         )
         val completedTreatments = treatments.filterNot(_.dateCompleted.isEmpty)
         Some(copy(treatments = treatmentsJustCompleted ++ completedTreatments))

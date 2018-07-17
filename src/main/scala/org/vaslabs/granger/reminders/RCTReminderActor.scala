@@ -15,12 +15,13 @@ class RCTReminderActor extends Actor{
     case SetReminder(submitted, remindOn, externalReference) =>
       context.become(behaviourWithReminders(Set(Reminder(submitted, remindOn, externalReference))))
       sender() ! ReminderSetAck(externalReference, submitted, remindOn)
+    case CheckReminders(_) => sender() ! Notify(List.empty)
   }
 
   private[this] def behaviourWithReminders(reminders: Set[Reminder]): Receive = {
     case CheckReminders(now) =>
       val remindersToSend = NonEmptyList.fromList(reminders.toList.filter(_.remindOn.compareTo(now) <= 0).filterNot(_.deletedOn.isDefined))
-      remindersToSend.map(_.map(r => Notification(r.submitted, r.remindOn, r.externalReference))).map(Notify)
+      remindersToSend.map(_.map(r => Notification(r.submitted, r.remindOn, r.externalReference))).map(_.toList).map(Notify)
         .foreach(sender ! _)
     case SetReminder(submitted, remindOn, externalReference) =>
       val newReminder = Reminder(submitted, remindOn, externalReference)
@@ -64,11 +65,11 @@ object RCTReminderActor {
 
       case class Notification(timestamp: ZonedDateTime, notificationTime: ZonedDateTime, externalReference: PatientId)
 
-      case class Notify(notifications: NonEmptyList[Notification])
+      case class Notify(notifications: List[Notification])
+      case class CheckReminders(now: ZonedDateTime)
 
     }
     private[reminders] object Internal {
-      case class CheckReminders(now: ZonedDateTime)
       @Lenses case class Reminder(
            submitted: ZonedDateTime, remindOn: ZonedDateTime, externalReference: PatientId, deletedOn: Option[ZonedDateTime] = None)
       {

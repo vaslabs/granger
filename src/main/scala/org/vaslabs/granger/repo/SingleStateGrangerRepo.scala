@@ -116,12 +116,12 @@ class SingleStateGrangerRepo()(
       }
   }
 
-  override def finishTreatment(patientId: PatientId, toothId: Int): Either[InvalidData, IO[Patient]] = {
+  override def finishTreatment(patientId: PatientId, toothId: Int, finishTime: ZonedDateTime): Either[InvalidData, IO[Patient]] = {
 
     val newState = for {
       patient <- state.get(patientId).toRight(PatientNotFound(patientId))
       toothWithTreatment <- patient.dentalChart.teeth.find(_.number == toothId).toRight(ToothNotFound(patientId, toothId))
-      toothWithFinishedTreatment <- toothWithTreatment.finishTreatment()
+      toothWithFinishedTreatment <- toothWithTreatment.finishTreatment(finishTime)
         .toRight(OpenTreatmentNotFound(patientId, toothId))
       patientWithFinishedTreatment = patient.update(toothWithFinishedTreatment)
       newState = state + (patientId -> patientWithFinishedTreatment)
