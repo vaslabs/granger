@@ -29,15 +29,17 @@ class PatientManager private (
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
 
+
   implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
     new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
+
 
   final val grangerRepo: GrangerRepo[Map[PatientId, Patient], IO] = new SingleStateGrangerRepo()
 
   final val gitRepoPusher: ActorRef =
     context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
 
-  val notificationActor = context.actorOf(RCTReminderActor.props, "notifications")
+  val notificationActor = context.actorOf(RCTReminderActor.props(grangerConfig.repoLocation), "notifications")
 
   override def receive: Receive = {
     case LoadData =>

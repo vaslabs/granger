@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfterAll, TestSuite}
 import org.vaslabs.granger.PatientManager.StartTreatment
 import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
 import org.vaslabs.granger.modeltreatments.{RootCanalTreatment, TreatmentCategory}
-import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId, Treatment}
+import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
 /**
@@ -47,8 +47,6 @@ trait BaseSpec extends TestSuite { this: BeforeAndAfterAll =>
   implicit val emptyRememberProvider: EmptyProvider[MedicamentSuggestions] = () => MedicamentSuggestions(List.empty)
   implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
     new GitRepo[MedicamentSuggestions](new File(tmpDir), "remember.json")
-
-
 
   def tearDown(): Unit = {
     import org.apache.commons.io.FileUtils

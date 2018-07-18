@@ -15,7 +15,7 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
   val TestClock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC)
 
   "a reminder actor spec" can {
-    val rctReminderActor = TestActorRef[RCTReminderActor](RCTReminderActor.props)
+    val rctReminderActor = TestActorRef[RCTReminderActor](RCTReminderActor.props(tmpDir))
     val externalId = PatientId(1)
     val dateStarted = ZonedDateTime.now(clock)
     val secondExternalId = PatientId(2)
@@ -63,6 +63,13 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
 
     "deleting reminders persists" in {
       rctReminderActor ! SetReminder(dateStarted, ZonedDateTime.now(clock).plusMonths(1), externalId)
+      expectNoMessage(1 second)
+    }
+
+    "even after restarts" in {
+      system.stop(rctReminderActor)
+      val recoveredActor = TestActorRef[RCTReminderActor](RCTReminderActor.props(tmpDir))
+      recoveredActor ! SetReminder(dateStarted, ZonedDateTime.now(clock).plusMonths(1), externalId)
       expectNoMessage(1 second)
     }
   }

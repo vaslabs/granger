@@ -261,13 +261,6 @@ object modelv2 {
 
   }
 
-  sealed trait Reminder {
-    val reference: UUID
-    val patientId: PatientId
-  }
-  case class RCTFollowupReminder(reference: UUID, patientId: PatientId)
-  case class ReRCTFollowupReminder(reference: UUID, patientId: PatientId)
-
   object DentalChart {
     def emptyChart(): DentalChart =
       DentalChart(
