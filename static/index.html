@@ -18,13 +18,6 @@
                     <a href="#" class="brand-logo">Granger</a>
                     <ul id="nav-mobile" class="right hide-on-med-and-down">
                         <li>
-                            <!--<a class="dropdown-trigger" data-target="notifications-dropdown" href="#">-->
-                                <!--<i class="material-icons" ng-bind="ctrl.notifications.length > 0 ? 'assignment_late' : 'assignment_turned_in'"></i>-->
-                            <!--</a>-->
-                            <!--<ul id="notifications-dropdown" class="dropdown-content">-->
-                                <!--<li><a href="sass.html">Sass</a></li>-->
-                                <!--<li><a href="badges.html">Components</a></li>-->
-                            <!--</ul>-->
                             <ul class="right hide-on-med-and-down">
                                 <!-- Dropdown Trigger -->
                                 <li>
@@ -34,7 +27,7 @@
                                 </li>
                             </ul>
                             <ul id="notifications-dropdown" class="dropdown-content">
-                                <li ng-repeat="notification in ctrl.notifications"><a href="#!">Patient {{notification.externalReference}} followup on {{ctrl.displayFriendlyTime(notification.notificationTime)}}</a></li>
+                                <li ng-repeat="notification in ctrl.notifications"><a href="#!" ng-click="ctrl.selectFromNotification(notification)">Patient {{notification.externalReference}} followup on {{ctrl.displayFriendlyTime(notification.notificationTime)}}</a></li>
                             </ul>
                         </li>
                     </ul>

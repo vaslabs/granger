@@ -489,4 +489,11 @@ app.controller('MainController', function($q, $http) {
     ctrl.displayFriendlyTime = function(utcTime) {
         return new Date(utcTime).toLocaleDateString()
     }
+
+
+    ctrl.selectFromNotification = function(notification) {
+        var patient = ctrl.allPatients.filter(function(patient) { return patient.patientId == notification.externalReference;})
+        if (patient.length > 0)
+            ctrl.selectedPatient = patient[0];
+    };
 });
