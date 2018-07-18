@@ -306,6 +306,15 @@
                                 <a href="#" ng-click="ctrl.deselectTooth()">Close</a>
                             </div>
                         </div>
+                            <div id="patient-notifications" class="row">
+                                <ul class="collection with-header">
+                                    <li class="collection-header"><h4>Notifications</h4></li>
+                                    <li class="collection-item" ng-repeat="notification in ctrl.selectedPatientNotifications()" ng-click="ctrl.stopNotification(notification, this)">
+                                        <div>Follow up date passed: {{ctrl.displayFriendlyTime(notification.notificationTime)}}<a href="#!" class="secondary-content"><i class="material-icons">check</i></a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
                     </div>
 
                     <div class="row" id="customerManagement" ng-if="ctrl.selectedPatient == null && ctrl.repoReady">

@@ -54,7 +54,7 @@ class RCTReminderActor private(repoLocation: String)(implicit git: Git)
         sender() ! ReminderSetAck(externalReference, submitted, remindOn)
       }
     case ModifyReminder(timestamp, snoozeTo, externalReference) =>
-      reminders.find(r => r.externalReference == externalReference && r.submitted == timestamp).map(r => Reminder.remindOn.set(snoozeTo)(r))
+      reminders.find(r => r.externalReference == externalReference && r.submitted.compareTo(timestamp) == 0).map(r => Reminder.remindOn.set(snoozeTo)(r))
         .foreach {
           modifiedReminder =>
             val newReminders = (reminders - modifiedReminder) + (modifiedReminder)
@@ -67,15 +67,16 @@ class RCTReminderActor private(repoLocation: String)(implicit git: Git)
     case DeleteReminder(timestamp, externalReference, deletionTime) =>
       reminders.find(r => r.externalReference == externalReference && r.submitted == timestamp)
         .map(Reminder.deletedOn.set(Some(deletionTime))(_))
-        .foreach {
+        .map {
           reminder =>
             val newReminders = (reminders - reminder) + (reminder)
             notificationsRepo.save(s"Stopping reminder $timestamp of patient id $externalReference", newReminders.toList)
+              .left.map(err => log.error(err.error))
               .foreach { _ =>
                 context.become(behaviourWithReminders(newReminders))
                 sender() ! DeletedAck(timestamp, externalReference)
               }
-        }
+        }.getOrElse(log.info(s"Reminder $timestamp for patient $externalReference was not found in $reminders"))
 
   }
 }

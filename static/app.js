@@ -496,4 +496,26 @@ app.controller('MainController', function($q, $http) {
         if (patient.length > 0)
             ctrl.selectedPatient = patient[0];
     };
+
+    ctrl.selectedPatientNotifications = function() {
+        if (ctrl.selectedPatient == null)
+            return [];
+        else
+            return ctrl.notifications.filter(
+                function(notification) { return notification.externalReference == ctrl.selectedPatient.patientId}
+            );
+    }
+
+    ctrl.stopNotification = function(notification, element) {
+        return $http({
+            method: "delete",
+            url: "/treatment/notification/" + notification.timestamp + "?patientId=" + notification.externalReference,
+        }).then(function(resp) {
+            var deletedAck = resp.data;
+            ctrl.notifications = ctrl.notifications.filter(function(n) {
+                console.log(element);
+                return !(n.timestamp == deletedAck.timestamp && n.externalReference == notification.externalReference);
+            });
+        });
+    };
 });
