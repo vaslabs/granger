@@ -74,22 +74,26 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.selectedTooth = null;
 
-    function getAllPatients() {
+    function simpleGet(endpoint) {
         return $http({
             method: "get",
-            url: '/api',
+            url: endpoint,
         }).then(function(resp) {
             return resp.data;
         });
     }
 
+    function getAllPatients() {
+        return simpleGet('/api');
+    }
+
+
     function getRememberData() {
-        return $http({
-            method: "get",
-            url: '/api/remember',
-        }).then(function(resp) {
-            return resp.data;
-        });
+        return simpleGet('/api/remember');
+    }
+
+    function getNotifications() {
+        return simpleGet('/treatment/notifications/' + new Date().toISOString());
     }
 
     ctrl.publicKey = null;
@@ -126,6 +130,8 @@ app.controller('MainController', function($q, $http) {
     };
 
     ctrl.treatmentCategory = null;
+
+    ctrl.notifications = [];
 
     ctrl.newTreatment = function() {
         if (ctrl.treatmentCategory == null || ctrl.treatmentCategory == "")
@@ -433,6 +439,8 @@ app.controller('MainController', function($q, $http) {
            } else {
             ctrl.repoReady = true;
             ctrl.allPatients = patients;
+            fetchNotifications();
+            setTimeout(fetchNotifications(), 5*60*1000)
            }
         });
     }
@@ -440,6 +448,13 @@ app.controller('MainController', function($q, $http) {
     getRememberData().then(function(medicaments) {
         ctrl.medicamentSuggestions = medicaments.medicamentNames;
     });
+
+    function fetchNotifications() {
+        getNotifications().then(function(notify) {
+            ctrl.notifications = notify.notifications;
+        });
+    }
+
 
     ctrl.allowRootFocus = false;
     ctrl.allowObturationFocus = false;
@@ -471,4 +486,7 @@ app.controller('MainController', function($q, $http) {
 
     grangerInit();
 
+    ctrl.displayFriendlyTime = function(utcTime) {
+        return new Date(utcTime).toLocaleDateString()
+    }
 });

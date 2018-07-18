@@ -63,6 +63,13 @@ class PatientManager private (
     grangerRepo.retrieveAllPatients().unsafeRunSync() match {
       case Left(errorState) => senderRef ! errorState
       case Right(patientData) => senderRef ! patientData
+        patientData.foreach(patient =>
+          patient.dentalChart.teeth.foreach(_.treatments.foreach(
+            _.dateCompleted.foreach(completedDate =>
+              context.system.eventStream.publish(
+                SetReminder(completedDate, completedDate.plusMonths(6), patient.patientId))
+            )
+          )))
     }
   }
 

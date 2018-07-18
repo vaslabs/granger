@@ -43,9 +43,9 @@ class RCTReminderActor private(repoLocation: String)(implicit git: Git)
 
   private[this] def behaviourWithReminders(reminders: Set[Reminder]): Receive = {
     case CheckReminders(now) =>
-      val remindersToSend = NonEmptyList.fromList(reminders.toList.filter(_.remindOn.compareTo(now) <= 0).filterNot(_.deletedOn.isDefined))
-      remindersToSend.map(_.map(r => Notification(r.submitted, r.remindOn, r.externalReference))).map(_.toList).map(Notify)
-        .foreach(sender ! _)
+      val remindersToSend = reminders.filter(_.remindOn.compareTo(now) <= 0).filterNot(_.deletedOn.isDefined)
+      val notify = Notify(remindersToSend.map(r => Notification(r.submitted, r.remindOn, r.externalReference)).toList)
+      sender ! notify
     case SetReminder(submitted, remindOn, externalReference) =>
       val newReminder = Reminder(submitted, remindOn, externalReference)
       if (!reminders.contains(newReminder)) {

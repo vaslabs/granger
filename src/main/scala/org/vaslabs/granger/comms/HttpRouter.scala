@@ -109,39 +109,40 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
     } ~ path("treatment" / "notification" / ZonedDateTimeMatcher) {
       time =>
         parameters('patientId.as[Long]) {
-          id => delete {
-            complete(deleteReminder(PatientId(id), time))
-          }
+          id =>
+            delete {
+              complete(deleteReminder(PatientId(id), time))
+            }
+        }
     }
+
   }
 
-}
-
-private[this] def exceptionHandler (log: LoggingAdapter) = ExceptionHandler {
-  case exception: Exception => complete (HttpResponse (InternalServerError, entity = exception.getMessage) )
-}
+  private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
+    case exception: Exception => complete(HttpResponse(InternalServerError, entity = exception.getMessage))
+  }
 
   private[this] def ZonedDateTimeMatcher: PathMatcher1[ZonedDateTime] =
-  Segment.flatMap {
-  value: String =>
-  Some (ZonedDateTime.parse (value, DateTimeFormatter.ISO_ZONED_DATE_TIME) )
-}
+    Segment.flatMap {
+      value: String =>
+        Some(ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME))
+    }
 
-  private[this] def rejectionHandler (log: LoggingAdapter) =
-  RejectionHandler.newBuilder ().handle {
-  case ValidationRejection (msg, cause) =>
-  complete (HttpResponse (BadRequest, entity = msg) )
-} result ()
+  private[this] def rejectionHandler(log: LoggingAdapter) =
+    RejectionHandler.newBuilder().handle {
+      case ValidationRejection(msg, cause) =>
+        complete(HttpResponse(BadRequest, entity = msg))
+    } result()
 
-  def routes (implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-  logRequest ("HTTPRequest") {
-  logResult ("HTTPResponse") {
-  handleExceptions (exceptionHandler (system.log) ) {
-  handleRejections (rejectionHandler (system.log) ) {
-  defineApi
-}
-}
-}
-} ~ staticResources
+  def routes(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+    logRequest("HTTPRequest") {
+      logResult("HTTPResponse") {
+        handleExceptions(exceptionHandler(system.log)) {
+          handleRejections(rejectionHandler(system.log)) {
+            defineApi
+          }
+        }
+      }
+    } ~ staticResources
 
 }
