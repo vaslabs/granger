@@ -506,16 +506,29 @@ app.controller('MainController', function($q, $http) {
             );
     }
 
+
+    ctrl.earliestNotificationPerPatient = function (notifications) {
+        var closestReminderPerPatient = {};
+        notifications.forEach(function(notification) {
+            if (!(notification.externalReference in closestReminderPerPatient)) {
+                closestReminderPerPatient[notification.externalReference] = notification;
+            } else {
+                if (notification.notificationTime < closestReminderPerPatient[notification.externalReference].notificationTime)
+                    closestReminderPerPatient[notification.externalReference] = notification
+            }
+        });
+
+        return Object.values(closestReminderPerPatient);
+    };
+
     ctrl.stopNotification = function(notification) {
         return $http({
             method: "delete",
             url: "/treatment/notification/" + notification.timestamp + "?patientId=" + notification.externalReference,
         }).then(function(resp) {
-            var deletedAck = resp.data;
-            var deletedFilter = function(n) { return !(n.timestamp == deletedAck.timestamp && n.externalReference == deletedAck.externalReference); };
-            ctrl.notifications = ctrl.notifications.filter(deletedFilter);
+            fetchNotifications();
             if (ctrl.allReminders != null) {
-                ctrl.allReminders = ctrl.allReminders.filter(deletedFilter);
+                ctrl.displayAllPatientNotifications();
             }
         });
     };
@@ -547,21 +560,12 @@ app.controller('MainController', function($q, $http) {
             url: '/treatment/notifications',
             data: modifyNotification
         }).then(function(resp) {
-            var snoozeAck = resp.data;
-            var notificationIndexToEdit = ctrl.notifications.findIndex(function(s) {
-                return (s.timestamp == snoozeAck.timestamp && s.externalReference == snoozeAck.externalReference);
-            });
-            if (notificationIndexToEdit >= 0) {
-                ctrl.notifications[notificationIndexToEdit].notificationTime = snoozeAck.movedAt;
-                ctrl.notificationNewTime = null;
-                ctrl.editingNotification = null;
-                ctrl.notifications = ctrl.notifications;
-            }
+            fetchNotifications();
             if (ctrl.allReminders != null) {
                 ctrl.allReminders = null;
                 ctrl.displayAllPatientNotifications();
             };
-
+            ctrl.editingNotification = null;
         });
     }
 
@@ -576,4 +580,12 @@ app.controller('MainController', function($q, $http) {
             ctrl.allReminders = null;
         }
     };
+
+    $('.dropdown-button').dropdown({
+        belowOrigin: true,
+        alignment: 'right',
+        constrain_width: false,
+        hover: false,
+        width: "130px"
+      });
 });

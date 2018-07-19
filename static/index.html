@@ -11,25 +11,26 @@
     <script src="js/angular.js"></script>
 
     <script src="js/main.js"></script>
-    <body ng-app="grangerApp">
-        <main id="grad" ng-controller="MainController as ctrl">
+    <body ng-app="grangerApp" ng-controller="MainController as ctrl">
+        <main id="grad">
             <nav>
                 <div class="nav-wrapper">
                     <a href="#" class="brand-logo">Granger</a>
                     <ul id="nav-mobile" class="right hide-on-med-and-down">
                         <li>
-                            <ul class="right hide-on-med-and-down">
+                            <ul class="right" style="padding-right: 30px">
                                 <!-- Dropdown Trigger -->
                                 <li>
-                                    <a class="dropdown-button" href="#" data-activates="notifications-dropdown">
-                                        <i class="material-icons" ng-bind="ctrl.notifications.length > 0 ? 'assignment_late' : 'assignment_turned_in'"></i>
-                                    </a>
+                                        <a class="dropdown-button" href="#" data-activates="notifications-dropdown">
+                                            <i class="material-icons" ng-bind="ctrl.notifications.length > 0 ? 'assignment_late' : 'assignment_turned_in'"></i>
+                                        </a>
+                                    </div>
                                 </li>
                             </ul>
-                            <ul id="notifications-dropdown" class="dropdown-content">
-                                <li ng-repeat="notification in ctrl.notifications"><a href="#!" ng-click="ctrl.selectFromNotification(notification)">Patient {{notification.externalReference}} followup on {{ctrl.displayFriendlyTime(notification.notificationTime)}}</a></li>
-                            </ul>
                         </li>
+                    </ul>
+                    <ul id="notifications-dropdown" class="dropdown-content">
+                        <li ng-repeat="notification in ctrl.earliestNotificationPerPatient(ctrl.notifications)" ng-click="ctrl.selectFromNotification(notification)"><a href="#!">Follow-up {{notification.externalReference}} on {{ctrl.displayFriendlyTime(notification.notificationTime)}}</a></li>
                     </ul>
                 </div>
             </nav>
