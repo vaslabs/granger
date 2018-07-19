@@ -14,6 +14,7 @@ import org.vaslabs.granger.{GrangerConfig, PatientManager, RememberInputAgent}
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
+import org.vaslabs.granger.reminders.RCTReminderActor
 import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External
 import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.SnoozeAck
 import org.vaslabs.granger.repo.IOError
@@ -102,4 +103,7 @@ class WebServer(patientManager: ActorRef, rememberInputAgent: ActorRef, config: 
 
   override def deleteReminder(patientId: PatientId, timestamp: ZonedDateTime): Future[External.DeletedAck] =
     (patientManager ? PatientManager.StopReminder(timestamp, patientId)).mapTo[External.DeletedAck]
+
+  override def allReminders(patientId: PatientId): Future[External.AllPatientReminders] =
+    (patientManager ? External.PatientReminders(patientId)).mapTo[External.AllPatientReminders]
 }

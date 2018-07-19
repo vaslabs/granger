@@ -14,7 +14,7 @@ import io.circe.syntax._
 import org.scalatest.Matchers
 import org.vaslabs.granger.modeltreatments.RootCanalTreatment
 import org.vaslabs.granger.reminders.RCTReminderActor
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.{DeletedAck, ModifyReminder, Notify, SnoozeAck}
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External._
 
 /**
   * Created by vnicolaou on 02/07/17.
@@ -60,6 +60,13 @@ class HttpRouterAddingTreatmentInfoSpec extends HttpBaseSpec with ScalatestRoute
             Notify(List(RCTReminderActor.Protocol.External.Notification(
               now, now.plusMonths(6), PatientId(1))))
         }
+        Get(s"/allreminders/1") ~> httpRouter.routes ~> check {
+          responseAs[RCTReminderActor.Protocol.External.AllPatientReminders] shouldBe
+            AllPatientReminders(
+              List(RCTReminderActor.Protocol.External.Notification(
+                now, now.plusMonths(6), PatientId(1)))
+            )
+        }
         Post("/treatment/notifications", ModifyReminder(now, now.plusMonths(7), PatientId(1))) ~> httpRouter.routes ~> check {
           responseAs[RCTReminderActor.Protocol.External.SnoozeAck] shouldBe
             SnoozeAck(PatientId(1), now, now.plusMonths(7))
@@ -67,6 +74,12 @@ class HttpRouterAddingTreatmentInfoSpec extends HttpBaseSpec with ScalatestRoute
         Delete(s"/treatment/notification/${now}?patientId=1") ~> httpRouter.routes ~> check {
           responseAs[RCTReminderActor.Protocol.External.DeletedAck] shouldBe
             DeletedAck(now, PatientId(1))
+        }
+        Get(s"/allreminders/1") ~> httpRouter.routes ~> check {
+          responseAs[RCTReminderActor.Protocol.External.AllPatientReminders] shouldBe
+            AllPatientReminders(
+              List.empty
+            )
         }
       }
     }

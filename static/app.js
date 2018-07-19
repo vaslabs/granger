@@ -512,9 +512,11 @@ app.controller('MainController', function($q, $http) {
             url: "/treatment/notification/" + notification.timestamp + "?patientId=" + notification.externalReference,
         }).then(function(resp) {
             var deletedAck = resp.data;
-            ctrl.notifications = ctrl.notifications.filter(function(n) {
-                return !(n.timestamp == deletedAck.timestamp && n.externalReference == deletedAck.externalReference);
-            });
+            var deletedFilter = function(n) { return !(n.timestamp == deletedAck.timestamp && n.externalReference == deletedAck.externalReference); };
+            ctrl.notifications = ctrl.notifications.filter(deletedFilter);
+            if (ctrl.allReminders != null) {
+                ctrl.allReminders = ctrl.allReminders.filter(deletedFilter);
+            }
         });
     };
 
@@ -534,6 +536,8 @@ app.controller('MainController', function($q, $http) {
                 'externalReference':notification.externalReference
             }
             submitSnooze(requestBody);
+        } else {
+            ctrl.editingNotification = null;
         }
     };
 
@@ -547,10 +551,29 @@ app.controller('MainController', function($q, $http) {
             var notificationIndexToEdit = ctrl.notifications.findIndex(function(s) {
                 return (s.timestamp == snoozeAck.timestamp && s.externalReference == snoozeAck.externalReference);
             });
-            ctrl.notifications[notificationIndexToEdit].notificationTime = snoozeAck.movedAt;
-            ctrl.notificationNewTime = null;
-            ctrl.editingNotification = null;
-            ctrl.notifications = ctrl.notifications;
+            if (notificationIndexToEdit >= 0) {
+                ctrl.notifications[notificationIndexToEdit].notificationTime = snoozeAck.movedAt;
+                ctrl.notificationNewTime = null;
+                ctrl.editingNotification = null;
+                ctrl.notifications = ctrl.notifications;
+            }
+            if (ctrl.allReminders != null) {
+                ctrl.allReminders = null;
+                ctrl.displayAllPatientNotifications();
+            };
+
         });
     }
+
+    ctrl.allReminders = null;
+
+    ctrl.displayAllPatientNotifications = function() {
+        if (ctrl.allReminders == null) {
+            simpleGet("/allreminders/" + ctrl.selectedPatient.patientId).then(function(allReminders) {
+                ctrl.allReminders = allReminders.notifications;
+            });
+        } else {
+            ctrl.allReminders = null;
+        }
+    };
 });

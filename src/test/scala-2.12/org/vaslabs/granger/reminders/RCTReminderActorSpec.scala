@@ -41,6 +41,15 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
       )
     }
 
+    "gives all notifications of specific user" in {
+      rctReminderActor ! RCTReminderActor.Protocol.External.PatientReminders(externalId)
+      expectMsg(RCTReminderActor.Protocol.External.AllPatientReminders(
+        List(
+          Notification(dateStarted, expectedNotificationTime, externalId)
+        )
+      ))
+    }
+
     "snooze notifications" in {
       val newTime = ZonedDateTime.now(TestClock).plusMonths(7)
       rctReminderActor ! ModifyReminder(dateStarted, ZonedDateTime.now(TestClock).plusMonths(7), externalId)

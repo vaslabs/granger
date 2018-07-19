@@ -11,7 +11,7 @@ import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRe
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.reminders.RCTReminderActor
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.{ModifyReminder, SetReminder}
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.{ModifyReminder, PatientReminders, SetReminder}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
 /**
@@ -137,6 +137,7 @@ class PatientManager private (
     case StopReminder(timestamp, patientId) =>
       notificationActor forward RCTReminderActor.Protocol.External.DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock))
 
+    case pr: PatientReminders => notificationActor forward pr
   }
 
   private[this] def schedulePushJob(): Unit = {

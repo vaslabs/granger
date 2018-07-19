@@ -78,6 +78,11 @@ class RCTReminderActor private(repoLocation: String)(implicit git: Git)
               }
         }.getOrElse(log.info(s"Reminder $timestamp for patient $externalReference was not found in $reminders"))
 
+    case PatientReminders(patientId) =>
+      sender() ! AllPatientReminders(
+        reminders.filter(_.externalReference == patientId).filter(_.deletedOn.isEmpty)
+          .map(r => Notification(r.submitted, r.remindOn, r.externalReference)).toList
+      )
   }
 }
 
@@ -106,6 +111,10 @@ object RCTReminderActor {
       case class Notify(notifications: List[Notification])
 
       case class CheckReminders(now: ZonedDateTime)
+
+      case class PatientReminders(externalId: PatientId)
+
+      case class AllPatientReminders(notifications: List[Notification])
 
     }
 

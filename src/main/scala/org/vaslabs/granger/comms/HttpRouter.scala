@@ -114,6 +114,10 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
               complete(deleteReminder(PatientId(id), time))
             }
         }
+    } ~ path("allreminders" / LongNumber) {
+      id => get {
+        complete(allReminders(PatientId(id)))
+      }
     }
 
   }
