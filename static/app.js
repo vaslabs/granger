@@ -539,7 +539,11 @@ app.controller('MainController', function($q, $http) {
         ctrl.editingNotification = notification;
     };
 
-    ctrl.notificationNewTime = null;
+    ctrl.notificationNewTime = new Date();
+
+    ctrl.cancelEditing = function() {
+        ctrl.editingNotification = null;
+    };
 
     ctrl.snoozeAction = function(notification) {
         if (ctrl.notificationNewTime != null) {

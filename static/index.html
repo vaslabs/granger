@@ -320,6 +320,9 @@
                                             <a href="#!" ng-click="ctrl.snoozeAction(notification)" ng-if="ctrl.editingNotification == notification">
                                                 <i class="material-icons">snooze</i>
                                             </a>
+                                            <a href="#!" ng-click="ctrl.cancelEditing()" ng-if="ctrl.editingNotification == notification">
+                                                <i class="material-icons">cancel</i>
+                                            </a>
                                             <a href="#!" class="secondary-content" ng-if="ctrl.editingNotification == null" ng-click="ctrl.stopNotification(notification)">
                                                 <i class="material-icons">check</i>
                                             </a>
@@ -336,12 +339,15 @@
                                             <a href="#!" ng-click="ctrl.snoozeAction(reminder)" ng-if="ctrl.editingNotification == reminder">
                                                 <i class="material-icons">snooze</i>
                                             </a>
+                                            <a href="#!" ng-click="ctrl.cancelEditing()" ng-if="ctrl.editingNotification == reminder">
+                                                <i class="material-icons">cancel</i>
+                                            </a>
                                             <a href="#!" class="secondary-content" ng-if="ctrl.editingNotification == null" ng-click="ctrl.stopNotification(reminder)">
                                                 <i class="material-icons">check</i>
                                             </a>
                                         </div>
                                         <div ng-if="ctrl.editingNotification == reminder">
-                                            <input id="editing-reminder-{{reminder.timestamp}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd HH:mm">
+                                            <input id="editing-reminder-{{reminder.timestamp}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd 10:00">
                                             <label for="editing-reminder-{{reminder.timestamp}}">Snooze time</label>
                                         </div>
                                     </li>

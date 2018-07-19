@@ -138,6 +138,8 @@ class PatientManager private (
       notificationActor forward RCTReminderActor.Protocol.External.DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock))
 
     case pr: PatientReminders => notificationActor forward pr
+
+    case other => log.debug("Dropping $other")
   }
 
   private[this] def schedulePushJob(): Unit = {
