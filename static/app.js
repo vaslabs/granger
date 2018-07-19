@@ -506,16 +506,51 @@ app.controller('MainController', function($q, $http) {
             );
     }
 
-    ctrl.stopNotification = function(notification, element) {
+    ctrl.stopNotification = function(notification) {
         return $http({
             method: "delete",
             url: "/treatment/notification/" + notification.timestamp + "?patientId=" + notification.externalReference,
         }).then(function(resp) {
             var deletedAck = resp.data;
             ctrl.notifications = ctrl.notifications.filter(function(n) {
-                console.log(element);
-                return !(n.timestamp == deletedAck.timestamp && n.externalReference == notification.externalReference);
+                return !(n.timestamp == deletedAck.timestamp && n.externalReference == deletedAck.externalReference);
             });
         });
     };
+
+    ctrl.editingNotification = null;
+
+    ctrl.editNotification = function(notification) {
+        ctrl.editingNotification = notification;
+    };
+
+    ctrl.notificationNewTime = null;
+
+    ctrl.snoozeAction = function(notification) {
+        if (ctrl.notificationNewTime != null) {
+            var requestBody = {
+                'reminderTimestamp': notification.timestamp,
+                'snoozeTo': ctrl.notificationNewTime.toISOString(),
+                'externalReference':notification.externalReference
+            }
+            submitSnooze(requestBody);
+        }
+    };
+
+    function submitSnooze(modifyNotification) {
+        return $http({
+            method: "post",
+            url: '/treatment/notifications',
+            data: modifyNotification
+        }).then(function(resp) {
+            var snoozeAck = resp.data;
+            var notificationIndexToEdit = ctrl.notifications.findIndex(function(s) {
+                return (s.timestamp == snoozeAck.timestamp && s.externalReference == snoozeAck.externalReference);
+            });
+            ctrl.notifications[notificationIndexToEdit].notificationTime = snoozeAck.movedAt;
+            ctrl.notificationNewTime = null;
+            ctrl.editingNotification = null;
+            ctrl.notifications = ctrl.notifications;
+        });
+    }
 });
