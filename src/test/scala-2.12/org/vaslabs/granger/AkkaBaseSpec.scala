@@ -9,8 +9,8 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike}
   */
 abstract class AkkaBaseSpec(name: String) extends
   TestKit(ActorSystem(name))
-  with BaseSpec with FlatSpecLike
-  with BeforeAndAfterAll with ImplicitSender{
+  with BaseSpec
+  with ImplicitSender with BeforeAndAfterAll {
 
   import system.dispatcher
 

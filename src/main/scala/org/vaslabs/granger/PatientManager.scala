@@ -2,6 +2,7 @@ package org.vaslabs.granger
 
 import java.io.File
 import java.time.{Clock, ZonedDateTime}
+import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import cats.effect.IO
@@ -9,6 +10,8 @@ import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.reminders.RCTReminderActor
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.{ModifyReminder, PatientReminders, SetReminder}
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
 /**
@@ -26,14 +29,17 @@ class PatientManager private (
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
 
+
   implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
     new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
+
 
   final val grangerRepo: GrangerRepo[Map[PatientId, Patient], IO] = new SingleStateGrangerRepo()
 
   final val gitRepoPusher: ActorRef =
     context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
 
+  val notificationActor = context.actorOf(RCTReminderActor.props(grangerConfig.repoLocation), "notifications")
 
   override def receive: Receive = {
     case LoadData =>
@@ -57,7 +63,19 @@ class PatientManager private (
     grangerRepo.retrieveAllPatients().unsafeRunSync() match {
       case Left(errorState) => senderRef ! errorState
       case Right(patientData) => senderRef ! patientData
+        patientData.foreach(patient =>
+          patient.dentalChart.teeth.foreach(_.treatments.foreach(
+            _.dateCompleted.foreach(completedDate =>
+              context.system.eventStream.publish(
+                SetReminder(completedDate, completedDate.plusMonths(6), patient.patientId))
+            )
+          )))
     }
+  }
+
+  override def aroundPreStart(): Unit = {
+    context.system.eventStream.subscribe(notificationActor, classOf[SetReminder])
+    super.aroundPreStart()
   }
 
   def settingUp: Receive = {
@@ -95,7 +113,13 @@ class PatientManager private (
       sender() ! grangerRepo.startTreatment(patientId, toothId, category).map(_.unsafeRunSync()).merge
     case FinishTreatment(patientId, toothId) =>
       schedulePushJob()
-      sender() ! grangerRepo.finishTreatment(patientId, toothId).map(_.unsafeRunSync()).merge
+      val finishTime = ZonedDateTime.now(clock)
+      val outcome = grangerRepo.finishTreatment(patientId, toothId, finishTime).map(_.unsafeRunSync())
+      outcome.foreach(_ => {
+        context.system.eventStream.publish(SetReminder(finishTime, finishTime.plusMonths(6), patientId))
+      })
+
+      sender() ! outcome.merge
     case DeleteTreatment(patientId, toothId, timestamp) =>
       schedulePushJob()
       sender() !
@@ -106,6 +130,16 @@ class PatientManager private (
         .map(_.map(_ => Success).left.map(_ => Failure(s"Failed to delete patient ${patientId}"))).unsafeRunSync()
       sender() ! outcome.merge
 
+    case GetTreatmentNotifications(time) =>
+      notificationActor forward RCTReminderActor.Protocol.External.CheckReminders(time)
+
+    case mr: ModifyReminder => notificationActor forward mr
+    case StopReminder(timestamp, patientId) =>
+      notificationActor forward RCTReminderActor.Protocol.External.DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock))
+
+    case pr: PatientReminders => notificationActor forward pr
+
+    case other => log.debug("Dropping $other")
   }
 
   private[this] def schedulePushJob(): Unit = {
@@ -142,7 +176,12 @@ object PatientManager {
 
   case class DeletePatient(patientId: PatientId)
 
+  case class GetTreatmentNotifications(time: ZonedDateTime)
+
   sealed trait CommandOutcome
   case object Success extends CommandOutcome
   case class Failure(reason: String) extends CommandOutcome
+
+  case class StopReminder(timestamp: ZonedDateTime, patientId: PatientId)
+
 }

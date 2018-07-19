@@ -74,22 +74,26 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.selectedTooth = null;
 
-    function getAllPatients() {
+    function simpleGet(endpoint) {
         return $http({
             method: "get",
-            url: '/api',
+            url: endpoint,
         }).then(function(resp) {
             return resp.data;
         });
     }
 
+    function getAllPatients() {
+        return simpleGet('/api');
+    }
+
+
     function getRememberData() {
-        return $http({
-            method: "get",
-            url: '/api/remember',
-        }).then(function(resp) {
-            return resp.data;
-        });
+        return simpleGet('/api/remember');
+    }
+
+    function getNotifications() {
+        return simpleGet('/treatment/notifications/' + new Date().toISOString());
     }
 
     ctrl.publicKey = null;
@@ -126,6 +130,8 @@ app.controller('MainController', function($q, $http) {
     };
 
     ctrl.treatmentCategory = null;
+
+    ctrl.notifications = [];
 
     ctrl.newTreatment = function() {
         if (ctrl.treatmentCategory == null || ctrl.treatmentCategory == "")
@@ -433,6 +439,8 @@ app.controller('MainController', function($q, $http) {
            } else {
             ctrl.repoReady = true;
             ctrl.allPatients = patients;
+            fetchNotifications();
+            setTimeout(fetchNotifications(), 5*60*1000)
            }
         });
     }
@@ -440,6 +448,13 @@ app.controller('MainController', function($q, $http) {
     getRememberData().then(function(medicaments) {
         ctrl.medicamentSuggestions = medicaments.medicamentNames;
     });
+
+    function fetchNotifications() {
+        getNotifications().then(function(notify) {
+            ctrl.notifications = notify.notifications;
+        });
+    }
+
 
     ctrl.allowRootFocus = false;
     ctrl.allowObturationFocus = false;
@@ -471,4 +486,110 @@ app.controller('MainController', function($q, $http) {
 
     grangerInit();
 
+    ctrl.displayFriendlyTime = function(utcTime) {
+        return new Date(utcTime).toLocaleDateString()
+    }
+
+
+    ctrl.selectFromNotification = function(notification) {
+        var patient = ctrl.allPatients.filter(function(patient) { return patient.patientId == notification.externalReference;})
+        if (patient.length > 0)
+            ctrl.selectedPatient = patient[0];
+    };
+
+    ctrl.selectedPatientNotifications = function() {
+        if (ctrl.selectedPatient == null)
+            return [];
+        else
+            return ctrl.notifications.filter(
+                function(notification) { return notification.externalReference == ctrl.selectedPatient.patientId}
+            );
+    }
+
+
+    ctrl.earliestNotificationPerPatient = function (notifications) {
+        var closestReminderPerPatient = {};
+        notifications.forEach(function(notification) {
+            if (!(notification.externalReference in closestReminderPerPatient)) {
+                closestReminderPerPatient[notification.externalReference] = notification;
+            } else {
+                if (notification.notificationTime < closestReminderPerPatient[notification.externalReference].notificationTime)
+                    closestReminderPerPatient[notification.externalReference] = notification
+            }
+        });
+
+        return Object.values(closestReminderPerPatient);
+    };
+
+    ctrl.stopNotification = function(notification) {
+        return $http({
+            method: "delete",
+            url: "/treatment/notification/" + notification.timestamp + "?patientId=" + notification.externalReference,
+        }).then(function(resp) {
+            fetchNotifications();
+            if (ctrl.allReminders != null) {
+                ctrl.displayAllPatientNotifications();
+            }
+        });
+    };
+
+    ctrl.editingNotification = null;
+
+    ctrl.editNotification = function(notification) {
+        ctrl.editingNotification = notification;
+    };
+
+    ctrl.notificationNewTime = new Date();
+
+    ctrl.cancelEditing = function() {
+        ctrl.editingNotification = null;
+    };
+
+    ctrl.snoozeAction = function(notification) {
+        if (ctrl.notificationNewTime != null) {
+            var requestBody = {
+                'reminderTimestamp': notification.timestamp,
+                'snoozeTo': ctrl.notificationNewTime.toISOString(),
+                'externalReference':notification.externalReference
+            }
+            submitSnooze(requestBody);
+        } else {
+            ctrl.editingNotification = null;
+        }
+    };
+
+    function submitSnooze(modifyNotification) {
+        return $http({
+            method: "post",
+            url: '/treatment/notifications',
+            data: modifyNotification
+        }).then(function(resp) {
+            fetchNotifications();
+            if (ctrl.allReminders != null) {
+                ctrl.allReminders = null;
+                ctrl.displayAllPatientNotifications();
+            };
+            ctrl.editingNotification = null;
+        });
+    }
+
+    ctrl.allReminders = null;
+
+    ctrl.displayAllPatientNotifications = function() {
+        if (ctrl.allReminders == null) {
+            simpleGet("/allreminders/" + ctrl.selectedPatient.patientId).then(function(allReminders) {
+                ctrl.allReminders = allReminders.notifications;
+            });
+        } else {
+            ctrl.allReminders = null;
+        }
+    };
+
+    $('.dropdown-button').dropdown({
+        belowOrigin: true,
+        alignment: 'right',
+        constrain_width: false,
+        hover: false,
+        width: "130px"
+      });
 });

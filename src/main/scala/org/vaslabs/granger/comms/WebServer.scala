@@ -1,5 +1,7 @@
 package org.vaslabs.granger.comms
 
+import java.time.ZonedDateTime
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCode
@@ -8,10 +10,13 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern._
 import akka.util.Timeout
-import org.vaslabs.granger.{GrangerConfig, RememberInputAgent}
+import org.vaslabs.granger.{GrangerConfig, PatientManager, RememberInputAgent}
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
+import org.vaslabs.granger.reminders.RCTReminderActor
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External
+import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.SnoozeAck
 import org.vaslabs.granger.repo.IOError
 
 import scala.concurrent.duration._
@@ -88,4 +93,17 @@ class WebServer(patientManager: ActorRef, rememberInputAgent: ActorRef, config: 
 
   override def deletePatient(patientId: PatientId): Future[CommandOutcome] =
     (patientManager ? DeletePatient(patientId)).mapTo[CommandOutcome]
+
+  override def treatmentNotifications(timestamp: ZonedDateTime): Future[External.Notify] =
+    (patientManager ? GetTreatmentNotifications(timestamp)).mapTo[External.Notify]
+
+  override def modifyReminder(rq: External.ModifyReminder): Future[External.SnoozeAck] = {
+    (patientManager ? rq).mapTo[SnoozeAck]
+  }
+
+  override def deleteReminder(patientId: PatientId, timestamp: ZonedDateTime): Future[External.DeletedAck] =
+    (patientManager ? PatientManager.StopReminder(timestamp, patientId)).mapTo[External.DeletedAck]
+
+  override def allReminders(patientId: PatientId): Future[External.AllPatientReminders] =
+    (patientManager ? External.PatientReminders(patientId)).mapTo[External.AllPatientReminders]
 }

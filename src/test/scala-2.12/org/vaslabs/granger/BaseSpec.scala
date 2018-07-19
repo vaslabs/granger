@@ -2,21 +2,22 @@ package org.vaslabs.granger
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
+
 import akka.util.Timeout
 import io.circe.{Decoder, Encoder}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, TestSuite}
 import org.vaslabs.granger.PatientManager.StartTreatment
 import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
 import org.vaslabs.granger.modeltreatments.{RootCanalTreatment, TreatmentCategory}
-import org.vaslabs.granger.modelv2.{DentalChart, Patient, PatientId, Treatment}
+import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
 /**
   * Created by vnicolaou on 28/06/17.
   */
-trait BaseSpec { this: BeforeAndAfterAll =>
+trait BaseSpec extends TestSuite { this: BeforeAndAfterAll =>
   val tmpDir = System.getProperty("java.io.tmpdir") + s"/${this.getClass.getName}-${System.currentTimeMillis()}/.granger_repo/"
 
 
@@ -46,8 +47,6 @@ trait BaseSpec { this: BeforeAndAfterAll =>
   implicit val emptyRememberProvider: EmptyProvider[MedicamentSuggestions] = () => MedicamentSuggestions(List.empty)
   implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
     new GitRepo[MedicamentSuggestions](new File(tmpDir), "remember.json")
-
-
 
   def tearDown(): Unit = {
     import org.apache.commons.io.FileUtils

@@ -11,14 +11,35 @@
     <script src="js/angular.js"></script>
 
     <script src="js/main.js"></script>
-    <body ng-app="grangerApp">
+    <body ng-app="grangerApp" ng-controller="MainController as ctrl">
         <main id="grad">
+            <nav>
+                <div class="nav-wrapper">
+                    <a href="#" class="brand-logo">Granger</a>
+                    <ul id="nav-mobile" class="right hide-on-med-and-down">
+                        <li>
+                            <ul class="right" style="padding-right: 30px">
+                                <!-- Dropdown Trigger -->
+                                <li>
+                                        <a class="dropdown-button" href="#" data-activates="notifications-dropdown">
+                                            <i class="material-icons" ng-bind="ctrl.notifications.length > 0 ? 'assignment_late' : 'assignment_turned_in'"></i>
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <ul id="notifications-dropdown" class="dropdown-content">
+                        <li ng-repeat="notification in ctrl.earliestNotificationPerPatient(ctrl.notifications)" ng-click="ctrl.selectFromNotification(notification)"><a href="#!">Follow-up {{notification.externalReference}} on {{ctrl.displayFriendlyTime(notification.notificationTime)}}</a></li>
+                    </ul>
+                </div>
+            </nav>
             <div class="container">
                 <div class="row">
                     <div class="col s12">
                     </div>
                 </div>
-                <div class="row" ng-controller="MainController as ctrl">
+                <div class="row">
                     <div class="card scale-transition" ng-class="{ 'invisible': ctrl.selectedPatient == null, 'scale-in':ctrl.selectedPatient != null}">
                         <div class="card-content">
                             <a class="btn-floating btn-small waves-effect waves-light red" ng-click="ctrl.deselectPatient()"><i class="material-icons">done</i></a>
@@ -286,6 +307,52 @@
                                 <a href="#" ng-click="ctrl.deselectTooth()">Close</a>
                             </div>
                         </div>
+                            <div id="patient-notifications" class="row">
+                                <ul class="collection with-header">
+                                    <li class="collection-header"><h4>Reminders</h4>
+                                        <a href="#!" ng-click="ctrl.displayAllPatientNotifications()">
+                                            <i class="material-icons" ng-bind="ctrl.allReminders == null ? 'expand_more' : 'expand_less'"></i>
+                                        </a>
+                                    </li>
+                                    <li class="collection-item" ng-if="ctrl.allReminders == null" ng-repeat="notification in ctrl.selectedPatientNotifications()">
+                                        <div>Follow up date passed: {{ctrl.displayFriendlyTime(notification.notificationTime)}}
+                                            <a href="#!"><i class="material-icons" ng-if="ctrl.editingNotification == null" ng-click="ctrl.editNotification(notification)">edit</i></a>
+                                            <a href="#!" ng-click="ctrl.snoozeAction(notification)" ng-if="ctrl.editingNotification == notification">
+                                                <i class="material-icons">snooze</i>
+                                            </a>
+                                            <a href="#!" ng-click="ctrl.cancelEditing()" ng-if="ctrl.editingNotification == notification">
+                                                <i class="material-icons">cancel</i>
+                                            </a>
+                                            <a href="#!" class="secondary-content" ng-if="ctrl.editingNotification == null" ng-click="ctrl.stopNotification(notification)">
+                                                <i class="material-icons">check</i>
+                                            </a>
+                                        </div>
+                                        <div ng-if="ctrl.editingNotification == notification">
+                                            <input id="editing-notification-{{notification.timestamp}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd HH:mm">
+                                            <label for="editing-notification-{{notification.timestamp}}">Snooze time</label>
+                                        </div>
+                                    </li>
+
+                                    <li class="collection-item" ng-if="ctrl.allReminders != null" ng-repeat="reminder in ctrl.allReminders">
+                                        <div>Follow up date is on: {{ctrl.displayFriendlyTime(reminder.notificationTime)}}
+                                            <a href="#!"><i class="material-icons" ng-if="ctrl.editingNotification == null" ng-click="ctrl.editNotification(reminder)">edit</i></a>
+                                            <a href="#!" ng-click="ctrl.snoozeAction(reminder)" ng-if="ctrl.editingNotification == reminder">
+                                                <i class="material-icons">snooze</i>
+                                            </a>
+                                            <a href="#!" ng-click="ctrl.cancelEditing()" ng-if="ctrl.editingNotification == reminder">
+                                                <i class="material-icons">cancel</i>
+                                            </a>
+                                            <a href="#!" class="secondary-content" ng-if="ctrl.editingNotification == null" ng-click="ctrl.stopNotification(reminder)">
+                                                <i class="material-icons">check</i>
+                                            </a>
+                                        </div>
+                                        <div ng-if="ctrl.editingNotification == reminder">
+                                            <input id="editing-reminder-{{reminder.timestamp}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd 10:00">
+                                            <label for="editing-reminder-{{reminder.timestamp}}">Snooze time</label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
                     </div>
 
                     <div class="row" id="customerManagement" ng-if="ctrl.selectedPatient == null && ctrl.repoReady">

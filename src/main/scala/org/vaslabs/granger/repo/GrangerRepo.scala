@@ -1,6 +1,7 @@
 package org.vaslabs.granger.repo
 
 import java.time.ZonedDateTime
+import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCode
 import cats.effect.IO
@@ -40,7 +41,7 @@ trait GrangerRepo[State, F[_]] {
   def startTreatment(patientId: PatientId, toothId: Int, treatmentCategory: TreatmentCategory):
     Either[InvalidData, F[Patient]]
 
-  def finishTreatment(patientId: PatientId, toothId: Int): Either[InvalidData, F[Patient]]
+  def finishTreatment(patientId: PatientId, toothId: Int, finishTime: ZonedDateTime): Either[InvalidData, F[Patient]]
 
   def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime):
     Either[InvalidData, F[Patient]]

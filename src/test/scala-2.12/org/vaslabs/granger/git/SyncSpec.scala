@@ -6,16 +6,15 @@ import akka.testkit.TestActorRef
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.URIish
-import org.scalatest.{Assertion, Matchers}
+import org.scalatest.{Assertion, FlatSpecLike, Matchers}
 import org.vaslabs.granger.{AkkaBaseSpec, Orchestrator}
-import org.vaslabs.granger.modelv2.{PatientId}
-import org.vaslabs.granger.repo.SingleStateGrangerRepo
+import org.vaslabs.granger.modelv2.PatientId
 import org.vaslabs.granger.system.BaseDirProvider
 
 /**
   * Created by vnicolaou on 09/09/17.
   */
-class SyncSpec extends AkkaBaseSpec("SyncTest") with Matchers{
+class SyncSpec extends AkkaBaseSpec("SyncTest") with Matchers with FlatSpecLike{
 
   val remoteUri = s"${System.getProperty("java.io.tmpdir")}/remote_granger"
   import system.dispatcher
