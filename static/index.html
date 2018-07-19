@@ -331,7 +331,7 @@
                                     </li>
 
                                     <li class="collection-item" ng-if="ctrl.allReminders != null" ng-repeat="reminder in ctrl.allReminders">
-                                        <div>Follow up date passed: {{ctrl.displayFriendlyTime(reminder.notificationTime)}}
+                                        <div>Follow up date is on: {{ctrl.displayFriendlyTime(reminder.notificationTime)}}
                                             <a href="#!"><i class="material-icons" ng-if="ctrl.editingNotification == null" ng-click="ctrl.editNotification(reminder)">edit</i></a>
                                             <a href="#!" ng-click="ctrl.snoozeAction(reminder)" ng-if="ctrl.editingNotification == reminder">
                                                 <i class="material-icons">snooze</i>
