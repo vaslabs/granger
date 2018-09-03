@@ -9,16 +9,17 @@ organization := "org.vaslabs"
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
 
-val akkaVersion = "2.5.12"
+val akkaVersion = "2.5.16"
+val akkaHttpVersion = "10.1.4"
 val circeVersion = "0.9.3"
 val monocleVersion = "1.5.1-cats"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-  "com.typesafe.akka" %% "akka-http" % "10.1.1",
-  "com.typesafe.akka" %% "akka-http-testkit" % "10.1.1" % Test,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
-  "commons-io" % "commons-io" % "2.4" % "test",
+  "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+  "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+  "commons-io" % "commons-io" % "2.4" % Test,
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
@@ -31,7 +32,7 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-effect" % "1.0.0-RC3",
   "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
-  "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % "test"
+  "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % Test
 
 )
 
