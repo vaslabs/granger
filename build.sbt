@@ -28,7 +28,7 @@ libraryDependencies ++= Seq(
   "com.github.pureconfig" %% "pureconfig" % "0.9.1",
   "de.knutwalker" %% "akka-http-circe" % "3.5.0",
   "de.knutwalker" %% "akka-http-json" % "3.5.0",
-  "org.typelevel" %% "cats-effect" % "1.0.0-RC",
+  "org.typelevel" %% "cats-effect" % "1.0.0-RC3",
   "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % "test"
