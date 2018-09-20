@@ -16,14 +16,16 @@ class HttpRouterDeletingPatientsSpec extends HttpBaseSpec with ScalatestRouteTes
   "deleting a patient" should "persist across restarts" in {
     withHttpRouter[Id](system, config) {
       httpRouter => {
+        import scala.collection.JavaConverters._
+        val initialSize = git.log().call().asScala.size
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]].size shouldBe 0
         }
         Post("/api", withNewPatient()) ~> httpRouter.routes ~> check {
           responseAs[Patient] shouldBe withPatient(PatientId(1))
         }
-        import scala.collection.JavaConverters._
-        git.log().call().asScala.size shouldBe 1
+
+        git.log().call().asScala.size shouldBe initialSize + 1
 
         Delete("/patient/2") ~> httpRouter.routes ~> check {
           responseAs[CommandOutcome] should matchPattern {

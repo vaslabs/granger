@@ -15,14 +15,16 @@ class HttpRouterAddingPatientsSpec extends HttpBaseSpec with ScalatestRouteTest 
   "adding a new patient" should "persist across restarts" in {
     withHttpRouter[Id](system, config) {
       httpRouter => {
+        import scala.collection.JavaConverters._
+        val initialGitActions = git.log().call().asScala.size
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]].size shouldBe 0
         }
         Post("/api", withNewPatient()) ~> httpRouter.routes ~> check {
           responseAs[Patient] shouldBe withPatient(PatientId(1))
         }
-        import scala.collection.JavaConverters._
-        git.log().call().asScala.size shouldBe 1
+
+        git.log().call().asScala.size shouldBe initialGitActions + 1
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]] shouldBe List(withPatient(PatientId(1)))
         }
