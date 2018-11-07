@@ -1,5 +1,6 @@
 # granger
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b840a5c26d144bc48b98147edb2732a0)](https://app.codacy.com/app/vaslabs/granger?utm_source=github.com&utm_medium=referral&utm_content=vaslabs/granger&utm_campaign=Badge_Grade_Dashboard)
 [![Join the chat at https://gitter.im/vaslabs-granger/Lobby](https://badges.gitter.im/vaslabs-granger/Lobby.svg)](https://gitter.im/vaslabs-granger/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 A patient manager for dentists
 
