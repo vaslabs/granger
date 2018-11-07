@@ -74,4 +74,4 @@ name in Universal := name.value
 
 packageName in Universal := packageName.value
 
-addCommandAlias("reportTestCov", ";project talos; coverageReport; coverageAggregate; codacyCoverage")
+addCommandAlias("reportTestCov", ";coverageReport; coverageAggregate; codacyCoverage")
