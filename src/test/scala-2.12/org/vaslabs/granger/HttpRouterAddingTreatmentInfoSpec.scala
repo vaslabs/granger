@@ -3,9 +3,10 @@ package org.vaslabs.granger
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import cats.Id
-import org.vaslabs.granger.PatientManager.StartTreatment
+import org.vaslabs.granger.PatientManager.{FinishTreatment, StartTreatment}
 import org.vaslabs.granger.comms.api.model.AddToothInformationRequest
 import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.v2json._
@@ -49,33 +50,34 @@ class HttpRouterAddingTreatmentInfoSpec extends HttpBaseSpec with ScalatestRoute
           List(Root("MB2", 19, "F2"))
         }
 
-        Post("/treatment/finish", StartTreatment(PatientId(1), 11, RootCanalTreatment())) ~> httpRouter.routes ~> check {
-          responseAs[Patient].dentalChart.teeth.find(_.number == 11)
-            .get.treatments.head.dateCompleted shouldBe
-          Some(now)
+        val finishedAt = ZonedDateTime.now(clock).plusDays(1)
+        Post("/treatment/finish", FinishTreatment(PatientId(1), 11, finishedAt)) ~> httpRouter.routes ~> check {
+          responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments.head.dateCompleted shouldBe Some(finishedAt)
         }
-        Get(s"/treatment/notifications/${now.plusMonths(6)
+        Get(s"/treatment/notifications/${now.plusMonths(6).plusDays(1)
           .format(DateTimeFormatter.ISO_ZONED_DATE_TIME)}") ~> httpRouter.routes ~> check {
           responseAs[RCTReminderActor.Protocol.External.Notify] shouldBe
             Notify(List(RCTReminderActor.Protocol.External.Notification(
-              now, now.plusMonths(6), PatientId(1))))
+              finishedAt, finishedAt.plusMonths(6), PatientId(1))))
         }
-        Get(s"/allreminders/1") ~> httpRouter.routes ~> check {
+        Get("/allreminders/1") ~> httpRouter.routes ~> check {
           responseAs[RCTReminderActor.Protocol.External.AllPatientReminders] shouldBe
             AllPatientReminders(
               List(RCTReminderActor.Protocol.External.Notification(
-                now, now.plusMonths(6), PatientId(1)))
+                finishedAt, finishedAt.plusMonths(6), PatientId(1)))
             )
         }
-        Post("/treatment/notifications", ModifyReminder(now, now.plusMonths(7), PatientId(1))) ~> httpRouter.routes ~> check {
+        Post("/treatment/notifications", ModifyReminder(finishedAt, finishedAt.plusMonths(7), PatientId(1))) ~> httpRouter.routes ~> check {
           responseAs[RCTReminderActor.Protocol.External.SnoozeAck] shouldBe
-            SnoozeAck(PatientId(1), now, now.plusMonths(7))
+            SnoozeAck(PatientId(1), finishedAt, finishedAt.plusMonths(7))
         }
-        Delete(s"/treatment/notification/${now}?patientId=1") ~> httpRouter.routes ~> check {
+
+        Delete(s"/treatment/notification/${finishedAt}?patientId=1") ~> httpRouter.routes ~> check {
           responseAs[RCTReminderActor.Protocol.External.DeletedAck] shouldBe
-            DeletedAck(now, PatientId(1))
+            DeletedAck(finishedAt, PatientId(1))
         }
-        Get(s"/allreminders/1") ~> httpRouter.routes ~> check {
+
+        Get("/allreminders/1") ~> httpRouter.routes ~> check {
           responseAs[RCTReminderActor.Protocol.External.AllPatientReminders] shouldBe
             AllPatientReminders(
               List.empty

@@ -48,8 +48,6 @@ class RememberInputAgent private(maxRememberSize: Int)(
   import RememberInputAgent._
   import context.dispatcher
 
-  implicit val timeout = Timeout(1 second)
-
   override def preStart(): Unit = context.system.eventStream.subscribe(self, classOf[AddToothInformationRequest])
 
   def recordSuggestion(medicament: Medicament, state: RememberInputAgent.MedicamentSuggestions): RememberInputAgent.MedicamentSuggestions = {

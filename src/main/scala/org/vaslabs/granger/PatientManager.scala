@@ -1,7 +1,7 @@
 package org.vaslabs.granger
 
 import java.io.File
-import java.time.{Clock, ZonedDateTime}
+import java.time.{Clock, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
@@ -111,9 +111,8 @@ class PatientManager private (
     case StartTreatment(patientId, toothId, category) =>
       schedulePushJob()
       sender() ! grangerRepo.startTreatment(patientId, toothId, category).map(_.unsafeRunSync()).merge
-    case FinishTreatment(patientId, toothId) =>
+    case FinishTreatment(patientId, toothId, finishTime) =>
       schedulePushJob()
-      val finishTime = ZonedDateTime.now(clock)
       val outcome = grangerRepo.finishTreatment(patientId, toothId, finishTime).map(_.unsafeRunSync())
       outcome.foreach(_ => {
         context.system.eventStream.publish(SetReminder(finishTime, finishTime.plusMonths(6), patientId))
@@ -165,7 +164,9 @@ object PatientManager {
                             toothId: Int,
                             category: TreatmentCategory)
   case class DeleteTreatment(patientId:PatientId, toothId: Int, createdOn: ZonedDateTime)
-  case class FinishTreatment(patientId: PatientId, toothId: Int)
+  case class FinishTreatment(patientId: PatientId, toothId: Int, finishedOn: ZonedDateTime) {
+    require(finishedOn.getOffset.equals(ZoneOffset.UTC))
+  }
 
   case object LoadData
   sealed trait LoadDataOutcome
