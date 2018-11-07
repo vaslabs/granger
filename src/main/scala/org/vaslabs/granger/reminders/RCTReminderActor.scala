@@ -128,8 +128,10 @@ object RCTReminderActor {
         override def equals(obj: scala.Any): Boolean = obj match {
           case Reminder(submitted, _, otherExternalReference, _) =>
             externalReference.equals(otherExternalReference) && submitted == this.submitted
-          case _ => super.equals(obj)
+          case _ => false
         }
+
+        override def canEqual(that: Any): Boolean = that.isInstanceOf[Reminder]
       }
 
       case class ReminderState(reminders: List[Reminder])
