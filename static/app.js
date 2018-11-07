@@ -167,10 +167,13 @@ app.controller('MainController', function($q, $http) {
             return "green";
     };
 
+
+
     ctrl.completeTreatment = function() {
             var data = {
                 "patientId": ctrl.selectedPatient.patientId,
                 "toothId": ctrl.selectedTooth.number,
+                "finishedOn": ctrl.treatmentFinishedAt.toISOString()
             };
 
             return $http({
@@ -180,6 +183,7 @@ app.controller('MainController', function($q, $http) {
             }).then(function(resp) {
                 updatePatient(resp);
                 ctrl.treatmentCategory = null;
+                ctrl.treatmentFinishedAt = new Date();
             });
         };
 
@@ -458,6 +462,8 @@ app.controller('MainController', function($q, $http) {
 
     ctrl.allowRootFocus = false;
     ctrl.allowObturationFocus = false;
+
+    ctrl.treatmentFinishedAt = new Date();
 
     ctrl.addRootRow = function() {
         var emptyRows = ctrl.rootDetails.filter(filterOutEmptyRoots);

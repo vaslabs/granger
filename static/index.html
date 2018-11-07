@@ -133,8 +133,10 @@
                                                             <td><a href="#Roots" ng-click="ctrl.selectTreatment(treatment)">{{treatment.category}}</a></td>
                                                             <td>{{ctrl.toLocalDateTime(treatment.dateStarted)}}</td>
                                                             <td>{{ctrl.toLocalDateTime(treatment.dateCompleted)}}</td>
-                                                            <td>
-                                                                <button ng-if="treatment.dateCompleted == null" class="btn waves-effect waves-light orange" type="submit" name="action" ng-click="ctrl.completeTreatment()" ng-if="ctrl.publicKey == null">Complete
+                                                            <td ng-if="treatment.dateCompleted == null">
+                                                                <input type="datetime-local" class="validate" ng-model="ctrl.treatmentFinishedAt">
+
+                                                                <button class="btn waves-effect waves-light orange" type="submit" name="action" ng-click="ctrl.completeTreatment()" ng-if="ctrl.publicKey == null">Complete
                                                                     <i class="material-icons right">done</i>
                                                                 </button>
                                                                 <span ng-if="treatment.dateCompleted != null" class="badge green" data-badge-caption="Completed"></span>
@@ -328,8 +330,8 @@
                                             </a>
                                         </div>
                                         <div ng-if="ctrl.editingNotification == notification">
-                                            <input id="editing-notification-{{notification.timestamp}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd HH:mm">
-                                            <label for="editing-notification-{{notification.timestamp}}">Snooze time</label>
+                                            <input id="editing-notification-{{notification.notificationTime}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd HH:mm">
+                                            <label for="editing-notification-{{notification.notificationTime}}">Snooze time</label>
                                         </div>
                                     </li>
 
@@ -347,8 +349,8 @@
                                             </a>
                                         </div>
                                         <div ng-if="ctrl.editingNotification == reminder">
-                                            <input id="editing-reminder-{{reminder.timestamp}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd 10:00">
-                                            <label for="editing-reminder-{{reminder.timestamp}}">Snooze time</label>
+                                            <input id="editing-reminder-{{reminder.notificationTime}}" ng-model="ctrl.notificationNewTime" type="datetime-local" placeholder="yyyy-MM-dd 10:00">
+                                            <label for="editing-reminder-{{reminder.notificationTime}}">Snooze time</label>
                                         </div>
                                     </li>
                                 </ul>
