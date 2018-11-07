@@ -6,6 +6,7 @@ import org.scalatest.Matchers
 import org.vaslabs.granger.PatientManager.{CommandOutcome, Failure, Success}
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.v2json._
+import scala.collection.JavaConverters._
 
 /**
   * Created by vnicolaou on 28/06/17.
@@ -19,11 +20,12 @@ class HttpRouterDeletingPatientsSpec extends HttpBaseSpec with ScalatestRouteTes
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]].size shouldBe 0
         }
+        val initialSize = git.log().call().asScala.size
+
         Post("/api", withNewPatient()) ~> httpRouter.routes ~> check {
           responseAs[Patient] shouldBe withPatient(PatientId(1))
         }
-        import scala.collection.JavaConverters._
-        git.log().call().asScala.size shouldBe 1
+        git.log().call().asScala.size shouldBe initialSize + 1
 
         Delete("/patient/2") ~> httpRouter.routes ~> check {
           responseAs[CommandOutcome] should matchPattern {

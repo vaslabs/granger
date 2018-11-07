@@ -1,3 +1,5 @@
+import sbt._
+
 name := "granger"
 
 version := "1.0"
@@ -72,3 +74,4 @@ name in Universal := name.value
 
 packageName in Universal := packageName.value
 
+addCommandAlias("reportTestCov", ";project talos; coverageReport; coverageAggregate; codacyCoverage")
