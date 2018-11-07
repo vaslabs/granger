@@ -116,9 +116,9 @@ trait BaseSpec extends TestSuite { this: BeforeAndAfterAll =>
                           treatment: TreatmentCategory = RootCanalTreatment()) =
     StartTreatment(patientId, toothNumber, treatment)
 
-  def withCompletedTreatment(treatmentCategory: TreatmentCategory = RootCanalTreatment()): Treatment =
+  def withCompletedTreatment(treatmentCategory: TreatmentCategory = RootCanalTreatment(), finishAt: ZonedDateTime = ZonedDateTime.now(clock)): Treatment =
     Treatment(ZonedDateTime.now(clock),
-      Some(ZonedDateTime.now(clock)),
+      Some(finishAt),
       treatmentCategory)
 
   def withOpenTreatment(treatmentCategory: TreatmentCategory = RootCanalTreatment()): Treatment =

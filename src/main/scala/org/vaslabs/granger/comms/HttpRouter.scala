@@ -1,7 +1,7 @@
 package org.vaslabs.granger.comms
 
 import java.time.ZonedDateTime
-import java.time.format.{DateTimeFormatter, DateTimeParseException}
+import java.time.format.{DateTimeFormatter}
 
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.server._

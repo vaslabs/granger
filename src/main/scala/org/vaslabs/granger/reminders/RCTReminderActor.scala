@@ -5,6 +5,7 @@ import java.time.ZonedDateTime
 import java.util.Objects
 
 import akka.actor.{Actor, ActorLogging, Props, Stash}
+import akka.http.scaladsl.model.StatusCodes
 import cats.data.NonEmptyList
 import monocle.macros.Lenses
 import org.eclipse.jgit.api.Git

@@ -1,6 +1,6 @@
 package org.vaslabs.granger
 
-import java.time.ZonedDateTime
+import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
 
 import cats.Id
 import org.vaslabs.granger.PatientManager.{Failure, FinishTreatment}
@@ -10,12 +10,14 @@ import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
 import org.scalatest.Matchers
 import org.vaslabs.granger.repo.ToothHasActiveTreatment
+
+import scala.collection.JavaConverters._
+
 /**
   * Created by vnicolaou on 28/06/17.
   */
 class HttpRouterAddTreatmentsSpec extends HttpBaseSpec with Matchers{
 
-  import scala.collection.JavaConverters._
 
   "only one open treatment" should "exist per tooth" in {
     withHttpRouter[Id](system, config) {
@@ -41,10 +43,11 @@ class HttpRouterAddTreatmentsSpec extends HttpBaseSpec with Matchers{
           git.log().call().asScala.head.getFullMessage shouldBe
             "Started treatment for tooth 11 on patient 1"
 
-          Post("/treatment/finish", FinishTreatment(PatientId(1), 11)) ~> httpRouter.routes ~> check {
+          val finishAt = ZonedDateTime.now(clock).plusHours(2)
+          Post("/treatment/finish", FinishTreatment(PatientId(1), 11, finishAt)) ~> httpRouter.routes ~> check {
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe
               List(
-                withCompletedTreatment()
+                withCompletedTreatment(finishAt = finishAt)
               )
           }
           git.log().call().asScala.head.getFullMessage shouldBe
@@ -55,7 +58,7 @@ class HttpRouterAddTreatmentsSpec extends HttpBaseSpec with Matchers{
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe
               List(
                 withOpenTreatment(RepeatRootCanalTreatment()),
-                withCompletedTreatment()
+                withCompletedTreatment(finishAt = finishAt)
               )
           }
           git.log().call().asScala.head.getFullMessage shouldBe
@@ -65,7 +68,7 @@ class HttpRouterAddTreatmentsSpec extends HttpBaseSpec with Matchers{
             .find(_.number == 11).get.treatments shouldBe
             List(
               withOpenTreatment(RepeatRootCanalTreatment()),
-              withCompletedTreatment()
+              withCompletedTreatment(finishAt = finishAt)
             )
         }
     }
