@@ -12,7 +12,7 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.fu
 
 
 val akkaVersion = "2.5.16"
-val akkaHttpVersion = "10.1.4"
+val akkaHttpVersion = "10.1.5"
 val circeVersion = "0.9.3"
 val monocleVersion = "1.5.1-cats"
 libraryDependencies ++= Seq(
@@ -26,12 +26,12 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
   "io.circe" %% "circe-java8" % circeVersion,
-  "de.heikoseeberger" %% "akka-http-circe" % "1.20.1",
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.7.0.201704051617-r",
+  "de.heikoseeberger" %% "akka-http-circe" % "1.21.0",
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "5.1.1.201809181055-r",
   "com.github.pureconfig" %% "pureconfig" % "0.9.1",
   "de.knutwalker" %% "akka-http-circe" % "3.5.0",
   "de.knutwalker" %% "akka-http-json" % "3.5.0",
-  "org.typelevel" %% "cats-effect" % "1.0.0-RC3",
+  "org.typelevel" %% "cats-effect" % "1.0.0",
   "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % Test
