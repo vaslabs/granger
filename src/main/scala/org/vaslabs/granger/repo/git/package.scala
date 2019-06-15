@@ -21,7 +21,7 @@ package object git {
   }
 
   def getWriter(file: File): Either[WriteError, PrintWriter] = {
-    Either.catchNonFatal(new PrintWriter(file)).leftMap(t => WriteError(t.getMessage))
+    Either.catchNonFatal(new PrintWriter(file, "UTF-8")).leftMap(t => WriteError(t.getMessage))
   }
 
   def write(payload: String, writer: PrintWriter): Either[WriteError, PrintWriter] = {

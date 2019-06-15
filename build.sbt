@@ -48,6 +48,18 @@ enablePlugins(sbtdocker.DockerPlugin)
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(DockerComposePlugin)
 enablePlugins(UniversalPlugin)
+enablePlugins(WindowsPlugin)
+lazy val windowsInstallerSettings = {
+  maintainer := "Vasilis Nicolaou <vaslabsco@gmail.com>"
+  packageSummary := "Granger"
+  packageDescription := """A patient management system for dentists for Root Canal Treatment"""
+
+  // wix build information
+  wixProductId := "*"
+  wixProductUpgradeId := "*"
+  name in Windows := "Granger"
+}
+
 parallelExecution in ThisBuild := false
 
 import NativePackagerHelper._

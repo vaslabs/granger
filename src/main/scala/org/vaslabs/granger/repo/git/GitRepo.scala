@@ -1,9 +1,10 @@
 package org.vaslabs.granger.repo.git
 
 import java.io.File
+import java.nio.charset.StandardCharsets
 
-import akka.http.scaladsl.model.{ StatusCode, StatusCodes }
-import io.circe.{ parser, Decoder, Encoder }
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
+import io.circe.{Decoder, Encoder, parser}
 import io.circe.syntax._
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.URIish
@@ -55,7 +56,7 @@ class GitRepo[A](dbLocation: File, snapshotFile: String)(
   override def getState(): Either[RepoErrorState, A] = {
     getFile(snapshotFile, dbLocation)
       .map(file => {
-        Source.fromFile(file).mkString
+        Source.fromFile(file)(StandardCharsets.UTF_8).mkString
       })
       .flatMap(jsonString =>
         parser.parse(jsonString).flatMap(_.as[A]).left.map(error => UnparseableSchema(error.getMessage)))
