@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 
 object GitRepoPusher {
 
-  private def behavior(grangerRepo: GrangerRepo[_, IO]): Behavior[Protocol] =
+  def behavior(grangerRepo: GrangerRepo[_, IO]): Behavior[Protocol] =
     Behaviors.supervise(unsafeBehavior(grangerRepo)).onFailure[IOException](
       SupervisorStrategy.restartWithBackoff(10 seconds, 5 minutes, 0.2)
         .withMaxRestarts(10)
