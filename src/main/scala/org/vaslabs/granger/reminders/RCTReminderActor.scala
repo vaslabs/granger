@@ -2,7 +2,6 @@ package org.vaslabs.granger.reminders
 
 import java.io.File
 import java.time.ZonedDateTime
-import java.util.Objects
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
@@ -127,17 +126,7 @@ case class AllPatientReminders(notifications: List[Notification])
                                                 submitted: ZonedDateTime,
                                                 remindOn: ZonedDateTime,
                                                 externalReference: PatientId,
-                                                deletedOn: Option[ZonedDateTime] = None)  extends Protocol {
-  override def hashCode(): Int = Objects.hash(submitted.asInstanceOf[Object], externalReference.asInstanceOf[Object])
-
-  override def equals(obj: scala.Any): Boolean = obj match {
-    case Reminder(submitted, _, otherExternalReference, _) =>
-      externalReference.equals(otherExternalReference) && submitted == this.submitted
-    case _ => false
-  }
-
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Reminder]
-}
+                                                deletedOn: Option[ZonedDateTime] = None)  extends Protocol
 
 private[reminders] case class ReminderState(reminders: List[Reminder]) extends Protocol
 

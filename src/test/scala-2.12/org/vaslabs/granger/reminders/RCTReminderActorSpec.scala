@@ -40,7 +40,7 @@ class RCTReminderActorSpec extends AkkaBaseSpec("RCTRemindersSpec") with WordSpe
       )
     }
 
-    "gives all notifications of specific user" in {
+    "give all notifications of specific user" in {
       rctReminderActor ! PatientReminders(externalId, sender)
       expectMsg(AllPatientReminders(
         List(
