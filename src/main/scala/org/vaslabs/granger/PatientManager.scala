@@ -7,8 +7,6 @@ import java.time.{Clock, ZoneOffset, ZonedDateTime}
 import akka.actor.typed.eventstream.Publish
 import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
-import akka.actor.typed.scaladsl.adapter._
 import cats.effect.IO
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.RememberInputAgent.MedicamentSeen
