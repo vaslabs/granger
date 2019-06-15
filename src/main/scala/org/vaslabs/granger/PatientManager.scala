@@ -46,8 +46,8 @@ object PatientManager {
       val grangerRepo: GrangerRepoType = new SingleStateGrangerRepo()
       val notificationActor = ctx.spawn(RCTReminderActor.behaviour(grangerConfig.repoLocation), "notifications")
       val noopActor = ctx.spawnAnonymous[Any](Behaviors.ignore)
-      val gitRepoPusher: akka.actor.ActorRef =
-        ctx.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
+      val gitRepoPusher =
+        ctx.spawn(GitRepoPusher.behavior(grangerRepo), "gitPusher")
 
       grangerRepo.loadData().unsafeRunSync() match {
         case LoadDataSuccess =>
@@ -89,7 +89,7 @@ object PatientManager {
 
   private[this] def submitInformation(
           grangerRepo: GrangerRepoType,
-          gitRepoPusher: akka.actor.ActorRef,
+          gitRepoPusher: ActorRef[GitRepoPusher.Protocol],
           notificationActor: ActorRef[reminders.Protocol],
           clock: Clock): Behavior[Protocol] = Behaviors.setup[Protocol] { ctx =>
     val missingFeatureActor = ctx.spawn(Behaviors.ignore[Any], "MissingFeaturesDungeon")
@@ -144,7 +144,7 @@ object PatientManager {
 
 
   private def databaseReadyBehaviour(grangerRepo: GrangerRepo[Map[PatientId, Patient], IO],
-                                     gitRepoPusher: akka.actor.ActorRef,
+                                     gitRepoPusher: ActorRef[GitRepoPusher.Protocol],
                                      notificationsActor: ActorRef[reminders.Protocol],
                                      clock: Clock
   ): Behavior[Protocol] =
