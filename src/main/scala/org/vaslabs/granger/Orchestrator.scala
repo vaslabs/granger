@@ -53,7 +53,7 @@ object Orchestrator {
       webServer.shutDown()
       Behaviors.stopped
     case Ping(replyTo) => replyTo ! Pong
-      Behavior.same
+      Behaviors.same
   }
 
   private def initialiseRememberAgent(rememberRepo: GitRepo[MedicamentSuggestions], rememberInputAgent: ActorRef[RememberInputAgent.Protocol]) =

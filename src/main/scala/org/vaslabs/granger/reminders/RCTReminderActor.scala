@@ -35,8 +35,8 @@ object RCTReminderActor {
         behaviourWithReminders(Set.empty, notificationsRepo)
       case (ctx, LoadingError(genericError)) =>
         ctx.log.info("Unhandled error {}, reminders are disabled", genericError)
-        Behavior.ignore
-      case _ => Behavior.ignore
+        Behaviors.ignore
+      case _ => Behaviors.ignore
     }
   }
 
