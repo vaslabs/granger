@@ -1,188 +1,248 @@
 package org.vaslabs.granger
 
+import scala.concurrent.duration._
 import java.io.File
-import java.time.{Clock, ZoneOffset, ZonedDateTime}
-import java.util.UUID
+import java.time.{ Clock, ZoneOffset, ZonedDateTime }
 
-import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import akka.actor.typed.eventstream.Publish
+import akka.actor.typed.{ ActorRef, Behavior, SupervisorStrategy }
+import akka.actor.typed.scaladsl.Behaviors
 import cats.effect.IO
 import org.eclipse.jgit.api.Git
-import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
+import org.vaslabs.granger.RememberInputAgent.MedicamentSeen
+import org.vaslabs.granger.comms.api.model.{ Activity, AddToothInformationRequest, RemoteRepo }
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
-import org.vaslabs.granger.reminders.RCTReminderActor
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.{ModifyReminder, PatientReminders, SetReminder}
-import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
+import org.vaslabs.granger.modelv2.{ Patient, PatientId }
+import org.vaslabs.granger.reminders._
+import org.vaslabs.granger.repo.git.{ EmptyProvider, GitRepo }
 import org.vaslabs.granger.repo._
-/**
-  * Created by vnicolaou on 29/05/17.
-  */
-class PatientManager private (
-    grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock)
-    extends Actor
-    with ActorLogging {
-  import PatientManager._
-  import io.circe.generic.auto._
-  import io.circe.generic.semiauto._
-  import v2json._
 
+object PatientManager {
+
+  import io.circe.generic.auto._
+  import v2json._
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
+  private type GrangerRepoType = GrangerRepo[Map[PatientId, Patient], IO]
 
+  def behavior(grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
+    Behaviors
+      .supervise(unsafeSetupBehaviour(grangerConfig))
+      .onFailure[RuntimeException](
+        SupervisorStrategy
+          .restartWithBackoff(minBackoff = 10 seconds, maxBackoff = 5 minutes, randomFactor = 0.2)
+          .withMaxRestarts(10))
 
-  implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
-    new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
+  private def unsafeSetupBehaviour(
+      grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
+    Behaviors.setup { ctx =>
+      implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
+        new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
 
+      val grangerRepo: GrangerRepoType = new SingleStateGrangerRepo()
+      val notificationActor = ctx.spawn(RCTReminderActor.behaviour(grangerConfig.repoLocation), "notifications")
+      val noopActor = ctx.spawnAnonymous[Any](Behaviors.ignore)
+      val gitRepoPusher =
+        ctx.spawn(GitRepoPusher.behavior(grangerRepo), "gitPusher")
 
-  final val grangerRepo: GrangerRepo[Map[PatientId, Patient], IO] = new SingleStateGrangerRepo()
-
-  final val gitRepoPusher: ActorRef =
-    context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
-
-  val notificationActor = context.actorOf(RCTReminderActor.props(grangerConfig.repoLocation), "notifications")
-
-  override def receive: Receive = {
-    case LoadData =>
-      log.info("Loading patient data...")
-      self ! grangerRepo.loadData().unsafeRunSync()
-    case LoadDataSuccess =>
-      log.info("Done")
-      context.become(receivePostLoad)
-    case LoadDataFailure(repoState) =>
-      repoState match {
-        case EmptyRepo =>
-          context.become(settingUp)
-        case _ =>
-          log.error("Failed to load repo: " + repoState)
-          self ! PoisonPill
+      grangerRepo.loadData().unsafeRunSync() match {
+        case LoadDataSuccess =>
+          ctx.log.info("Done")
+          databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, clock)
+        case LoadDataFailure(repoState) =>
+          repoState match {
+            case EmptyRepo =>
+              recoverReminders(grangerRepo, notificationActor, noopActor) match {
+                case Right(_) => databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, clock)
+                case Left(EmptyRepo) =>
+                  grangerRepo.setUpRepo().unsafeRunSync()
+                  databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, clock)
+              }
+            case _ =>
+              ctx.log.error("Failed to load repo: " + repoState)
+              Behaviors.stopped
+          }
       }
+    }
+
+  private def getInformation(
+      grangerRepo: GrangerRepoType,
+      notificationActor: ActorRef[CheckReminders]): Behavior[Protocol] = Behaviors.receiveMessage {
+    case FetchAllPatients(replyTo: ActorRef[List[Patient]]) =>
+      grangerRepo.retrieveAllPatients().unsafeRunSync().map {
+        replyTo ! _
+      }
+      Behaviors.same
+    case LatestActivity(patientId, replyTo) =>
+      replyTo ! grangerRepo.getLatestActivity(patientId)
+      Behaviors.same
+    case GetTreatmentNotifications(time, replyTo) =>
+      notificationActor ! CheckReminders(time, replyTo)
+      Behaviors.same
+    case _ => Behaviors.unhandled
   }
 
-  private[this] def handleRetrievingPatientData(): Unit = {
-    val senderRef = sender()
-    grangerRepo.retrieveAllPatients().unsafeRunSync() match {
-      case Left(errorState) => senderRef ! errorState
-      case Right(patientData) => senderRef ! patientData
-        patientData.foreach(patient =>
-          patient.dentalChart.teeth.foreach(_.treatments.foreach(
-            _.dateCompleted.foreach(completedDate =>
-              context.system.eventStream.publish(
-                SetReminder(completedDate, completedDate.plusMonths(6), patient.patientId))
-            )
-          )))
+  private[this] def submitInformation(
+      grangerRepo: GrangerRepoType,
+      gitRepoPusher: ActorRef[GitRepoPusher.Protocol],
+      notificationActor: ActorRef[reminders.Protocol],
+      clock: Clock): Behavior[Protocol] =
+    managePatientsBehaviour(grangerRepo, gitRepoPusher)
+      .orElse(modifyTreatmentsBehaviour(grangerRepo, gitRepoPusher, notificationActor))
+      .orElse(manageRemindersBehaviour(notificationActor, clock))
+
+  private def manageRemindersBehaviour(
+      notificationActor: ActorRef[reminders.Protocol],
+      clock: Clock): Behavior[Protocol] = Behaviors.receiveMessage {
+    case ModifyReminderRQ(reminderTimestamp, snoozeTo, patientId, replyTo) =>
+      notificationActor ! ModifyReminder(reminderTimestamp, snoozeTo, patientId, replyTo)
+      Behaviors.same
+    case StopReminder(timestamp, patientId, replyTo: ActorRef[DeletedAck]) =>
+      notificationActor ! DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock), replyTo)
+      Behaviors.same
+    case FetchAllPatientReminders(patientId, replyTo) =>
+      notificationActor ! PatientReminders(patientId, replyTo)
+      Behaviors.same
+    case _ =>
+      Behaviors.unhandled
+  }
+
+  private def modifyTreatmentsBehaviour(
+      grangerRepo: GrangerRepo[Map[PatientId, Patient], IO],
+      gitRepoPusher: ActorRef[GitRepoPusher.Protocol],
+      notificationActor: ActorRef[reminders.Protocol]): Behavior[Protocol] =
+    Behaviors.setup[Protocol] { ctx =>
+      val missingFeatureActor = ctx.spawn(Behaviors.ignore[Any], "MissingFeaturesDungeon")
+
+      Behaviors.receiveMessage {
+        case StartTreatment(patientId, toothId, category, replyTo) =>
+          gitRepoPusher ! GitRepoPusher.PushChanges
+          replyTo ! grangerRepo.startTreatment(patientId, toothId, category).map(_.unsafeRunSync())
+          Behaviors.same
+        case FinishTreatment(patientId, toothId, finishTime, replyTo) =>
+          gitRepoPusher ! GitRepoPusher.PushChanges
+          val outcome = grangerRepo.finishTreatment(patientId, toothId, finishTime).map(_.unsafeRunSync())
+          outcome.foreach(_ => {
+            notificationActor ! SetReminder(finishTime, finishTime.plusMonths(6), patientId, missingFeatureActor)
+          })
+          replyTo ! outcome
+          Behaviors.same
+        case DeleteTreatment(patientId, toothId, timestamp, replyTo) =>
+          gitRepoPusher ! GitRepoPusher.PushChanges
+          replyTo ! grangerRepo.deleteTreatment(patientId, toothId, timestamp).map(_.unsafeRunSync())
+          Behaviors.same
+        case _ => Behaviors.unhandled
+      }
+    }
+
+  private def managePatientsBehaviour(
+      grangerRepo: GrangerRepo[Map[PatientId, Patient], IO],
+      gitRepoPusher: ActorRef[GitRepoPusher.Protocol]): Behavior[Protocol] = Behaviors.receive {
+    case (_, AddPatient(patient, replyTo)) =>
+      gitRepoPusher ! GitRepoPusher.PushChanges
+      replyTo ! grangerRepo.addPatient(patient).unsafeRunSync()
+      Behaviors.same
+    case (ctx, AddToothInformation(request, replyTo)) =>
+      request.medicament.foreach { med =>
+        ctx.system.eventStream ! Publish(MedicamentSeen(med))
+      }
+      replyTo ! grangerRepo.addToothInfo(request).map(_.unsafeRunSync())
+      Behaviors.same
+    case (_, DeletePatient(patientId, replyTo)) =>
+      gitRepoPusher ! GitRepoPusher.PushChanges
+      val outcome = grangerRepo
+        .deletePatient(patientId)
+        .map(_.map(_ => Success).left.map(_ => Failure(s"Failed to delete patient ${patientId}")))
+        .unsafeRunSync()
+      replyTo ! outcome.merge
+      Behaviors.same
+    case (_, _) => Behaviors.unhandled
+  }
+
+  private def databaseReadyBehaviour(
+      grangerRepo: GrangerRepo[Map[PatientId, Patient], IO],
+      gitRepoPusher: ActorRef[GitRepoPusher.Protocol],
+      notificationsActor: ActorRef[reminders.Protocol],
+      clock: Clock): Behavior[Protocol] =
+    getInformation(grangerRepo, notificationsActor).orElse(
+      submitInformation(grangerRepo, gitRepoPusher, notificationsActor, clock))
+
+  private def recoverReminders(
+      grangerRepo: GrangerRepo[Map[PatientId, Patient], IO],
+      notificationActor: ActorRef[reminders.Protocol],
+      noop: ActorRef[Any]) = {
+    grangerRepo.retrieveAllPatients().unsafeRunSync().map { patients =>
+      patients.foreach(patient =>
+        patient.dentalChart.teeth.foreach(_.treatments.foreach(_.dateCompleted.foreach(completedDate =>
+          notificationActor ! SetReminder(completedDate, completedDate.plusMonths(6), patient.patientId, noop)))))
     }
   }
 
-  override def aroundPreStart(): Unit = {
-    context.system.eventStream.subscribe(notificationActor, classOf[SetReminder])
-    super.aroundPreStart()
-  }
-
-  def settingUp: Receive = {
-    case FetchAllPatients =>
-      handleRetrievingPatientData()
-
-    case InitRepo(remoteRepo) =>
-      context.become(receivePostLoad)
-      sender() ! grangerRepo.setUpRepo(remoteRepo)
-  }
-
-
-  def receivePostLoad: Receive = {
-    getInformation orElse submitInformation
-  }
-
-  private [this] def getInformation: Receive = {
-    case FetchAllPatients =>
-      handleRetrievingPatientData()
-    case LatestActivity(patientId) =>
-      sender() ! grangerRepo.getLatestActivity(patientId)
-  }
-
-  private [this] def submitInformation: Receive = {
-    case AddPatient(patient) =>
-      schedulePushJob()
-      sender() ! grangerRepo.addPatient(patient).unsafeRunSync()
-    case rq: AddToothInformationRequest =>
-      schedulePushJob()
-      val senderRef = sender()
-      grangerRepo.addToothInfo(rq).map(_.unsafeRunSync()).map(senderRef ! _).merge
-      context.system.eventStream.publish(rq)
-    case StartTreatment(patientId, toothId, category) =>
-      schedulePushJob()
-      sender() ! grangerRepo.startTreatment(patientId, toothId, category).map(_.unsafeRunSync()).merge
-    case FinishTreatment(patientId, toothId, finishTime) =>
-      schedulePushJob()
-      val outcome = grangerRepo.finishTreatment(patientId, toothId, finishTime).map(_.unsafeRunSync())
-      outcome.foreach(_ => {
-        context.system.eventStream.publish(SetReminder(finishTime, finishTime.plusMonths(6), patientId))
-      })
-
-      sender() ! outcome.merge
-    case DeleteTreatment(patientId, toothId, timestamp) =>
-      schedulePushJob()
-      sender() !
-        grangerRepo.deleteTreatment(patientId, toothId, timestamp).map(_.unsafeRunSync()).merge
-    case DeletePatient(patientId) =>
-      schedulePushJob()
-      val outcome = grangerRepo.deletePatient(patientId)
-        .map(_.map(_ => Success).left.map(_ => Failure(s"Failed to delete patient ${patientId}"))).unsafeRunSync()
-      sender() ! outcome.merge
-
-    case GetTreatmentNotifications(time) =>
-      notificationActor forward RCTReminderActor.Protocol.External.CheckReminders(time)
-
-    case mr: ModifyReminder => notificationActor forward mr
-    case StopReminder(timestamp, patientId) =>
-      notificationActor forward RCTReminderActor.Protocol.External.DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock))
-
-    case pr: PatientReminders => notificationActor forward pr
-
-    case other => log.debug("Dropping $other")
-  }
-
-  private[this] def schedulePushJob(): Unit = {
-    gitRepoPusher ! GitRepoPusher.PushChanges
-  }
-
 }
 
-object PatientManager {
-  def props(grangerConfig: GrangerConfig)(implicit gitApi: Git,
-                                          clock: Clock): Props =
-    Props(new PatientManager(grangerConfig))
+sealed trait Protocol
 
-  case object FetchAllPatients
+case class FetchAllPatients(replyTo: ActorRef[List[Patient]]) extends Protocol
 
-  case class AddPatient(patient: modelv2.Patient)
+case class AddPatient(patient: Patient, replyTo: ActorRef[Patient]) extends Protocol
 
-  case class LatestActivity(patientId: PatientId)
+case class LatestActivity(patientId: PatientId, replyTo: ActorRef[Map[Int, List[Activity]]]) extends Protocol
 
-  case class InitRepo(remoteRepo: RemoteRepo)
+case class AddToothInformation(
+    addToothInformationRequest: AddToothInformationRequest,
+    replyTo: ActorRef[Either[InvalidData, Patient]])
+    extends Protocol
 
-  case class StartTreatment(patientId: PatientId,
-                            toothId: Int,
-                            category: TreatmentCategory)
-  case class DeleteTreatment(patientId:PatientId, toothId: Int, createdOn: ZonedDateTime)
-  case class FinishTreatment(patientId: PatientId, toothId: Int, finishedOn: ZonedDateTime) {
-    require(finishedOn.getOffset.equals(ZoneOffset.UTC))
-  }
+private[granger] case class InitRepo(remoteRepo: RemoteRepo) extends Protocol
 
-  case object LoadData
-  sealed trait LoadDataOutcome
-  case object LoadDataSuccess extends LoadDataOutcome
-  case class LoadDataFailure(repoState: RepoErrorState) extends LoadDataOutcome
+case class StartTreatment(
+    patientId: PatientId,
+    toothId: Int,
+    category: TreatmentCategory,
+    replyTo: ActorRef[Either[InvalidData, Patient]])
+    extends Protocol
 
-  case object RememberedData
+case class DeleteTreatment(
+    patientId: PatientId,
+    toothId: Int,
+    createdOn: ZonedDateTime,
+    replyTo: ActorRef[Either[InvalidData, Patient]])
+    extends Protocol
 
-  case class DeletePatient(patientId: PatientId)
-
-  case class GetTreatmentNotifications(time: ZonedDateTime)
-
-  sealed trait CommandOutcome
-  case object Success extends CommandOutcome
-  case class Failure(reason: String) extends CommandOutcome
-
-  case class StopReminder(timestamp: ZonedDateTime, patientId: PatientId)
-
+case class FinishTreatment(
+    patientId: PatientId,
+    toothId: Int,
+    finishedOn: ZonedDateTime,
+    replyTo: ActorRef[Either[InvalidData, Patient]])
+    extends Protocol {
+  require(finishedOn.getOffset.equals(ZoneOffset.UTC))
 }
+
+sealed trait LoadDataOutcome
+
+case object LoadDataSuccess extends LoadDataOutcome
+
+case class LoadDataFailure(repoState: RepoErrorState) extends LoadDataOutcome
+
+case object RememberedData
+
+case class DeletePatient(patientId: PatientId, replyTo: ActorRef[CommandOutcome]) extends Protocol
+
+case class GetTreatmentNotifications(time: ZonedDateTime, replyTo: ActorRef[Notify]) extends Protocol
+
+sealed trait CommandOutcome
+
+case object Success extends CommandOutcome
+
+case class Failure(reason: String) extends CommandOutcome
+
+case class StopReminder(timestamp: ZonedDateTime, patientId: PatientId, replyTo: ActorRef[DeletedAck]) extends Protocol
+
+case class ModifyReminderRQ(
+    reminderTimestamp: ZonedDateTime,
+    snoozeTo: ZonedDateTime,
+    patientId: PatientId,
+    replyTo: ActorRef[SnoozeAck])
+    extends Protocol
+
+case class FetchAllPatientReminders(patientId: PatientId, replyTo: ActorRef[AllPatientReminders]) extends Protocol

@@ -5,14 +5,14 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCode
 import cats.effect.IO
-import org.vaslabs.granger.PatientManager.LoadDataOutcome
-import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
+import org.vaslabs.granger.LoadDataOutcome
+import org.vaslabs.granger.comms.api.model.{ Activity, AddToothInformationRequest }
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2._
 
 /**
-  * Created by vnicolaou on 28/05/17.
-  */
+ * Created by vnicolaou on 28/05/17.
+ */
 case class PatientEntry(patientId: PatientId, patient: Patient)
 
 sealed trait RepoErrorState
@@ -26,7 +26,7 @@ trait GrangerRepo[State, F[_]] {
 
   def loadData(): F[LoadDataOutcome]
 
-  def setUpRepo(repoRq: Any): F[StatusCode]
+  def setUpRepo(): F[Unit]
 
   def getLatestActivity(patientId: PatientId): Map[Int, List[Activity]]
 
@@ -38,16 +38,15 @@ trait GrangerRepo[State, F[_]] {
 
   def pushChanges(): F[Unit]
 
-  def startTreatment(patientId: PatientId, toothId: Int, treatmentCategory: TreatmentCategory):
-    Either[InvalidData, F[Patient]]
+  def startTreatment(
+      patientId: PatientId,
+      toothId: Int,
+      treatmentCategory: TreatmentCategory): Either[InvalidData, F[Patient]]
 
   def finishTreatment(patientId: PatientId, toothId: Int, finishTime: ZonedDateTime): Either[InvalidData, F[Patient]]
 
-  def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime):
-    Either[InvalidData, F[Patient]]
+  def deleteTreatment(patientId: PatientId, toothId: Int, timestamp: ZonedDateTime): Either[InvalidData, F[Patient]]
 
   def deletePatient(patientId: PatientId): F[Either[IOError, Unit]]
-
-
 
 }

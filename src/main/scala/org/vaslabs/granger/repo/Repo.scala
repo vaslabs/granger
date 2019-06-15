@@ -5,8 +5,8 @@ import java.io.File
 import akka.http.scaladsl.model.StatusCode
 
 /**
-  * Created by vnicolaou on 29/06/17.
-  */
+ * Created by vnicolaou on 29/06/17.
+ */
 trait Repo[A] {
   def saveNew(): Unit
 
@@ -16,6 +16,6 @@ trait Repo[A] {
 
   def push(): Unit
 
-  val setUp: Any => StatusCode
+  def setUp(): Unit
 
 }

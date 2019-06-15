@@ -2,25 +2,25 @@ package org.vaslabs.granger.comms.api
 
 import java.time.ZonedDateTime
 
-import io.circe.{Decoder, Encoder}
+import io.circe.{ Decoder, Encoder }
 import org.vaslabs.granger.modelv2._
 
 import io.circe.generic.semiauto._
+
 /**
-  * Created by vnicolaou on 13/06/17.
-  */
+ * Created by vnicolaou on 13/06/17.
+ */
 object model {
 
   case class AddToothInformationRequest(
-                                       patientId: PatientId,
-                                       toothNumber: Int,
-                                       medicament: Option[Medicament],
-                                       nextVisit: Option[NextVisit],
-                                       roots: Option[List[Root]],
-                                       toothNote: Option[TreatmentNote],
-                                       obturation: Option[List[Root]],
-                                       treatmentStarted: ZonedDateTime
-                                       )
+      patientId: PatientId,
+      toothNumber: Int,
+      medicament: Option[Medicament],
+      nextVisit: Option[NextVisit],
+      roots: Option[List[Root]],
+      toothNote: Option[TreatmentNote],
+      obturation: Option[List[Root]],
+      treatmentStarted: ZonedDateTime)
   object AddToothInformationRequest {
     import org.vaslabs.granger.v2json._
     import io.circe.generic.auto._

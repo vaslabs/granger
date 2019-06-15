@@ -15,7 +15,7 @@ import scala.collection.JavaConverters._
 class HttpRouterAddingPatientsSpec extends HttpBaseSpec with ScalatestRouteTest with Matchers{
 
   "adding a new patient" should "persist across restarts" in {
-    withHttpRouter[Id](system, config) {
+    withHttpRouter[Id](config) {
       httpRouter => {
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]].size shouldBe 0

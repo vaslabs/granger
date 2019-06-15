@@ -5,52 +5,40 @@ import java.nio.file.Files
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Directives, Route}
+import akka.http.scaladsl.server.{ Directives, Route }
 
 import scala.io.Source
 import akka.http.scaladsl.model.StatusCodes._
 
 /**
-  * Created by vnicolaou on 29/05/17.
-  */
+ * Created by vnicolaou on 29/05/17.
+ */
 trait StaticResources {
 
   val workingDirectory = System.getProperty("user.dir")
 
   private[this] def getDefaultPage(): String = {
-    Source
-      .fromFile(s"${workingDirectory}/static/index.html")
-      .getLines
-      .mkString
+    Source.fromFile(s"${workingDirectory}/static/index.html").getLines.mkString
   }
 
   private[this] def getStaticJsResource(resource: String): HttpResponse = {
     HttpResponse(
       OK,
-      entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`,
-                          Source
-                            .fromFile(s"$workingDirectory/static/$resource")
-                            .getLines()
-                            .mkString("\n")))
+      entity = HttpEntity(
+        ContentTypes.`text/plain(UTF-8)`,
+        Source.fromFile(s"$workingDirectory/static/$resource").getLines().mkString("\n")))
   }
 
   private[this] def getStaticCssResource(resource: String): HttpResponse = {
     HttpResponse(
       OK,
-      entity =
-        HttpEntity(ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`),
-                   Source
-                     .fromFile(s"$workingDirectory/static/$resource")
-                     .getLines()
-                     .mkString("\n"))
-    )
+      entity = HttpEntity(
+        ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`),
+        Source.fromFile(s"$workingDirectory/static/$resource").getLines().mkString("\n")))
   }
 
-  private[this] def getStaticFontResource(
-      resource: Array[Byte]): HttpResponse = {
-    val contentType = ContentType
-      .parse("application/font-woff2")
-      .getOrElse(ContentTypes.NoContentType)
+  private[this] def getStaticFontResource(resource: Array[Byte]): HttpResponse = {
+    val contentType = ContentType.parse("application/font-woff2").getOrElse(ContentTypes.NoContentType)
     HttpResponse(OK, entity = HttpEntity(contentType, resource))
   }
 
@@ -76,16 +64,12 @@ trait StaticResources {
     "Roboto-Regular.woff2" -> readBytes("/fonts/Roboto-Regular.woff2"),
     "Roboto-Medium.woff2" -> readBytes("/fonts/Roboto-Medium.woff2"),
     "Roboto-Bold.woff2" -> readBytes("/fonts/Roboto-Bold.woff2"),
-    "material_icons.woff2" -> readBytes("/fonts/material_icons.woff2")
-  )
+    "material_icons.woff2" -> readBytes("/fonts/material_icons.woff2"))
 
   def staticResources: Route =
     pathEndOrSingleSlash {
       get {
-        complete(
-          HttpResponse(OK,
-                       entity = HttpEntity(ContentTypes.`text/html(UTF-8)`,
-                                           getDefaultPage())))
+        complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, getDefaultPage())))
       }
     } ~ path("js" / "main.js") {
       get {
@@ -98,21 +82,19 @@ trait StaticResources {
     } ~ path("js" / "materialize.js") {
       complete(getStaticJsResource("js/materialize.min.js"))
     } ~
-      path("css" / "materialize.css") {
-        complete(getStaticCssResource("css/materialize.min.css"))
-      } ~
-      path("css" / "material_icons.css") {
-        complete(getStaticCssResource("css/material_icons.css"))
-      } ~ path("js" / "jquery.js") {
+    path("css" / "materialize.css") {
+      complete(getStaticCssResource("css/materialize.min.css"))
+    } ~
+    path("css" / "material_icons.css") {
+      complete(getStaticCssResource("css/material_icons.css"))
+    } ~ path("js" / "jquery.js") {
       complete(getStaticJsResource("js/jquery-2.1.1.min.js"))
     } ~ path("fonts" / "roboto" / Directives.RemainingPath) { remainingPath =>
       get {
         val remainingPathString = remainingPath.toString
         recognisedFonts
           .get(remainingPathString)
-          .map(
-            font => complete(getStaticFontResource(font))
-          )
+          .map(font => complete(getStaticFontResource(font)))
           .getOrElse(complete(NotFound))
       }
     }
