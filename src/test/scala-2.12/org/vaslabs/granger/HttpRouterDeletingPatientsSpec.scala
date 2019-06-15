@@ -3,7 +3,6 @@ package org.vaslabs.granger
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import cats.Id
 import org.scalatest.Matchers
-import org.vaslabs.granger.PatientManager.{CommandOutcome, Failure, Success}
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.v2json._
 import scala.collection.JavaConverters._
@@ -15,7 +14,7 @@ class HttpRouterDeletingPatientsSpec extends HttpBaseSpec with ScalatestRouteTes
 
   import io.circe.generic.auto._
   "deleting a patient" should "persist across restarts" in {
-    withHttpRouter[Id](system, config) {
+    withHttpRouter[Id](config) {
       httpRouter => {
         Get("/api") ~> httpRouter.routes ~> check {
           responseAs[List[Patient]].size shouldBe 0

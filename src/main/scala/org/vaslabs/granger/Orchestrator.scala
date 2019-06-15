@@ -3,13 +3,10 @@ package org.vaslabs.granger
 import java.io.File
 import java.time.Clock
 
-import akka.actor.ActorRef
-import akka.actor.typed.Behavior
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.scaladsl.adapter._
 import cats.effect.IO
 import org.eclipse.jgit.api.Git
-import org.vaslabs.granger.PatientManager.{LoadData => LoadPatientData}
 import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
 import org.vaslabs.granger.comms.WebServer
 import org.vaslabs.granger.repo.EmptyRepo
@@ -29,21 +26,20 @@ object Orchestrator {
     Behaviors.setup { ctx =>
       import RememberInputAgent.json._
 
-      implicit val actorSystem = ctx.system.toUntyped
+      implicit val actorSystem = ctx.system
 
       syncRepo().handleErrorWith {
         t => IO(ctx.log.warning(t, "Could not sync with remote database"))
       }.unsafeRunSync()
-      val patientManager = ctx.toUntyped.actorOf(PatientManager.props(config), "PatientManager")
-      patientManager ! LoadPatientData
+      val patientManager = ctx.spawn(PatientManager.behavior(config), "PatientManager")
 
       implicit val emptyRememberProvider: EmptyProvider[MedicamentSuggestions] = () => MedicamentSuggestions(List.empty)
 
       implicit val rememberRepo: GitRepo[MedicamentSuggestions] =
         new GitRepo[MedicamentSuggestions](new File(config.repoLocation), "remember.json")
 
-      val rememberInputAgent: ActorRef =
-        ctx.toUntyped.actorOf(RememberInputAgent.props(5), "rememberInputAgent")
+      val rememberInputAgent: ActorRef[RememberInputAgent.Protocol] =
+        ctx.spawn(RememberInputAgent.behavior(5), "rememberInputAgent")
       val webServer = new WebServer(patientManager, rememberInputAgent, config)
       webServer.start()
       ctx.log.info("Granger started patient manager")
@@ -60,14 +56,14 @@ object Orchestrator {
       Behavior.same
   }
 
-  private def initialiseRememberAgent(rememberRepo: GitRepo[MedicamentSuggestions], rememberInputAgent: ActorRef) =
-    rememberRepo.getState().map(sm => rememberInputAgent ! RememberInputAgent.LoadData(sm))
+  private def initialiseRememberAgent(rememberRepo: GitRepo[MedicamentSuggestions], rememberInputAgent: ActorRef[RememberInputAgent.Protocol]) =
+    rememberRepo.getState().map(sm => rememberInputAgent ! RememberInputAgent.RecoverMemory(sm))
       .left.foreach(error => {
       error match {
         case EmptyRepo =>
           rememberRepo.saveNew()
           rememberInputAgent ! RememberInputAgent.
-            LoadData(MedicamentSuggestions(List.empty))
+            RecoverMemory(MedicamentSuggestions(List.empty))
       }
     })
 

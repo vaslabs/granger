@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCode
 import cats.effect.IO
-import org.vaslabs.granger.PatientManager.LoadDataOutcome
+import org.vaslabs.granger.LoadDataOutcome
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2._
@@ -26,7 +26,7 @@ trait GrangerRepo[State, F[_]] {
 
   def loadData(): F[LoadDataOutcome]
 
-  def setUpRepo(repoRq: Any): F[StatusCode]
+  def setUpRepo(): F[Unit]
 
   def getLatestActivity(patientId: PatientId): Map[Int, List[Activity]]
 

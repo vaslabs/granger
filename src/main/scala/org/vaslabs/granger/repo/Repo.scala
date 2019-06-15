@@ -16,6 +16,6 @@ trait Repo[A] {
 
   def push(): Unit
 
-  val setUp: Any => StatusCode
+  def setUp(): Unit
 
 }

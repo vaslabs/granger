@@ -2,12 +2,9 @@ package org.vaslabs.granger.repo
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, ZonedDateTime}
-import java.util.UUID
 
-import akka.http.scaladsl.model.StatusCode
 import cats.data.Kleisli
-import org.vaslabs.granger.PatientManager
-import org.vaslabs.granger.PatientManager.{LoadDataFailure, LoadDataSuccess}
+import org.vaslabs.granger.{LoadDataFailure, LoadDataOutcome, LoadDataSuccess, PatientManager}
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest}
 import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
@@ -133,7 +130,7 @@ class SingleStateGrangerRepo()(
   }
 
   override def loadData()
-  : IO[PatientManager.LoadDataOutcome] =
+  : IO[LoadDataOutcome] =
     retrieveAllPatients().map(
       _.fold(res => LoadDataFailure(res), _ => LoadDataSuccess)
     )
@@ -157,7 +154,7 @@ class SingleStateGrangerRepo()(
     )
   }
 
-  override def setUpRepo(repoRq: Any): IO[StatusCode] = IO {
+  override def setUpRepo(): IO[Unit] = IO {
     repo.setUp()
   }
 
@@ -186,7 +183,9 @@ case class WriteError(error: String) extends IOError
 
 case class CommitError(error: String) extends IOError
 
-sealed trait InvalidData extends IOError
+sealed trait InvalidData extends IOError {
+  def error: String
+}
 
 case class PatientNotFound(patientId: PatientId) extends InvalidData {
   val error: String = s"Patient $patientId does not exist"

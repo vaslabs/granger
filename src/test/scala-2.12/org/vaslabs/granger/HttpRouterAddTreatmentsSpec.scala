@@ -1,14 +1,14 @@
 package org.vaslabs.granger
 
-import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 
 import cats.Id
-import org.vaslabs.granger.PatientManager.{Failure, FinishTreatment}
 import org.vaslabs.granger.modeltreatments._
 import org.vaslabs.granger.modelv2._
 import org.vaslabs.granger.v2json._
 import io.circe.generic.auto._
 import org.scalatest.Matchers
+import org.vaslabs.granger.comms.UserApi
 import org.vaslabs.granger.repo.ToothHasActiveTreatment
 
 import scala.collection.JavaConverters._
@@ -20,7 +20,7 @@ class HttpRouterAddTreatmentsSpec extends HttpBaseSpec with Matchers{
 
 
   "only one open treatment" should "exist per tooth" in {
-    withHttpRouter[Id](system, config) {
+    withHttpRouter[Id](config) {
       httpRouter =>
         {
           import io.circe.generic.auto._
@@ -44,7 +44,7 @@ class HttpRouterAddTreatmentsSpec extends HttpBaseSpec with Matchers{
             "Started treatment for tooth 11 on patient 1"
 
           val finishAt = ZonedDateTime.now(clock).plusHours(2)
-          Post("/treatment/finish", FinishTreatment(PatientId(1), 11, finishAt)) ~> httpRouter.routes ~> check {
+          Post("/treatment/finish", UserApi.FinishTreatment(PatientId(1), 11, finishAt)) ~> httpRouter.routes ~> check {
             responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments shouldBe
               List(
                 withCompletedTreatment(finishAt = finishAt)

@@ -64,7 +64,7 @@ class GitRepo[A](dbLocation: File, snapshotFile: String)(
       )
   }
 
-  override val setUp: (Any) => StatusCode = (a: Any) =>
+  override def setUp = (a: Any) =>
     a match {
       case rr: RemoteRepo =>
         setUpRemote(rr)

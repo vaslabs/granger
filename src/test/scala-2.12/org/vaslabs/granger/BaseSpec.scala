@@ -3,15 +3,17 @@ package org.vaslabs.granger
 import java.io.{File, FileWriter, PrintWriter}
 import java.time.{Clock, Instant, ZoneOffset, ZonedDateTime}
 
+import akka.actor.typed.ActorRef
 import akka.util.Timeout
 import io.circe.{Decoder, Encoder}
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.scalatest.{BeforeAndAfterAll, TestSuite}
-import org.vaslabs.granger.PatientManager.StartTreatment
 import org.vaslabs.granger.RememberInputAgent.MedicamentSuggestions
+import org.vaslabs.granger.comms.UserApi
 import org.vaslabs.granger.modeltreatments.{RootCanalTreatment, TreatmentCategory}
 import org.vaslabs.granger.modelv2._
+import org.vaslabs.granger.repo.InvalidData
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 
 /**
@@ -114,7 +116,7 @@ trait BaseSpec extends TestSuite { this: BeforeAndAfterAll =>
                           patientId: PatientId,
                           toothNumber: Int,
                           treatment: TreatmentCategory = RootCanalTreatment()) =
-    StartTreatment(patientId, toothNumber, treatment)
+    UserApi.StartTreatment(patientId, toothNumber, treatment)
 
   def withCompletedTreatment(treatmentCategory: TreatmentCategory = RootCanalTreatment(), finishAt: ZonedDateTime = ZonedDateTime.now(clock)): Treatment =
     Treatment(ZonedDateTime.now(clock),

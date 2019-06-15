@@ -1,17 +1,13 @@
 package org.vaslabs.granger
 
-import scala.concurrent.duration._
-
 import java.io.File
 import java.time.Clock
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.vaslabs.granger.system.BaseDirProvider
 import pureconfig._
-import akka.actor.typed.scaladsl.adapter._
-import akka.util.Timeout
 import pureconfig.generic.auto._
 
 /**
@@ -20,10 +16,8 @@ import pureconfig.generic.auto._
 object Main extends App{
 
 
-  implicit val system = ActorSystem()
   implicit val clock: Clock = Clock.systemUTC()
 
-  implicit val executionContext = system.dispatcher
 
   loadConfig[GrangerConfig](GrangerConfig.Namespace).map(
     config => {
@@ -51,9 +45,7 @@ object Main extends App{
         new File(workingDirectory).getParentFile.getParentFile
       }
 
-      val typedActorSystem = system.toTyped
-
-      typedActorSystem.systemActorOf(Orchestrator.behaviour(config), "Orchestrator")(Timeout(3 seconds))
+      val system = ActorSystem(Orchestrator.behaviour(config), "Granger")
 
 
       sys.addShutdownHook(

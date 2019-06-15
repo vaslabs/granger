@@ -11,8 +11,8 @@ organization := "org.vaslabs"
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
 
-val akkaVersion = "2.6.0-M2"
-val akkaHttpVersion = "10.1.5"
+val akkaVersion = "2.6.0-M3"
+val akkaHttpVersion = "10.1.8"
 val circeVersion = "0.9.3"
 val monocleVersion = "1.5.1-cats"
 
@@ -20,6 +20,7 @@ lazy val akka = Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+  "com.typesafe.akka" %% "akka-stream-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,

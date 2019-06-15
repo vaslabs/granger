@@ -1,28 +1,29 @@
 package org.vaslabs.granger
 
-import akka.actor.ActorSystem
+import akka.actor.testkit.typed.scaladsl.ActorTestKit
+import akka.actor.typed.scaladsl.adapter._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.ActorMaterializer
+import akka.stream.typed.scaladsl.ActorMaterializer
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.scalatest.{Assertion, AsyncFlatSpecLike}
-import org.vaslabs.granger.PatientManager.LoadData
 import org.vaslabs.granger.comms.{HttpRouter, WebServer}
-import org.vaslabs.granger.repo.SingleStateGrangerRepo
-/**
-  * Created by vnicolaou on 30/07/17.
-  */
+
+
 abstract class HttpBaseSpec extends BaseSpec with AsyncFlatSpecLike with FailFastCirceSupport with ScalatestRouteTest{
 
-  override def beforeAll() = super.beforeAll()
-  override def afterAll(): Unit = super.afterAll()
+  lazy val testKit = ActorTestKit()
+  override def beforeAll(): Unit = super.beforeAll()
+  override def afterAll(): Unit = {
+    testKit.shutdownTestKit()
+    super.afterAll()
+  }
 
-  def withHttpRouter[F[_]](actorSystem: ActorSystem, grangerConfig: GrangerConfig)(f: HttpRouter => F[Assertion]): F[Assertion] = {
-    implicit val system = actorSystem
+  def withHttpRouter[F[_]](grangerConfig: GrangerConfig)(f: HttpRouter => F[Assertion]): F[Assertion] = {
+    implicit val system = testKit.system
     implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-    val patientManager = actorSystem.actorOf(PatientManager.props(config))
-    val rememberInputAgent = actorSystem.actorOf(RememberInputAgent.props(10))
-    patientManager ! LoadData
+    val patientManager = testKit.spawn(PatientManager.behavior(config), "PatientManagerSpec")
+    val rememberInputAgent = testKit.spawn(RememberInputAgent.behavior(5), "RememberInputAgent")
 
     val httpRouter = new WebServer(patientManager, rememberInputAgent, grangerConfig) with HttpRouter
     httpRouter.start()

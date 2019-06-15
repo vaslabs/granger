@@ -1,25 +1,26 @@
 package org.vaslabs.granger.comms
 
-import java.time.ZonedDateTime
+import java.time.{ZoneOffset, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
-import akka.event.LoggingAdapter
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.model._
-import StatusCodes._
 import akka.actor.ActorSystem
+import akka.event.LoggingAdapter
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+import io.circe.generic.auto._
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
+import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.spa.StaticResources
-import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
-import org.vaslabs.granger.PatientManager.{DeleteTreatment, FinishTreatment, ModifyReminderRQ, StartTreatment}
-import io.circe.generic.auto._
 import org.vaslabs.granger.v2json._
 
 import scala.concurrent.Future
 
+import UserApi._
 /**
   * Created by vnicolaou on 28/05/17.
   */
@@ -68,7 +69,7 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
     } ~
       path("treatment" / "start") {
         post {
-          entity(as[StartTreatment]) {
+          entity(as[UserApi.StartTreatment]) {
             rq => complete(startNewTreatment(rq))
           }
         }
@@ -96,7 +97,7 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
         }
     } ~ path("treatment" / "notifications") {
       post {
-        entity(as[ModifyReminderRQ]) {
+        entity(as[ModifyReminder]) {
           rq => complete(modifyReminder(rq))
         }
       }
@@ -147,5 +148,30 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
         }
       }
     } ~ staticResources
+
+}
+
+object UserApi {
+  case class StartTreatment(patientId: PatientId,
+                            toothId: Int,
+                            category: TreatmentCategory)
+
+  case class DeleteTreatment(
+                              patientId: PatientId, toothId: Int,
+                              createdOn: ZonedDateTime) {
+    require(createdOn.getOffset.equals(ZoneOffset.UTC))
+  }
+
+  case class FinishTreatment(
+                              patientId: PatientId,
+                              toothId: Int, finishedOn: ZonedDateTime) {
+    require(finishedOn.getOffset.equals(ZoneOffset.UTC))
+  }
+
+  case class ModifyReminder(
+       reminderTimestamp: ZonedDateTime,
+       snoozeTo: ZonedDateTime,
+       patientId: PatientId
+  )
 
 }
