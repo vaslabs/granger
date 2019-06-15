@@ -1,19 +1,19 @@
 package org.vaslabs.granger
 
 import java.time.format.DateTimeFormatter
-import java.time.{Clock, LocalDate, ZonedDateTime}
+import java.time.{ Clock, LocalDate, ZonedDateTime }
 import java.util.UUID
 
 import io.circe.java8.time
-import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+import io.circe.{ Decoder, Encoder, KeyDecoder, KeyEncoder }
 import monocle.macros.Lenses
 import org.vaslabs.granger.comms.api.model.Activity
-import org.vaslabs.granger.modeltreatments.{RepeatRootCanalTreatment, RootCanalTreatment, TreatmentCategory}
+import org.vaslabs.granger.modeltreatments.{ RepeatRootCanalTreatment, RootCanalTreatment, TreatmentCategory }
 import org.vaslabs.granger.modelv2._
 
 /**
-  * Created by vnicolaou on 09/07/17.
-  */
+ * Created by vnicolaou on 09/07/17.
+ */
 object v2json {
   import io.circe.generic.semiauto._
   import io.circe.generic.auto._
@@ -32,18 +32,16 @@ object v2json {
 
   implicit val decoder: Decoder[TreatmentCategory] = Decoder[String].emap(s =>
     s match {
-      case "RCT" => Right(RootCanalTreatment())
+      case "RCT"    => Right(RootCanalTreatment())
       case "Re-RCT" => Right(RepeatRootCanalTreatment())
-      case _ => Left(s)
-  })
+      case _        => Left(s)
+    })
   implicit val encoder: Encoder[TreatmentCategory] =
-    Encoder[String].contramap[TreatmentCategory](
-      tc =>
-        tc match {
-          case _: RootCanalTreatment => "RCT"
-          case _: RepeatRootCanalTreatment => "Re-RCT"
-      }
-    )
+    Encoder[String].contramap[TreatmentCategory](tc =>
+      tc match {
+        case _: RootCanalTreatment       => "RCT"
+        case _: RepeatRootCanalTreatment => "Re-RCT"
+      })
 
   private[this] def isNullOrEmpty(name: String): Boolean =
     name == null || name.isEmpty
@@ -56,10 +54,7 @@ object v2json {
   }
 
   implicit val medicamentDecoder: Decoder[Medicament] =
-    deriveDecoder[Medicament].emap(
-      medicament =>
-          verifyNonEmptyString(medicament.name, medicament)
-    )
+    deriveDecoder[Medicament].emap(medicament => verifyNonEmptyString(medicament.name, medicament))
 
   implicit val patientIdEncoder: Encoder[PatientId] =
     Encoder[Long].contramap(_.id)
@@ -71,15 +66,10 @@ object v2json {
   implicit val patientIdKeyEncoder: KeyEncoder[PatientId] =
     KeyEncoder[Long].contramap[PatientId](_.id)
   implicit val treatmentNoteDecoder: Decoder[TreatmentNote] =
-    deriveDecoder[TreatmentNote].emap(
-      tn =>
-          verifyNonEmptyString[TreatmentNote](tn.note, tn)
-    )
+    deriveDecoder[TreatmentNote].emap(tn => verifyNonEmptyString[TreatmentNote](tn.note, tn))
 
   implicit val nextVisitDecoder: Decoder[NextVisit] =
-    deriveDecoder[NextVisit].emap(
-      nv => verifyNonEmptyString[NextVisit](nv.notes, nv)
-    )
+    deriveDecoder[NextVisit].emap(nv => verifyNonEmptyString[NextVisit](nv.notes, nv))
 
   implicit val patientEncoder: Encoder[Patient] = deriveEncoder[Patient]
   implicit val patientDecoder: Decoder[Patient] = deriveDecoder[Patient]
@@ -102,19 +92,21 @@ object modelv2 {
   case class TreatmentNote(note: String, dateOfNote: ZonedDateTime)
 
   @Lenses
-  case class Treatment(dateStarted: ZonedDateTime,
-                       dateCompleted: Option[ZonedDateTime] = None,
-                       category: TreatmentCategory,
-                       roots: List[Root] = List.empty,
-                       notes: List[TreatmentNote] = List.empty,
-                       medicaments: List[Medicament] = List.empty,
-                       nextVisits: List[NextVisit] = List.empty,
-                       obturation: Option[List[Root]] = Some(List.empty)) {
-    def update(roots: Option[List[Root]],
-               note: Option[TreatmentNote],
-               medicament: Option[Medicament],
-               nextVisit: Option[NextVisit],
-               obturation: Option[List[Root]]): Treatment = {
+  case class Treatment(
+      dateStarted: ZonedDateTime,
+      dateCompleted: Option[ZonedDateTime] = None,
+      category: TreatmentCategory,
+      roots: List[Root] = List.empty,
+      notes: List[TreatmentNote] = List.empty,
+      medicaments: List[Medicament] = List.empty,
+      nextVisits: List[NextVisit] = List.empty,
+      obturation: Option[List[Root]] = Some(List.empty)) {
+    def update(
+        roots: Option[List[Root]],
+        note: Option[TreatmentNote],
+        medicament: Option[Medicament],
+        nextVisit: Option[NextVisit],
+        obturation: Option[List[Root]]): Treatment = {
       val newNotes = note.map(_ :: notes).getOrElse(notes)
       val newMedicaents =
         medicament.map(_ :: medicaments).getOrElse(medicaments)
@@ -122,11 +114,12 @@ object modelv2 {
       val newRoots = roots.getOrElse(this.roots)
       val newObturation = obturation.getOrElse(this.obturation.getOrElse(List.empty))
 
-      copy(roots = newRoots,
-           notes = newNotes,
-           medicaments = newMedicaents,
-           nextVisits = newNextVisits,
-           obturation = Some(newObturation))
+      copy(
+        roots = newRoots,
+        notes = newNotes,
+        medicaments = newMedicaents,
+        nextVisits = newNextVisits,
+        obturation = Some(newObturation))
     }
   }
 
@@ -137,12 +130,13 @@ object modelv2 {
       copy(treatments = treatments.filterNot(_.dateStarted == timestamp))
     }
 
-
-    def update(roots: Option[List[Root]],
-               medicament: Option[Medicament],
-               nextVisit: Option[NextVisit],
-               treatmentNote: Option[TreatmentNote], startedTreatmentTimestamp: ZonedDateTime,
-               obturation: Option[List[Root]]): Tooth = {
+    def update(
+        roots: Option[List[Root]],
+        medicament: Option[Medicament],
+        nextVisit: Option[NextVisit],
+        treatmentNote: Option[TreatmentNote],
+        startedTreatmentTimestamp: ZonedDateTime,
+        obturation: Option[List[Root]]): Tooth = {
       treatments
         .filter(t => t.dateStarted.equals(startedTreatmentTimestamp))
         .map(_.update(roots, treatmentNote, medicament, nextVisit, obturation))
@@ -161,12 +155,10 @@ object modelv2 {
     }
 
     def finishTreatment(finishTime: ZonedDateTime): Option[Tooth] = {
-      val treatmentsJustCompleted = treatments.filter(_.dateCompleted.isEmpty)
-        .map(
-          _.copy(dateCompleted = Some(finishTime))
-        )
-        val completedTreatments = treatments.filterNot(_.dateCompleted.isEmpty)
-        Some(copy(treatments = treatmentsJustCompleted ++ completedTreatments))
+      val treatmentsJustCompleted =
+        treatments.filter(_.dateCompleted.isEmpty).map(_.copy(dateCompleted = Some(finishTime)))
+      val completedTreatments = treatments.filterNot(_.dateCompleted.isEmpty)
+      Some(copy(treatments = treatmentsJustCompleted ++ completedTreatments))
     }
 
     implicit val t_transformer: Transformer[Treatment] = (t: Treatment) => {
@@ -210,9 +202,7 @@ object modelv2 {
   }
 
   @Lenses
-  case class NextVisit(notes: String,
-                       dateOfNextVisit: ZonedDateTime,
-                       dateOfNote: ZonedDateTime)
+  case class NextVisit(notes: String, dateOfNextVisit: ZonedDateTime, dateOfNote: ZonedDateTime)
 
   @Lenses
   case class Root(name: String, length: Int, size: String)
@@ -221,19 +211,17 @@ object modelv2 {
   case class Medicament(name: String, date: ZonedDateTime)
 
   @Lenses
-  case class Patient(patientId: PatientId,
-                     firstName: String,
-                     lastName: String,
-                     dateOfBirth: LocalDate,
-                     dentalChart: DentalChart) {
+  case class Patient(
+      patientId: PatientId,
+      firstName: String,
+      lastName: String,
+      dateOfBirth: LocalDate,
+      dentalChart: DentalChart) {
     def deleteTreatment(toothId: Int, timestamp: ZonedDateTime): Patient =
       copy(dentalChart = dentalChart.deleteTreatment(toothId, timestamp))
 
     def extractLatestActivity: Map[Int, List[Activity]] = {
-      dentalChart.teeth
-        .flatMap(_.allActivity())
-        .groupBy(_.tooth)
-        .mapValues(_.sorted)
+      dentalChart.teeth.flatMap(_.allActivity()).groupBy(_.tooth).mapValues(_.sorted)
     }
 
     def update(tooth: Tooth): Patient =
@@ -247,13 +235,12 @@ object modelv2 {
   @Lenses
   case class DentalChart(teeth: List[Tooth]) {
     def deleteTreatment(toothId: Int, timestamp: ZonedDateTime): DentalChart =
-      copy(teeth.map( t => {
+      copy(teeth.map(t => {
         if (t.number == toothId)
           t.deleteTreatment(timestamp)
         else
           t
       }))
-
 
     def update(tooth: Tooth): DentalChart = {
       DentalChart((tooth :: teeth.filterNot(_.number == tooth.number)).sorted)
@@ -263,13 +250,7 @@ object modelv2 {
 
   object DentalChart {
     def emptyChart(): DentalChart =
-      DentalChart(
-        ((11 to 18) ++ (21 to 28) ++ (31 to 38) ++ (41 to 48))
-          .map(
-            Tooth(_)
-          )
-          .toList
-          .sorted)
+      DentalChart(((11 to 18) ++ (21 to 28) ++ (31 to 38) ++ (41 to 48)).map(Tooth(_)).toList.sorted)
   }
 
 }

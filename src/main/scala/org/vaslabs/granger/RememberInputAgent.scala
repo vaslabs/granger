@@ -1,47 +1,48 @@
 package org.vaslabs.granger
 
-
 import java.util.concurrent.Executors
 
-import akka.actor.typed.eventstream.{Publish, Subscribe}
+import akka.actor.typed.eventstream.{ Publish, Subscribe }
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, Behavior}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import io.circe.{Decoder, Encoder}
+import akka.actor.typed.{ ActorRef, Behavior }
+import io.circe.generic.semiauto.{ deriveDecoder, deriveEncoder }
+import io.circe.{ Decoder, Encoder }
 import org.vaslabs.granger.comms.api.model.AutocompleteSuggestions
 import org.vaslabs.granger.modelv2.Medicament
 import org.vaslabs.granger.repo.Repo
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
-  * Created by vnicolaou on 22/07/17.
-  */
+ * Created by vnicolaou on 22/07/17.
+ */
 object RememberInputAgent {
 
-  def behavior(maxRememberSize: Int)(implicit repo: Repo[MedicamentSuggestions]): Behavior[Protocol] = Behaviors.setup[Protocol] { ctx =>
-    ctx.system.eventStream ! Subscribe[MedicamentSeen](ctx.self)
-    Behaviors.receiveMessage {
-      case RecoverMemory(suggestions) =>
-        behaviorWithDataAndSaving(maxRememberSize, suggestions)
-      case Suggest(replyTo) =>
-        replyTo ! AutocompleteSuggestions(List.empty)
-        Behaviors.same
-      case MedicamentSeen(medicament: Medicament) =>
-
-        behaviorWithData(maxRememberSize, MedicamentSuggestions(List(MedicamentStat(medicament.name, 1))))
+  def behavior(maxRememberSize: Int)(implicit repo: Repo[MedicamentSuggestions]): Behavior[Protocol] =
+    Behaviors.setup[Protocol] { ctx =>
+      ctx.system.eventStream ! Subscribe[MedicamentSeen](ctx.self)
+      Behaviors.receiveMessage {
+        case RecoverMemory(suggestions) =>
+          behaviorWithDataAndSaving(maxRememberSize, suggestions)
+        case Suggest(replyTo) =>
+          replyTo ! AutocompleteSuggestions(List.empty)
+          Behaviors.same
+        case MedicamentSeen(medicament: Medicament) =>
+          behaviorWithData(maxRememberSize, MedicamentSuggestions(List(MedicamentStat(medicament.name, 1))))
+      }
     }
-  }
 
-  private def behaviorWithData(maxRememberSize: Int, medicamentSuggestions: MedicamentSuggestions)
-                              (implicit repo: Repo[MedicamentSuggestions]): Behavior[Protocol] =
+  private def behaviorWithData(maxRememberSize: Int, medicamentSuggestions: MedicamentSuggestions)(
+      implicit repo: Repo[MedicamentSuggestions]): Behavior[Protocol] =
     Behaviors.receiveMessage {
       case RecoverMemory(suggestions) =>
         val allSuggestions =
-          (suggestions.medicamentsUsed ++ medicamentSuggestions.medicamentsUsed).groupBy(_.medicamentName)
-            .mapValues(_.map(_.usageCounter).sum).map {
-            case (name, usage) => MedicamentStat(name, usage)
-          }
+          (suggestions.medicamentsUsed ++ medicamentSuggestions.medicamentsUsed)
+            .groupBy(_.medicamentName)
+            .mapValues(_.map(_.usageCounter).sum)
+            .map {
+              case (name, usage) => MedicamentStat(name, usage)
+            }
         val sorted = allSuggestions.toList.sortBy(_.usageCounter)
         val newMedicamentSuggestions = MedicamentSuggestions(sorted.drop(sorted.size - maxRememberSize))
 
@@ -50,13 +51,14 @@ object RememberInputAgent {
         behaviorWithDataAndSaving(maxRememberSize, newMedicamentSuggestions)
       case MedicamentSeen(medicament: Medicament) =>
         behaviorWithData(maxRememberSize, recordSuggestion(medicament, medicamentSuggestions))
-      case Suggest(replyTo) => replyTo !
+      case Suggest(replyTo) =>
+        replyTo !
         AutocompleteSuggestions(medicamentSuggestions.medicamentsUsed.map(_.medicamentName))
         Behaviors.same
     }
 
-  private def behaviorWithDataAndSaving(maxRememberSize: Int, medicamentSuggestions: MedicamentSuggestions)
-                              (implicit repo: Repo[MedicamentSuggestions]): Behavior[Protocol] =
+  private def behaviorWithDataAndSaving(maxRememberSize: Int, medicamentSuggestions: MedicamentSuggestions)(
+      implicit repo: Repo[MedicamentSuggestions]): Behavior[Protocol] =
     Behaviors.receive {
       case (ctx, MedicamentSeen(medicament: Medicament)) =>
         val newMedicamentSuggestions = recordSuggestion(medicament, medicamentSuggestions)
@@ -65,20 +67,22 @@ object RememberInputAgent {
 
         behaviorWithDataAndSaving(maxRememberSize, recordSuggestion(medicament, medicamentSuggestions))
 
-      case (_, Suggest(replyTo)) => replyTo !
+      case (_, Suggest(replyTo)) =>
+        replyTo !
         AutocompleteSuggestions(medicamentSuggestions.medicamentsUsed.map(_.medicamentName))
         Behaviors.same
       case (_, recoverMemory: RecoverMemory) => Behaviors.ignore
     }
 
   private[granger] def recordSuggestion(medicament: Medicament, state: MedicamentSuggestions): MedicamentSuggestions = {
-    val medicamentStat = state.medicamentsUsed.find(medicament.name == _.medicamentName)
+    val medicamentStat = state.medicamentsUsed
+      .find(medicament.name == _.medicamentName)
       .map(m => m.copy(usageCounter = m.usageCounter + 1))
       .getOrElse(MedicamentStat(medicament.name, 1))
-    val newList = MedicamentSuggestions(medicamentStat :: state.medicamentsUsed.filterNot(_.medicamentName == medicament.name))
+    val newList = MedicamentSuggestions(
+      medicamentStat :: state.medicamentsUsed.filterNot(_.medicamentName == medicament.name))
     newList
   }
-
 
   sealed trait Protocol
 
@@ -98,9 +102,7 @@ object RememberInputAgent {
 
   case class MedicamentSuggestionAdded(medicamentName: String) extends RememberInputEvent
 
-
   object json {
-
 
     implicit val jsonMedStatEncoder: Encoder[MedicamentStat] = deriveEncoder[MedicamentStat]
     implicit val jsonMedStatDecoder: Decoder[MedicamentStat] = deriveDecoder[MedicamentStat]
@@ -109,4 +111,3 @@ object RememberInputAgent {
   }
 
 }
-
