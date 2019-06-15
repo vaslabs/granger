@@ -1,7 +1,7 @@
 package org.vaslabs.granger.comms
 
 import java.time.ZonedDateTime
-import java.time.format.{DateTimeFormatter}
+import java.time.format.DateTimeFormatter
 
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.server._
@@ -14,9 +14,8 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.spa.StaticResources
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
-import org.vaslabs.granger.PatientManager.{DeleteTreatment, FinishTreatment, StartTreatment}
+import org.vaslabs.granger.PatientManager.{DeleteTreatment, FinishTreatment, ModifyReminderRQ, StartTreatment}
 import io.circe.generic.auto._
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.ModifyReminder
 import org.vaslabs.granger.v2json._
 
 import scala.concurrent.Future
@@ -97,7 +96,7 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
         }
     } ~ path("treatment" / "notifications") {
       post {
-        entity(as[ModifyReminder]) {
+        entity(as[ModifyReminderRQ]) {
           rq => complete(modifyReminder(rq))
         }
       }

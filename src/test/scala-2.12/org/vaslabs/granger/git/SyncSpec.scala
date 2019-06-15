@@ -2,7 +2,7 @@ package org.vaslabs.granger.git
 
 import java.io.File
 
-import akka.testkit.TestActorRef
+import akka.actor.testkit.typed.scaladsl.TestProbe
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.URIish
@@ -61,10 +61,10 @@ class SyncSpec extends AkkaBaseSpec("SyncTest") with Matchers with FlatSpecLike{
   "given granger starts up it" should "sync with remote repo" in {
     givenRemoteRepoWithData() {
       uri => {
-        val orchestrator = TestActorRef(Orchestrator.props(config))
-        orchestrator ! Orchestrator.Orchestrate
-        orchestrator ! Orchestrator.Ping
-        expectMsg(Orchestrator.Pong)
+        val pongListener: TestProbe[Orchestrator.Pong.type] = testKit.createTestProbe("PongListener")
+        val orchestrator = testKit.spawn(Orchestrator.behaviour(config), "Orchestrator")
+        orchestrator ! Orchestrator.Ping(pongListener.ref)
+        pongListener.expectMessage(Orchestrator.Pong)
         assert(gitRepo.getState().toOption.get.size == 1)
       }
     }

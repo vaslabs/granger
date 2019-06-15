@@ -4,140 +4,141 @@ import java.io.File
 import java.time.ZonedDateTime
 import java.util.Objects
 
-import akka.actor.{Actor, ActorLogging, Props, Stash}
-import akka.http.scaladsl.model.StatusCodes
-import cats.data.NonEmptyList
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
 import monocle.macros.Lenses
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.modelv2.PatientId
-import org.vaslabs.granger.repo.EmptyRepo
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
+import org.vaslabs.granger.repo.{EmptyRepo, RepoErrorState}
 
-class RCTReminderActor private(repoLocation: String)(implicit git: Git)
-    extends Actor with Stash with ActorLogging{
 
-  import RCTReminderActor.Protocol.External._
-  import RCTReminderActor.Protocol.Internal._
-
-  implicit val emptyNotificationsProvider: EmptyProvider[List[Reminder]] = () => List.empty
+object RCTReminderActor {
   import io.circe.java8.time._
   import io.circe.generic.auto._
-  implicit val notificationsRepo: GitRepo[List[Reminder]] =
-    new GitRepo[List[Reminder]](new File(repoLocation), "notification_changes.json")
+  implicit val emptyNotificationsProvider: EmptyProvider[List[Reminder]] = () => List.empty
 
-  override def preStart(): Unit =
-    notificationsRepo.getState().left.map(err => self ! err).map(ReminderState).foreach(self ! _)
+  def behaviour(repoLocation: String)(implicit git: Git): Behavior[Protocol] = Behaviors.setup { ctx =>
+    val notificationsRepo: GitRepo[List[Reminder]] =
+      new GitRepo[List[Reminder]](new File(repoLocation), "notification_changes.json")
 
+    notificationsRepo.getState().left.map(err => ctx.self ! LoadingError(err)).map(ReminderState).foreach(ctx.self ! _)
 
-  override def receive: Receive = {
-    case ReminderState(reminders) =>
-      context.become(behaviourWithReminders(reminders.toSet))
-      unstashAll()
-      log.info("Notification system for RCT reminders is initialised")
-    case EmptyRepo =>
-      notificationsRepo.saveNew()
-      context.become(behaviourWithReminders(Set.empty))
-      unstashAll()
-      log.info("Notification system for RCT reminders is initialised for the first time")
-    case other => stash()
+    Behaviors.receive {
+      case (ctx, ReminderState(reminders)) =>
+        ctx.log.info("Notification system for RCT reminders is initialised")
+        behaviourWithReminders(reminders.toSet, notificationsRepo)
+
+      case (ctx, LoadingError(EmptyRepo)) =>
+        notificationsRepo.saveNew()
+        ctx.log.info("Notification system for RCT reminders is initialised for the first time")
+        behaviourWithReminders(Set.empty, notificationsRepo)
+      case (ctx, LoadingError(genericError)) =>
+        ctx.log.info("Unhandled error {}, reminders are disabled", genericError)
+        Behavior.ignore
+      case _ => Behavior.ignore
+    }
   }
 
-  private[this] def behaviourWithReminders(reminders: Set[Reminder]): Receive = {
-    case CheckReminders(now) =>
+
+  private[this] def behaviourWithReminders(reminders: Set[Reminder], notificationsRepo: GitRepo[List[Reminder]]): Behavior[Protocol] = Behaviors.receiveMessage {
+    case CheckReminders(now, replyTo: ActorRef[Notify]) =>
       val remindersToSend = reminders.filter(_.remindOn.compareTo(now) <= 0).filterNot(_.deletedOn.isDefined)
       val notify = Notify(remindersToSend.map(r => Notification(r.submitted, r.remindOn, r.externalReference)).toList)
-      sender ! notify
-    case SetReminder(submitted, remindOn, externalReference) =>
+      replyTo ! notify
+      Behaviors.same
+    case SetReminder(submitted, remindOn, externalReference, replyTo: ActorRef[ReminderSetAck]) =>
       val newReminder = Reminder(submitted, remindOn, externalReference)
-      if (!reminders.contains(newReminder)) {
-        val allReminders = reminders + newReminder
-        context.become(behaviourWithReminders(allReminders))
-        sender() ! ReminderSetAck(externalReference, submitted, remindOn)
-      }
-    case ModifyReminder(timestamp, snoozeTo, externalReference) =>
-      reminders.find(r => r.externalReference == externalReference && r.submitted.compareTo(timestamp) == 0).map(r => Reminder.remindOn.set(snoozeTo)(r))
-        .foreach {
-          modifiedReminder =>
-            val newReminders = (reminders - modifiedReminder) + (modifiedReminder)
-            notificationsRepo.save(s"Saving reminder modification $timestamp of patient id $externalReference", newReminders.toList)
-              .foreach { _ =>
-                context.become(behaviourWithReminders(newReminders))
-                sender() ! SnoozeAck(modifiedReminder.externalReference, timestamp, modifiedReminder.remindOn)
-              }
-        }
-    case DeleteReminder(timestamp, externalReference, deletionTime) =>
-      reminders.find(r => r.externalReference == externalReference && r.submitted == timestamp)
-        .map(Reminder.deletedOn.set(Some(deletionTime))(_))
-        .map {
-          reminder =>
-            val newReminders = (reminders - reminder) + (reminder)
-            notificationsRepo.save(s"Stopping reminder $timestamp of patient id $externalReference", newReminders.toList)
-              .left.map(err => log.error(err.error))
-              .foreach { _ =>
-                context.become(behaviourWithReminders(newReminders))
-                sender() ! DeletedAck(timestamp, externalReference)
-              }
-        }.getOrElse(log.info(s"Reminder $timestamp for patient $externalReference was not found in $reminders"))
+      val allReminders = reminders + newReminder
+      replyTo ! ReminderSetAck(externalReference, submitted, remindOn)
+      behaviourWithReminders(allReminders, notificationsRepo)
+    case ModifyReminder(timestamp, snoozeTo, externalReference, replyTo: ActorRef[SnoozeAck]) =>
+      val savedReminders = for {
+        reminderToModify <- reminders.find(r =>
+          r.externalReference == externalReference &&
+            r.submitted.compareTo(timestamp) == 0 &&
+            r.deletedOn.isEmpty)
+        modifiedReminder = Reminder.remindOn.set(snoozeTo)(reminderToModify)
+        newReminders = (reminders - reminderToModify) + (modifiedReminder)
+        _ <- notificationsRepo.save(
+          s"Saving reminder modification $timestamp of patient id $externalReference",
+          newReminders.toList).toOption
+        _ = replyTo ! SnoozeAck(modifiedReminder.externalReference, timestamp, modifiedReminder.remindOn)
+      } yield newReminders
 
-    case PatientReminders(patientId) =>
-      sender() ! AllPatientReminders(
+      savedReminders.map(behaviourWithReminders(_, notificationsRepo)).getOrElse(Behaviors.same)
+
+    case DeleteReminder(timestamp, externalReference, deletionTime, replyTo: ActorRef[DeletedAck]) =>
+      val savedReminders = for {
+        reminderToDelete <- reminders.find(r => r.externalReference == externalReference && r.submitted == timestamp)
+        reminderAfterDeletion = Reminder.deletedOn.set(Some(deletionTime))(reminderToDelete)
+        newReminders = (reminders - reminderToDelete) + reminderAfterDeletion
+        _ <- notificationsRepo.save(s"Stopping reminder $timestamp of patient id $externalReference", newReminders.toList).toOption
+
+      } yield newReminders
+      savedReminders.foreach(_ => replyTo ! DeletedAck(timestamp, externalReference))
+      savedReminders.map(behaviourWithReminders(_, notificationsRepo)).getOrElse(Behaviors.same)
+
+    case PatientReminders(patientId, replyTo: ActorRef[AllPatientReminders]) =>
+      replyTo ! AllPatientReminders(
         reminders.filter(_.externalReference == patientId).filter(_.deletedOn.isEmpty)
           .map(r => Notification(r.submitted, r.remindOn, r.externalReference)).toList
       )
+      Behaviors.same
   }
 }
 
-object RCTReminderActor {
-
-  def props(repoLocation: String)(implicit git: Git): Props = Props(new RCTReminderActor(repoLocation))
-
-  object Protocol {
-
-    object External {
-
-      case class SetReminder(submitted: ZonedDateTime, remindOn: ZonedDateTime, externalReference: PatientId)
-
-      case class ModifyReminder(reminderTimestamp: ZonedDateTime, snoozeTo: ZonedDateTime, externalReference: PatientId)
-
-      case class DeleteReminder(reminderTimestamp: ZonedDateTime, externalReference: PatientId, deletionTime: ZonedDateTime)
-
-      case class ReminderSetAck(externalId: PatientId, timestamp: ZonedDateTime, notificationTime: ZonedDateTime)
-
-      case class SnoozeAck(externalReference: PatientId, timestamp: ZonedDateTime, movedAt: ZonedDateTime)
-
-      case class DeletedAck(timestamp: ZonedDateTime, externalRefernce: PatientId)
-
-      case class Notification(timestamp: ZonedDateTime, notificationTime: ZonedDateTime, externalReference: PatientId)
-
-      case class Notify(notifications: List[Notification])
-
-      case class CheckReminders(now: ZonedDateTime)
-
-      case class PatientReminders(externalId: PatientId)
-
-      case class AllPatientReminders(notifications: List[Notification])
-
-    }
-
-    private[reminders] object Internal {
-
-      @Lenses case class Reminder(
-                                   submitted: ZonedDateTime, remindOn: ZonedDateTime, externalReference: PatientId, deletedOn: Option[ZonedDateTime] = None) {
-        override def hashCode(): Int = Objects.hash(submitted.asInstanceOf[Object], externalReference.asInstanceOf[Object])
-
-        override def equals(obj: scala.Any): Boolean = obj match {
-          case Reminder(submitted, _, otherExternalReference, _) =>
-            externalReference.equals(otherExternalReference) && submitted == this.submitted
-          case _ => false
-        }
-
-        override def canEqual(that: Any): Boolean = that.isInstanceOf[Reminder]
-      }
-
-      case class ReminderState(reminders: List[Reminder])
-    }
 
 
+sealed trait Protocol
+
+case class SetReminder(
+         submitted: ZonedDateTime,
+         remindOn: ZonedDateTime,
+         externalReference: PatientId,
+         actorRef: ActorRef[ReminderSetAck]) extends Protocol
+
+case class ModifyReminder(
+         reminderTimestamp: ZonedDateTime,
+         snoozeTo: ZonedDateTime,
+         externalReference: PatientId,
+         replyTo: ActorRef[SnoozeAck]) extends Protocol
+
+case class DeleteReminder(reminderTimestamp: ZonedDateTime, externalReference: PatientId, deletionTime: ZonedDateTime, actorRef: ActorRef[DeletedAck]) extends Protocol
+
+case class ReminderSetAck(externalId: PatientId, timestamp: ZonedDateTime, notificationTime: ZonedDateTime)
+
+case class SnoozeAck(externalReference: PatientId, timestamp: ZonedDateTime, movedAt: ZonedDateTime)
+
+case class DeletedAck(timestamp: ZonedDateTime, externalRefernce: PatientId)
+
+case class Notification(timestamp: ZonedDateTime, notificationTime: ZonedDateTime, externalReference: PatientId)
+
+case class Notify(notifications: List[Notification]) extends Protocol
+
+case class CheckReminders(now: ZonedDateTime, replyTo: ActorRef[Notify]) extends Protocol
+
+case class PatientReminders(externalId: PatientId, replyTo: ActorRef[AllPatientReminders]) extends Protocol
+
+case class AllPatientReminders(notifications: List[Notification])
+
+
+@Lenses private[reminders] case class Reminder(
+                                                submitted: ZonedDateTime,
+                                                remindOn: ZonedDateTime,
+                                                externalReference: PatientId,
+                                                deletedOn: Option[ZonedDateTime] = None)  extends Protocol {
+  override def hashCode(): Int = Objects.hash(submitted.asInstanceOf[Object], externalReference.asInstanceOf[Object])
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case Reminder(submitted, _, otherExternalReference, _) =>
+      externalReference.equals(otherExternalReference) && submitted == this.submitted
+    case _ => false
   }
 
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Reminder]
 }
+
+private[reminders] case class ReminderState(reminders: List[Reminder]) extends Protocol
+
+private[reminders] case class LoadingError(repoErrorState: RepoErrorState) extends Protocol

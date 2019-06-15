@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.StatusCode
 import org.vaslabs.granger.PatientManager._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External._
+import org.vaslabs.granger.reminders.{AllPatientReminders, DeletedAck, Notify, SnoozeAck}
 
 import scala.concurrent.Future
 
@@ -39,7 +39,7 @@ trait GrangerApi[F[_]] {
 
   def rememberedData(): Future[AutocompleteSuggestions]
 
-  def modifyReminder(rq: ModifyReminder): F[SnoozeAck]
+  def modifyReminder(rq: ModifyReminderRQ): F[SnoozeAck]
 
   def deleteReminder(patientId: PatientId, timestamp: ZonedDateTime): F[DeletedAck]
 

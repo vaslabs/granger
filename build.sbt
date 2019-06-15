@@ -4,22 +4,27 @@ name := "granger"
 
 version := "1.0"
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.8"
 
 organization := "org.vaslabs"
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
 
-val akkaVersion = "2.5.16"
+val akkaVersion = "2.6.0-M2"
 val akkaHttpVersion = "10.1.5"
 val circeVersion = "0.9.3"
 val monocleVersion = "1.5.1-cats"
-libraryDependencies ++= Seq(
+
+lazy val akka = Seq(
+  "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
+  "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion,
   "com.typesafe.akka" %% "akka-stream" % akkaVersion,
   "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
   "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+)
+libraryDependencies ++= akka ++ Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
   "commons-io" % "commons-io" % "2.4" % Test,
   "io.circe" %% "circe-core" % circeVersion,
@@ -28,10 +33,10 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-java8" % circeVersion,
   "de.heikoseeberger" %% "akka-http-circe" % "1.21.0",
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.1.1.201809181055-r",
-  "com.github.pureconfig" %% "pureconfig" % "0.9.1",
+  "com.github.pureconfig" %% "pureconfig" % "0.11.1",
   "de.knutwalker" %% "akka-http-circe" % "3.5.0",
   "de.knutwalker" %% "akka-http-json" % "3.5.0",
-  "org.typelevel" %% "cats-effect" % "1.0.0",
+  "org.typelevel" %% "cats-effect" % "1.3.1",
   "com.github.julien-truffaut" %%  "monocle-core"  % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-macro" % monocleVersion,
   "com.github.julien-truffaut" %%  "monocle-law"   % monocleVersion % Test

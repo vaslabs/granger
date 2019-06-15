@@ -2,16 +2,15 @@ package org.vaslabs.granger
 
 import java.io.File
 import java.time.{Clock, ZoneOffset, ZonedDateTime}
-import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import akka.actor.typed.scaladsl.adapter._
 import cats.effect.IO
 import org.eclipse.jgit.api.Git
 import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId}
-import org.vaslabs.granger.reminders.RCTReminderActor
-import org.vaslabs.granger.reminders.RCTReminderActor.Protocol.External.{ModifyReminder, PatientReminders, SetReminder}
+import org.vaslabs.granger.reminders._
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
 /**
@@ -29,7 +28,6 @@ class PatientManager private (
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
 
-
   implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
     new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
 
@@ -39,7 +37,7 @@ class PatientManager private (
   final val gitRepoPusher: ActorRef =
     context.actorOf(GitRepoPusher.props(grangerRepo), "gitPusher")
 
-  val notificationActor = context.actorOf(RCTReminderActor.props(grangerConfig.repoLocation), "notifications")
+  val notificationActor = context.spawn(RCTReminderActor.behaviour(grangerConfig.repoLocation), "notifications")
 
   override def receive: Receive = {
     case LoadData =>
@@ -66,16 +64,10 @@ class PatientManager private (
         patientData.foreach(patient =>
           patient.dentalChart.teeth.foreach(_.treatments.foreach(
             _.dateCompleted.foreach(completedDate =>
-              context.system.eventStream.publish(
-                SetReminder(completedDate, completedDate.plusMonths(6), patient.patientId))
+              notificationActor ! SetReminder(completedDate, completedDate.plusMonths(6), patient.patientId, self.toTyped))
             )
-          )))
+          ))
     }
-  }
-
-  override def aroundPreStart(): Unit = {
-    context.system.eventStream.subscribe(notificationActor, classOf[SetReminder])
-    super.aroundPreStart()
   }
 
   def settingUp: Receive = {
@@ -115,7 +107,7 @@ class PatientManager private (
       schedulePushJob()
       val outcome = grangerRepo.finishTreatment(patientId, toothId, finishTime).map(_.unsafeRunSync())
       outcome.foreach(_ => {
-        context.system.eventStream.publish(SetReminder(finishTime, finishTime.plusMonths(6), patientId))
+        notificationActor ! SetReminder(finishTime, finishTime.plusMonths(6), patientId, self.toTyped)
       })
 
       sender() ! outcome.merge
@@ -130,15 +122,16 @@ class PatientManager private (
       sender() ! outcome.merge
 
     case GetTreatmentNotifications(time) =>
-      notificationActor forward RCTReminderActor.Protocol.External.CheckReminders(time)
+      notificationActor ! CheckReminders(time, sender().toTyped)
 
-    case mr: ModifyReminder => notificationActor forward mr
+    case ModifyReminderRQ(reminderTimestamp, snoozeTo, patientId) =>
+      notificationActor ! ModifyReminder(reminderTimestamp, snoozeTo, patientId, sender().toTyped)
     case StopReminder(timestamp, patientId) =>
-      notificationActor forward RCTReminderActor.Protocol.External.DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock))
+      notificationActor ! DeleteReminder(timestamp, patientId, ZonedDateTime.now(clock), sender().toTyped)
 
-    case pr: PatientReminders => notificationActor forward pr
+    case FetchAllPatientReminders(patientId) => notificationActor ! PatientReminders(patientId, sender().toTyped)
 
-    case other => log.debug("Dropping $other")
+    case other => log.debug(s"Dropping $other")
   }
 
   private[this] def schedulePushJob(): Unit = {
@@ -185,4 +178,7 @@ object PatientManager {
 
   case class StopReminder(timestamp: ZonedDateTime, patientId: PatientId)
 
+  case class ModifyReminderRQ(reminderTimestamp: ZonedDateTime, snoozeTo: ZonedDateTime, patientId: PatientId)
+
+  case class FetchAllPatientReminders(patientId: PatientId)
 }

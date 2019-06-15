@@ -1,5 +1,7 @@
 package org.vaslabs.granger
 
+import scala.concurrent.duration._
+
 import java.io.File
 import java.time.Clock
 
@@ -8,6 +10,10 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.vaslabs.granger.system.BaseDirProvider
 import pureconfig._
+import akka.actor.typed.scaladsl.adapter._
+import akka.util.Timeout
+import pureconfig.generic.auto._
+
 /**
   * Created by vnicolaou on 04/06/17.
   */
@@ -45,16 +51,14 @@ object Main extends App{
         new File(workingDirectory).getParentFile.getParentFile
       }
 
-      val orchestrator = system.actorOf(Orchestrator.props(config), "orchestrator")
+      val typedActorSystem = system.toTyped
 
+      typedActorSystem.systemActorOf(Orchestrator.behaviour(config), "Orchestrator")(Timeout(3 seconds))
 
-
-      orchestrator ! Orchestrator.Orchestrate
 
       sys.addShutdownHook(
         {
-          println("Shutting down")
-          orchestrator ! Orchestrator.Shutdown
+          system.terminate()
         }
       )
     }).left.foreach(
