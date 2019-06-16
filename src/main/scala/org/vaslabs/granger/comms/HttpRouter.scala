@@ -1,6 +1,6 @@
 package org.vaslabs.granger.comms
 
-import java.time.{ ZoneOffset, ZonedDateTime }
+import java.time.{ZoneOffset, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 
 import akka.actor.ActorSystem
@@ -12,9 +12,9 @@ import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
-import org.vaslabs.granger.comms.api.model.{ AddToothInformationRequest, RemoteRepo }
+import org.vaslabs.granger.comms.api.model.{AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
-import org.vaslabs.granger.modelv2.{ Patient, PatientId }
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.spa.StaticResources
 import org.vaslabs.granger.v2json._
 
@@ -23,76 +23,33 @@ import scala.concurrent.Future
 import UserApi._
 
 /**
- * Created by vnicolaou on 28/05/17.
- */
+  * Created by vnicolaou on 28/05/17.
+  */
 trait HttpRouter extends FailFastCirceSupport with StaticResources {
   this: GrangerApi[Future] =>
 
-  private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route = {
-
-    path("api") {
-      get {
-        complete(retrieveAllPatients())
-      } ~
-      post {
-        entity(as[Patient]) { patient =>
-          complete(addPatient(patient))
-        }
-      }
-    } ~
-    pathPrefix("api" / "latestActivity" / IntNumber) { id =>
-      {
-        pathEnd {
-          get {
-            complete(getLatestActivity(PatientId(id)))
+  private[this] def treatments(): Route =
+    pathPrefix("treatment") {
+      pathSuffix("start") {
+        post {
+          entity(as[UserApi.StartTreatment]) { rq =>
+            complete(startNewTreatment(rq))
           }
         }
       }
-    } ~
-    path("update") {
-      post {
-        entity(as[AddToothInformationRequest]) { rq =>
-          complete(addToothInfo(rq))
-        }
-      }
-    } ~
-    path("pub_key") {
-      get {
-        complete(getPublicKey())
-      }
-    } ~ path("init") {
-      entity(as[RemoteRepo]) { repo =>
-        complete(initGitRepo(repo))
-      }
-    } ~
-    path("treatment" / "start") {
-      post {
-        entity(as[UserApi.StartTreatment]) { rq =>
-          complete(startNewTreatment(rq))
-        }
-      }
-    } ~ path("treatment" / "finish") {
+    } ~ pathSuffix("finish") {
       post {
         entity(as[FinishTreatment]) { rq =>
           complete(finishTreatment(rq))
         }
       }
-    } ~ path("api" / "remember") {
-      get {
-        complete(rememberedData())
-      }
-    } ~
-    path("treatment" / "delete") {
+    } ~ pathSuffix("delete") {
       post {
         entity(as[DeleteTreatment]) { rq =>
           complete(deleteTreatment(rq))
         }
       }
-    } ~ path("patient" / LongNumber) { patientId =>
-      delete {
-        complete(deletePatient(PatientId(patientId)))
-      }
-    } ~ path("treatment" / "notifications") {
+    } ~ pathSuffix("notifications") {
       post {
         entity(as[ModifyReminder]) { rq =>
           complete(modifyReminder(rq))
@@ -102,16 +59,64 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
       get {
         complete(treatmentNotifications(time))
       }
-    } ~ path("treatment" / "notification" / ZonedDateTimeMatcher) { time =>
+    } ~ path ("treatment" / "notification" / ZonedDateTimeMatcher) { time =>
       parameters('patientId.as[Long]) { id =>
         delete {
           complete(deleteReminder(PatientId(id), time))
         }
       }
+    }
+
+  private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route = {
+
+    path("api") {
+      get {
+        complete(retrieveAllPatients())
+      } ~
+        post {
+          entity(as[Patient]) { patient =>
+            complete(addPatient(patient))
+          }
+        }
+    } ~
+      pathPrefix("api" / "latestActivity" / IntNumber) { id => {
+        pathEnd {
+          get {
+            complete(getLatestActivity(PatientId(id)))
+          }
+        }
+      }
+      } ~
+      path("update") {
+        post {
+          entity(as[AddToothInformationRequest]) { rq =>
+            complete(addToothInfo(rq))
+          }
+        }
+      } ~
+      path("pub_key") {
+        get {
+          complete(getPublicKey())
+        }
+      } ~ path("init") {
+      entity(as[RemoteRepo]) { repo =>
+        complete(initGitRepo(repo))
+      }
+    } ~ treatments() ~ path("api" / "remember") {
+      get {
+        complete(rememberedData())
+      }
+    } ~ path("patient" / LongNumber) { patientId =>
+      delete {
+        complete(deletePatient(PatientId(patientId)))
+      }
     } ~ path("allreminders" / LongNumber) { id =>
       get {
         complete(allReminders(PatientId(id)))
       }
+    } ~ path("patient" / LongNumber / "images") {
+      patientId =>
+        complete(StatusCodes.Accepted)
     }
 
   }
@@ -148,6 +153,7 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
 }
 
 object UserApi {
+
   case class StartTreatment(patientId: PatientId, toothId: Int, category: TreatmentCategory)
 
   case class DeleteTreatment(patientId: PatientId, toothId: Int, createdOn: ZonedDateTime) {

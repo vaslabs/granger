@@ -56,6 +56,7 @@ class HttpRouterAddingTreatmentInfoSpec extends HttpBaseSpec with ScalatestRoute
         Post("/treatment/finish", UserApi.FinishTreatment(PatientId(1), 11, finishedAt)) ~> httpRouter.routes ~> check {
           responseAs[Patient].dentalChart.teeth.find(_.number == 11).get.treatments.head.dateCompleted shouldBe Some(finishedAt)
         }
+
         Get(s"/treatment/notifications/${now.plusMonths(6).plusDays(1)
           .format(DateTimeFormatter.ISO_ZONED_DATE_TIME)}") ~> httpRouter.routes ~> check {
           responseAs[Notify] shouldBe
