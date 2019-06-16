@@ -120,7 +120,9 @@ class WebServer(
   override def allReminders(patientId: PatientId): Future[AllPatientReminders] =
     patientManager ? (replyTo => FetchAllPatientReminders(patientId, replyTo))
 
-  override def storeImage(patientId: PatientId): Future[UUID] = {
-    patientManager ? (replyTo => StoreImageRQ(Array(0), replyTo))
-  }
+  override def storeImage(patientId: PatientId): Future[UUID] =
+    patientManager ? (replyTo => StoreImageRQ(patientId, Array(0), replyTo))
+
+  override def getImages(patientId: PatientId): Future[PatientImages] =
+    patientManager ? (replyTo => GetPatientImages(patientId, replyTo))
 }

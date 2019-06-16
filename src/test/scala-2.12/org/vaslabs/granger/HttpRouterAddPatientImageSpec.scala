@@ -7,8 +7,10 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import cats.Id
 import cats.effect.IO
 import org.scalatest.Matchers
+import org.vaslabs.granger.modelv2.{PatientId, PatientImages}
 
 import scala.util.Random
+import v2json._
 
 class HttpRouterAddPatientImageSpec extends HttpBaseSpec with ScalatestRouteTest with Matchers {
 
@@ -30,6 +32,10 @@ class HttpRouterAddPatientImageSpec extends HttpBaseSpec with ScalatestRouteTest
       Put("/patient/1/images", patientImageForm) ~> router.routes ~> check {
         response.status shouldBe StatusCodes.Accepted
         responseAs[String] shouldBe expectedImageKey
+      }
+
+      Get(s"/patient/1/images") ~> router.routes ~> check {
+        responseAs[PatientImages] shouldBe PatientImages(PatientId(1), List(UUID.fromString(expectedImageKey)))
       }
     }
 

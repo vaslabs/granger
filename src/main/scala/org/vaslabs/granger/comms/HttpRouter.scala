@@ -114,9 +114,12 @@ trait HttpRouter extends FailFastCirceSupport with StaticResources {
       get {
         complete(allReminders(PatientId(id)))
       }
-    } ~ path("patient" / LongNumber / "images") {
-      patientId =>
-        complete(StatusCodes.Accepted -> storeImage(PatientId(patientId)))
+    } ~ path("patient" / LongNumber / "images") { patientId =>
+        put {
+            complete(StatusCodes.Accepted -> storeImage(PatientId(patientId)))
+        } ~ get {
+          complete(getImages(PatientId(patientId)))
+        }
     }
 
   }

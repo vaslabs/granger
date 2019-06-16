@@ -76,6 +76,10 @@ object v2json {
 
   implicit val repoEncoder: Encoder[Map[PatientId, Patient]] = Encoder.encodeMap[PatientId, Patient]
   implicit val repoDecoder: Decoder[Map[PatientId, Patient]] = Decoder.decodeMap[PatientId, Patient]
+
+  implicit val patientImagesEncoder: Encoder[PatientImages] = deriveEncoder
+  implicit val patientImagesDecoder: Decoder[PatientImages] = deriveDecoder
+
 }
 
 object modelv2 {
@@ -252,5 +256,8 @@ object modelv2 {
     def emptyChart(): DentalChart =
       DentalChart(((11 to 18) ++ (21 to 28) ++ (31 to 38) ++ (41 to 48)).map(Tooth(_)).toList.sorted)
   }
+
+  case class PatientImages(patientId: PatientId, identifiers: List[UUID])
+
 
 }

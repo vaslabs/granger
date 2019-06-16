@@ -14,7 +14,7 @@ import org.vaslabs.granger.ImageStore.StoreImage
 import org.vaslabs.granger.RememberInputAgent.MedicamentSeen
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
-import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.modelv2.{Patient, PatientId, PatientImages}
 import org.vaslabs.granger.reminders._
 import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
@@ -101,8 +101,11 @@ object PatientManager {
       .orElse(storeImagesBehavior(imageStore))
 
   private def storeImagesBehavior(imageStore: ActorRef[ImageStore.Protocol]): Behavior[Protocol] = Behaviors.receiveMessage {
-    case StoreImageRQ(payload: Array[Byte], replyTo) =>
-      imageStore ! ImageStore.StoreImage(payload, replyTo)
+    case StoreImageRQ(patientId, payload: Array[Byte], replyTo) =>
+      imageStore ! ImageStore.StoreImage(patientId, payload, replyTo)
+      Behaviors.same
+    case GetPatientImages(patientId, replyTo) =>
+      imageStore ! ImageStore.FetchImages(patientId, replyTo)
       Behaviors.same
     case _ => Behaviors.unhandled
   }
@@ -235,7 +238,8 @@ case class FinishTreatment(
   require(finishedOn.getOffset.equals(ZoneOffset.UTC))
 }
 
-case class StoreImageRQ(payload: Array[Byte], replyTo: ActorRef[UUID]) extends Protocol
+case class StoreImageRQ(patientId: PatientId, payload: Array[Byte], replyTo: ActorRef[UUID]) extends Protocol
+case class GetPatientImages(patientId: PatientId, replyTo: ActorRef[PatientImages]) extends Protocol
 
 sealed trait LoadDataOutcome
 
