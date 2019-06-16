@@ -1,36 +1,38 @@
 package org.vaslabs.granger
 
-import scala.concurrent.duration._
 import java.io.File
 import java.time.{Clock, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 import akka.actor.typed.eventstream.Publish
-import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import cats.effect.IO
 import org.eclipse.jgit.api.Git
-import org.vaslabs.granger.ImageStore.StoreImage
 import org.vaslabs.granger.RememberInputAgent.MedicamentSeen
 import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
 import org.vaslabs.granger.modelv2.{Patient, PatientId, PatientImages}
 import org.vaslabs.granger.reminders._
-import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
+import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
+
+import scala.concurrent.duration._
 
 object PatientManager {
 
-  import io.circe.generic.auto._
   import v2json._
   implicit val emptyPatientsProvider: EmptyProvider[Map[PatientId, Patient]] = () => Map.empty
 
   private type GrangerRepoType = GrangerRepo[Map[PatientId, Patient], IO]
+  private type GrangerImageReferenceRepo = GrangerRepo[Map[PatientId, UUID], IO]
 
-  def behavior(grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
+  def behavior(grangerConfig: GrangerConfig)(implicit
+                gitApi: Git, clock: Clock): Behavior[Protocol] =
     behavior(grangerConfig, IO.delay(UUID.randomUUID()))
 
-  private[granger] def behavior(grangerConfig: GrangerConfig, idGen: IO[UUID])(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
+  private[granger] def behavior(grangerConfig: GrangerConfig, idGen: IO[UUID])(implicit
+                gitApi: Git, clock: Clock): Behavior[Protocol] =
     Behaviors
       .supervise(unsafeSetupBehaviour(grangerConfig, idGen))
       .onFailure[RuntimeException](
@@ -44,7 +46,7 @@ object PatientManager {
       implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
         new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
 
-      val imageStore = ctx.spawn(ImageStore.behavior(idGen), "ImageStore")
+      val imageStore = ctx.spawn(ImageStore.behavior(grangerConfig, idGen), "ImageStore")
       val grangerRepo: GrangerRepoType = new SingleStateGrangerRepo()
       val notificationActor = ctx.spawn(RCTReminderActor.behaviour(grangerConfig.repoLocation), "notifications")
       val noopActor = ctx.spawnAnonymous[Any](Behaviors.ignore)

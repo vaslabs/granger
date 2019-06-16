@@ -13,7 +13,7 @@ import akka.util.Timeout
 import akka.actor.typed.scaladsl.AskPattern._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
-import org.vaslabs.granger.repo.{IOError, InvalidData}
+import org.vaslabs.granger.repo.InvalidData
 import org.vaslabs.granger._
 import org.vaslabs.granger.reminders.{AllPatientReminders, DeletedAck, Notify, SnoozeAck}
 
