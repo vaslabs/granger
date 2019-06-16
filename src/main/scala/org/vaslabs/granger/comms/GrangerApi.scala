@@ -1,13 +1,14 @@
 package org.vaslabs.granger.comms
 
 import java.time.ZonedDateTime
+import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCode
-import org.vaslabs.granger.{ CommandOutcome, Failure }
+import org.vaslabs.granger.{CommandOutcome, Failure}
 import org.vaslabs.granger.comms.UserApi._
 import org.vaslabs.granger.comms.api.model._
-import org.vaslabs.granger.modelv2.{ Patient, PatientId }
-import org.vaslabs.granger.reminders.{ AllPatientReminders, DeletedAck, Notify, SnoozeAck }
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
+import org.vaslabs.granger.reminders.{AllPatientReminders, DeletedAck, Notify, SnoozeAck}
 import org.vaslabs.granger.repo.InvalidData
 
 import scala.concurrent.Future
@@ -47,5 +48,7 @@ trait GrangerApi[F[_]] {
   def deleteReminder(patientId: PatientId, timestamp: ZonedDateTime): F[DeletedAck]
 
   def allReminders(patientId: PatientId): F[AllPatientReminders]
+
+  def storeImage(patientId: PatientId): F[UUID]
 
 }

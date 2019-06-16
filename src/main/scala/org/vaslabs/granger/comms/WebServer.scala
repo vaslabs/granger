@@ -1,23 +1,24 @@
 package org.vaslabs.granger.comms
 
 import java.time.ZonedDateTime
+import java.util.UUID
 import java.util.concurrent.Executors
 
-import akka.actor.typed.{ ActorRef, ActorSystem }
+import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.actor.typed.scaladsl.adapter._
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ StatusCode, StatusCodes }
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.stream.typed.scaladsl.ActorMaterializer
 import akka.util.Timeout
 import akka.actor.typed.scaladsl.AskPattern._
 import org.vaslabs.granger.comms.api.model._
 import org.vaslabs.granger.modelv2._
-import org.vaslabs.granger.repo.{ IOError, InvalidData }
+import org.vaslabs.granger.repo.{IOError, InvalidData}
 import org.vaslabs.granger._
-import org.vaslabs.granger.reminders.{ AllPatientReminders, DeletedAck, Notify, SnoozeAck }
+import org.vaslabs.granger.reminders.{AllPatientReminders, DeletedAck, Notify, SnoozeAck}
 
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 
 /**
@@ -118,4 +119,8 @@ class WebServer(
 
   override def allReminders(patientId: PatientId): Future[AllPatientReminders] =
     patientManager ? (replyTo => FetchAllPatientReminders(patientId, replyTo))
+
+  override def storeImage(patientId: PatientId): Future[UUID] = {
+    patientManager ? (replyTo => StoreImageRQ(Array(0), replyTo))
+  }
 }

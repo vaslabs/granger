@@ -1,9 +1,12 @@
 package org.vaslabs.granger
 
+import java.util.UUID
+
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.scaladsl.adapter._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.typed.scaladsl.ActorMaterializer
+import cats.effect.IO
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import org.scalatest.{Assertion, AsyncFlatSpecLike}
 import org.vaslabs.granger.comms.{HttpRouter, WebServer}
@@ -18,11 +21,11 @@ abstract class HttpBaseSpec extends BaseSpec with AsyncFlatSpecLike with FailFas
     super.afterAll()
   }
 
-  def withHttpRouter[F[_]](grangerConfig: GrangerConfig)(f: HttpRouter => F[Assertion]): F[Assertion] = {
+  def withHttpRouter[F[_]](grangerConfig: GrangerConfig, idGen: IO[UUID] = IO.delay(UUID.randomUUID()))(f: HttpRouter => F[Assertion]): F[Assertion] = {
     implicit val system = testKit.system
     implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-    val patientManager = testKit.spawn(PatientManager.behavior(config), "PatientManagerSpec")
+    val patientManager = testKit.spawn(PatientManager.behavior(config, idGen), "PatientManagerSpec")
     val rememberInputAgent = testKit.spawn(RememberInputAgent.behavior(5), "RememberInputAgent")
 
     val httpRouter = new WebServer(patientManager, rememberInputAgent, grangerConfig) with HttpRouter

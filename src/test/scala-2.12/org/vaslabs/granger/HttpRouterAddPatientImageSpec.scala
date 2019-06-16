@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import cats.Id
+import cats.effect.IO
 import org.scalatest.Matchers
 
 import scala.util.Random
@@ -18,7 +19,7 @@ class HttpRouterAddPatientImageSpec extends HttpBaseSpec with ScalatestRouteTest
 
     implicit val expectedImageKey = UUID.randomUUID().toString
 
-    withHttpRouter[Id](config) { router =>
+    withHttpRouter[Id](config, IO.pure(UUID.fromString(expectedImageKey))) { router =>
       val patientImageForm = Multipart.FormData(
         Multipart.FormData.BodyPart.Strict(
           "jpeg",
@@ -28,6 +29,7 @@ class HttpRouterAddPatientImageSpec extends HttpBaseSpec with ScalatestRouteTest
 
       Put("/patient/1/images", patientImageForm) ~> router.routes ~> check {
         response.status shouldBe StatusCodes.Accepted
+        responseAs[String] shouldBe expectedImageKey
       }
     }
 

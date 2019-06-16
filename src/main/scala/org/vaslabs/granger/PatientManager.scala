@@ -2,19 +2,21 @@ package org.vaslabs.granger
 
 import scala.concurrent.duration._
 import java.io.File
-import java.time.{ Clock, ZoneOffset, ZonedDateTime }
+import java.time.{Clock, ZoneOffset, ZonedDateTime}
+import java.util.UUID
 
 import akka.actor.typed.eventstream.Publish
-import akka.actor.typed.{ ActorRef, Behavior, SupervisorStrategy }
+import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.actor.typed.scaladsl.Behaviors
 import cats.effect.IO
 import org.eclipse.jgit.api.Git
+import org.vaslabs.granger.ImageStore.StoreImage
 import org.vaslabs.granger.RememberInputAgent.MedicamentSeen
-import org.vaslabs.granger.comms.api.model.{ Activity, AddToothInformationRequest, RemoteRepo }
+import org.vaslabs.granger.comms.api.model.{Activity, AddToothInformationRequest, RemoteRepo}
 import org.vaslabs.granger.modeltreatments.TreatmentCategory
-import org.vaslabs.granger.modelv2.{ Patient, PatientId }
+import org.vaslabs.granger.modelv2.{Patient, PatientId}
 import org.vaslabs.granger.reminders._
-import org.vaslabs.granger.repo.git.{ EmptyProvider, GitRepo }
+import org.vaslabs.granger.repo.git.{EmptyProvider, GitRepo}
 import org.vaslabs.granger.repo._
 
 object PatientManager {
@@ -26,37 +28,42 @@ object PatientManager {
   private type GrangerRepoType = GrangerRepo[Map[PatientId, Patient], IO]
 
   def behavior(grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
+    behavior(grangerConfig, IO.delay(UUID.randomUUID()))
+
+  private[granger] def behavior(grangerConfig: GrangerConfig, idGen: IO[UUID])(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
     Behaviors
-      .supervise(unsafeSetupBehaviour(grangerConfig))
+      .supervise(unsafeSetupBehaviour(grangerConfig, idGen))
       .onFailure[RuntimeException](
-        SupervisorStrategy
-          .restartWithBackoff(minBackoff = 10 seconds, maxBackoff = 5 minutes, randomFactor = 0.2)
-          .withMaxRestarts(10))
+      SupervisorStrategy
+        .restartWithBackoff(minBackoff = 10 seconds, maxBackoff = 5 minutes, randomFactor = 0.2)
+        .withMaxRestarts(10))
 
   private def unsafeSetupBehaviour(
-      grangerConfig: GrangerConfig)(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
+      grangerConfig: GrangerConfig, idGen: IO[UUID])(implicit gitApi: Git, clock: Clock): Behavior[Protocol] =
     Behaviors.setup { ctx =>
       implicit val gitRepo: GitRepo[Map[PatientId, Patient]] =
         new GitRepo[Map[PatientId, Patient]](new File(grangerConfig.repoLocation), "patients.json")
 
+      val imageStore = ctx.spawn(ImageStore.behavior(idGen), "ImageStore")
       val grangerRepo: GrangerRepoType = new SingleStateGrangerRepo()
       val notificationActor = ctx.spawn(RCTReminderActor.behaviour(grangerConfig.repoLocation), "notifications")
       val noopActor = ctx.spawnAnonymous[Any](Behaviors.ignore)
+
       val gitRepoPusher =
         ctx.spawn(GitRepoPusher.behavior(grangerRepo), "gitPusher")
 
       grangerRepo.loadData().unsafeRunSync() match {
         case LoadDataSuccess =>
           ctx.log.info("Done")
-          databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, clock)
+          databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, imageStore, clock)
         case LoadDataFailure(repoState) =>
           repoState match {
             case EmptyRepo =>
               recoverReminders(grangerRepo, notificationActor, noopActor) match {
-                case Right(_) => databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, clock)
+                case Right(_) => databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, imageStore, clock)
                 case Left(EmptyRepo) =>
                   grangerRepo.setUpRepo().unsafeRunSync()
-                  databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, clock)
+                  databaseReadyBehaviour(grangerRepo, gitRepoPusher, notificationActor, imageStore, clock)
               }
             case _ =>
               ctx.log.error("Failed to load repo: " + repoState)
@@ -86,10 +93,19 @@ object PatientManager {
       grangerRepo: GrangerRepoType,
       gitRepoPusher: ActorRef[GitRepoPusher.Protocol],
       notificationActor: ActorRef[reminders.Protocol],
+      imageStore: ActorRef[ImageStore.Protocol],
       clock: Clock): Behavior[Protocol] =
     managePatientsBehaviour(grangerRepo, gitRepoPusher)
       .orElse(modifyTreatmentsBehaviour(grangerRepo, gitRepoPusher, notificationActor))
       .orElse(manageRemindersBehaviour(notificationActor, clock))
+      .orElse(storeImagesBehavior(imageStore))
+
+  private def storeImagesBehavior(imageStore: ActorRef[ImageStore.Protocol]): Behavior[Protocol] = Behaviors.receiveMessage {
+    case StoreImageRQ(payload: Array[Byte], replyTo) =>
+      imageStore ! ImageStore.StoreImage(payload, replyTo)
+      Behaviors.same
+    case _ => Behaviors.unhandled
+  }
 
   private def manageRemindersBehaviour(
       notificationActor: ActorRef[reminders.Protocol],
@@ -163,9 +179,10 @@ object PatientManager {
       grangerRepo: GrangerRepo[Map[PatientId, Patient], IO],
       gitRepoPusher: ActorRef[GitRepoPusher.Protocol],
       notificationsActor: ActorRef[reminders.Protocol],
+      imageStore: ActorRef[ImageStore.Protocol],
       clock: Clock): Behavior[Protocol] =
     getInformation(grangerRepo, notificationsActor).orElse(
-      submitInformation(grangerRepo, gitRepoPusher, notificationsActor, clock))
+      submitInformation(grangerRepo, gitRepoPusher, notificationsActor, imageStore, clock))
 
   private def recoverReminders(
       grangerRepo: GrangerRepo[Map[PatientId, Patient], IO],
@@ -217,6 +234,8 @@ case class FinishTreatment(
     extends Protocol {
   require(finishedOn.getOffset.equals(ZoneOffset.UTC))
 }
+
+case class StoreImageRQ(payload: Array[Byte], replyTo: ActorRef[UUID]) extends Protocol
 
 sealed trait LoadDataOutcome
 
